@@ -252,6 +252,22 @@
     color: var(--maroon-dark);
     font-size: 1.15em;
     margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .help-icon{
+    flex-shrink: 0;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+  }
+  .card h2 .help-icon .tooltip{
+    left: 0;
+    transform: none;
+    font-weight: 400;
+  }
+  .card h2 .help-icon .tooltip::after{
+    left: 10px;
+    transform: none;
   }
   .hint{
     color: var(--ink-soft);
@@ -523,8 +539,8 @@
   <!-- MODE 1 -->
   <section class="panel" id="panel1">
     <div class="card">
-      <h2>Seřaď všech 66 knih</h2>
-      <p class="hint">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď všech 66 knih<span class="help-icon hint-icon" id="hint1Icon" tabindex="0" style="display:none;">?<span class="tooltip">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint1">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check1">Zkontrolovat</button>
         <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
@@ -542,8 +558,8 @@
   <!-- MODE 2 -->
   <section class="panel active" id="panel2">
     <div class="card">
-      <h2>Seřaď čtyři knihy</h2>
-      <p class="hint">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď čtyři knihy<span class="help-icon hint-icon" id="hint2Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint2">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check2">Zkontrolovat</button>
         <button class="action secondary" id="next2">Další čtyři knihy</button>
@@ -560,8 +576,8 @@
   <!-- MODE 3 -->
   <section class="panel" id="panel3">
     <div class="card">
-      <h2>Seřaď 12 malých proroků</h2>
-      <p class="hint">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď 12 malých proroků<span class="help-icon hint-icon" id="hint3Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint3">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check3">Zkontrolovat</button>
         <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
@@ -579,8 +595,8 @@
   <!-- MODE 4 -->
   <section class="panel" id="panel4">
     <div class="card">
-      <h2>Seřaď knihy a přiřaď pisatele</h2>
-      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď knihy a přiřaď pisatele<span class="help-icon hint-icon" id="hint4Icon" tabindex="0" style="display:none;">?<span class="tooltip">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint4">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check4">Zkontrolovat</button>
         <button class="action secondary" id="shuffle4">Nových 5 knih</button>
@@ -606,8 +622,8 @@
   <!-- MODE 5 -->
   <section class="panel" id="panel5">
     <div class="card">
-      <h2>Seřaď knihy a přiřaď dobu dokončení psaní</h2>
-      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď knihy a přiřaď dobu dokončení psaní<span class="help-icon hint-icon" id="hint5Icon" tabindex="0" style="display:none;">?<span class="tooltip">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint5">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
         <button class="action secondary" id="shuffle5">Nových 5 knih</button>
@@ -997,6 +1013,44 @@
     });
   }
 
+  // ---------- SBALENÍ NÁVODU PO PRVNÍ ÚSPĚŠNÉ HŘE ----------
+  // Jakmile hráč v daném režimu poprvé dokončí kolo na 100 %, dlouhý návod
+  // se schová a nahradí ho jen ikonka „?“ vedle nadpisu (nápověda zůstává
+  // dostupná v tooltipu). Stav se pamatuje i po zavření/obnovení stránky.
+  const SOLVED_MODES_KEY = "bibleOrderGameSolvedModes";
+
+  function loadSolvedModes(){
+    try{
+      const raw = localStorage.getItem(SOLVED_MODES_KEY);
+      if(!raw) return {};
+      const data = JSON.parse(raw);
+      return (data && typeof data === "object") ? data : {};
+    }catch(e){ return {}; }
+  }
+
+  function saveSolvedModes(solved){
+    try{ localStorage.setItem(SOLVED_MODES_KEY, JSON.stringify(solved)); }catch(e){}
+  }
+
+  const solvedModes = loadSolvedModes();
+
+  function collapseHint(modeKey){
+    const hintEl = document.getElementById("hint" + modeKey);
+    const iconEl = document.getElementById("hint" + modeKey + "Icon");
+    if(hintEl) hintEl.style.display = "none";
+    if(iconEl) iconEl.style.display = "inline-flex";
+  }
+
+  function markModeSolved(modeKey){
+    if(!solvedModes[modeKey]){
+      solvedModes[modeKey] = true;
+      saveSolvedModes(solvedModes);
+    }
+    collapseHint(modeKey);
+  }
+
+  [1,2,3,4,5].forEach(k=>{ if(solvedModes[k]) collapseHint(k); });
+
   // ---------- MODE 1 ----------
   const list1 = document.getElementById("list1");
   const verdict1 = document.getElementById("verdict1");
@@ -1030,6 +1084,7 @@
     if(correct === 66){
       verdict1.className = "verdict show perfect";
       verdict1.textContent = randomPerfectMessage() + " Všech 66 knih je ve správném pořadí!" + pointsMsg;
+      markModeSolved(1);
       celebrateVerdict(verdict1);
     }else{
       verdict1.className = "verdict show partial";
@@ -1093,6 +1148,7 @@
     if(allCorrect){
       verdict2.className = "verdict show perfect";
       verdict2.textContent = randomPerfectMessage() + pointsMsg;
+      markModeSolved(2);
       celebrateVerdict(verdict2);
     }else{
       verdict2.className = "verdict show partial";
@@ -1142,6 +1198,7 @@
     if(correct === 12){
       verdict3.className = "verdict show perfect";
       verdict3.textContent = randomPerfectMessage() + " Všech 12 malých proroků je ve správném pořadí!" + pointsMsg;
+      markModeSolved(3);
       celebrateVerdict(verdict3);
     }else{
       verdict3.className = "verdict show partial";
@@ -1224,6 +1281,7 @@
     if(orderCorrect === 5 && matchCorrect === 5){
       verdict4.className = "verdict show perfect";
       verdict4.textContent = randomPerfectMessage() + " Knihy sedí a pisatelé jsou správně přiřazení!" + pointsMsg;
+      markModeSolved(4);
       celebrateVerdict(verdict4);
     }else{
       verdict4.className = "verdict show partial";
@@ -1295,6 +1353,7 @@
     if(orderCorrect === 5 && matchCorrect === 5){
       verdict5.className = "verdict show perfect";
       verdict5.textContent = randomPerfectMessage() + " Knihy sedí a doba dokončení psaní je správně přiřazená!" + pointsMsg;
+      markModeSolved(5);
       celebrateVerdict(verdict5);
     }else{
       verdict5.className = "verdict show partial";
@@ -1308,17 +1367,19 @@
   attachSortable(list5periods);
   buildMode5();
 
-  // ---------- NÁPOVĚDNÁ IKONKA (dotyk / klik) ----------
-  const scoreHelpIcon = document.getElementById("scoreHelpIcon");
-  if(scoreHelpIcon){
-    scoreHelpIcon.addEventListener("click", (e)=>{
+  // ---------- NÁPOVĚDNÉ IKONKY (dotyk / klik) ----------
+  const allHelpIcons = document.querySelectorAll(".help-icon");
+  allHelpIcons.forEach(icon=>{
+    icon.addEventListener("click", (e)=>{
       e.stopPropagation();
-      scoreHelpIcon.classList.toggle("tooltip-open");
+      const wasOpen = icon.classList.contains("tooltip-open");
+      allHelpIcons.forEach(i=>i.classList.remove("tooltip-open"));
+      if(!wasOpen) icon.classList.add("tooltip-open");
     });
-    document.addEventListener("click", ()=>{
-      scoreHelpIcon.classList.remove("tooltip-open");
-    });
-  }
+  });
+  document.addEventListener("click", ()=>{
+    allHelpIcons.forEach(i=>i.classList.remove("tooltip-open"));
+  });
 
   // ---------- VÝBĚR REŽIMU ----------
   const modeSelect = document.getElementById("modeSelect");
