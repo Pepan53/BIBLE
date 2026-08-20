@@ -69,16 +69,90 @@
     40%{ transform: scale(1.22); color: var(--green); }
     100%{ transform: scale(1); }
   }
-  .reset-score-btn{
-    background: transparent;
+  .history-btn{
+    background: var(--bg-panel);
     border: 1.5px solid var(--border);
-    color: var(--ink-soft);
-    padding: 7px 14px;
-    border-radius: 16px;
-    font-size: 0.8em;
+    color: var(--gold-dark);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 0.95em;
     cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
   }
-  .reset-score-btn:hover{ border-color: var(--maroon); color: var(--maroon-dark); }
+  .history-btn:hover{ border-color: var(--gold); background: #f1e6ce; }
+
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 22, 10, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background: var(--bg-panel);
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(30,22,10,0.35);
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+  .modal-header h3{
+    margin: 0;
+    font-family: Georgia, serif;
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+  }
+  .modal-close{
+    background: transparent;
+    border: none;
+    font-size: 1.1em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .modal-close:hover{ background: rgba(122,46,46,0.08); color: var(--maroon-dark); }
+
+  .history-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92em;
+  }
+  .history-table th, .history-table td{
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-table th{
+    color: var(--gold-dark);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .history-table tr:last-child td{ border-bottom: none; }
+  .history-table td.today-row, .history-table tr.today-row td{
+    font-weight: 700;
+    color: var(--maroon-dark);
+  }
+  .history-table .pct-good{ color: var(--green); font-weight: 700; }
+  .history-table .pct-bad{ color: var(--red); }
 
   .help-icon{
     position: relative;
@@ -418,11 +492,21 @@
 
   <div class="global-score-bar">
     <span class="value-pill">🏅 Skóre: <span class="num" id="globalScoreValue">0</span> bodů</span>
-    <button class="reset-score-btn" id="resetScore">Vynulovat skóre</button>
+    <button class="history-btn" id="historyBtn" title="Historie skóre" aria-label="Historie skóre">📈</button>
     <span class="help-icon" id="scoreHelpIcon" tabindex="0">
       ?
-      <span class="tooltip">Za každou správně umístěnou knihu/pisatele +2 body, za každou chybu −1 bod, a za bezchybné kolo bonus navrch. Skóre je společné pro všechny čtyři režimy a platí, dokud máš hru otevřenou.</span>
+      <span class="tooltip">Za každou správně umístěnou knihu nebo pisatele +2 body, u nejtěžšího režimu (doba dokončení psaní) +5 bodů. Za každou chybu −1 bod, za bezchybné kolo bonus navrch. Skóre je společné pro všech pět režimů a v tomto prohlížeči vydrží do půlnoci, pak se počítá znovu od nuly. Historie (ikonka grafu) ukazuje přehled po dnech.</span>
     </span>
+  </div>
+
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📈 Historie skóre po dnech</h3>
+        <button class="modal-close" id="historyClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div id="historyContent"></div>
+    </div>
   </div>
 
   <nav class="tabs">
@@ -432,7 +516,7 @@
       <option value="3">Režim 2 · Malí proroci</option>
       <option value="4">Režim 3 · Knihy a pisatelé</option>
       <option value="1">Režim 4 · Všech 66 knih</option>
-      <option value="5">Režim 5 · Kniha a doba psaní</option>
+      <option value="5">Režim 5 · Kniha a doba dokončení psaní</option>
     </select>
   </nav>
 
@@ -526,12 +610,12 @@
   <!-- MODE 5 -->
   <section class="panel" id="panel5">
     <div class="card">
-      <h2>Seřaď knihy a přiřaď dobu psaní</h2>
-      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď knihy a přiřaď dobu dokončení psaní</h2>
+      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
         <button class="action secondary" id="shuffle5">Nových 5 knih</button>
-        <span class="score" id="score5">Knihy: 0/5 · Doba psaní: 0/5</span>
+        <span class="score" id="score5">Knihy: 0/5 · Doba dokončení: 0/5</span>
       </div>
       <div class="verdict" id="verdict5"></div>
       <div class="two-col">
@@ -540,13 +624,13 @@
           <ul class="sortable-list" id="list5books"></ul>
         </div>
         <div class="col">
-          <h3>Doba psaní</h3>
+          <h3>Doba dokončení psaní</h3>
           <ul class="sortable-list" id="list5periods"></ul>
         </div>
       </div>
       <div class="legend">
-        <span><span class="swatch g"></span> na správném místě / správná doba</span>
-        <span><span class="swatch r"></span> na špatném místě / špatná doba</span>
+        <span><span class="swatch g"></span> na správném místě / správná doba dokončení</span>
+        <span><span class="swatch r"></span> na špatném místě / špatná doba dokončení</span>
       </div>
     </div>
   </section>
@@ -593,7 +677,7 @@
     "Juda (Ježíšův bratr)","apoštol Jan"
   ];
 
-  // Doba psaní (podle přehledu na jw.org)
+  // Doba dokončení psaní (podle přehledu na jw.org)
   const WRITING_PERIOD = [
     "asi 1513 př. n. l.","asi 1512 př. n. l.","asi 1512 př. n. l.","asi 1473 př. n. l.","asi 1473 př. n. l.",
     "asi 1450 př. n. l.","asi 1100 př. n. l.","asi 1090 př. n. l.","asi 1078 př. n. l.","asi 1040 př. n. l.",
@@ -768,34 +852,135 @@
     return PERFECT_MESSAGES[Math.floor(Math.random()*PERFECT_MESSAGES.length)];
   }
 
-  // ---------- BODOVÁNÍ ----------
+  // ---------- BODOVÁNÍ + HISTORIE PO DNECH ----------
   const POINTS_CORRECT = 2;
   const POINTS_WRONG = 1;
-  let totalScore = 0;
-  const globalScoreValue = document.getElementById("globalScoreValue");
+  const HISTORY_STORAGE_KEY = "bibleOrderGameHistory";
+  const OLD_SCORE_STORAGE_KEY = "bibleOrderGameScore"; // starší verze hry — použije se jen k jednorázové migraci
 
-  function addPoints(delta){
+  // Skóre se v prohlížeči pamatuje jen do konce aktuálního dne (do půlnoci) —
+  // další den (nebo na jiném zařízení/v jiném prohlížeči) se počítá znovu od nuly.
+  // Zároveň se ale (skrytě) ukládá i historie po dnech: dosažené skóre, kolik bodů
+  // šlo maximálně získat a kolik jich hráč nezískal — pro přehled v historii.
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+
+  function formatDateLabel(iso){
+    const parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    return parts[2] + ". " + parts[1] + ". " + parts[0];
+  }
+
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if(!raw) return {};
+      const data = JSON.parse(raw);
+      return (data && typeof data === "object") ? data : {};
+    }catch(e){ /* localStorage nedostupné (např. v náhledu) — v pořádku, začneme naprázdno */ }
+    return {};
+  }
+
+  function saveHistory(){
+    try{
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(gameHistory));
+    }catch(e){ /* localStorage nedostupné — historie zůstane jen v paměti */ }
+  }
+
+  let gameHistory = loadHistory();
+
+  // Jednorázová migrace ze starší verze hry (jen dnešní skóre, bez historie).
+  (function migrateOldScore(){
+    try{
+      const raw = localStorage.getItem(OLD_SCORE_STORAGE_KEY);
+      if(!raw) return;
+      const old = JSON.parse(raw);
+      if(old && old.date && typeof old.score === "number" && !gameHistory[old.date]){
+        gameHistory[old.date] = { score: old.score, maxPossible: old.score };
+        saveHistory();
+      }
+      localStorage.removeItem(OLD_SCORE_STORAGE_KEY);
+    }catch(e){ /* nic se neděje, migrace je jen bonus */ }
+  })();
+
+  const TODAY = todayKey();
+  if(!gameHistory[TODAY]) gameHistory[TODAY] = { score: 0, maxPossible: 0 };
+
+  let totalScore = gameHistory[TODAY].score;
+  const globalScoreValue = document.getElementById("globalScoreValue");
+  globalScoreValue.textContent = totalScore;
+
+  function addPoints(delta, maxPossibleForRound){
     totalScore = Math.max(0, totalScore + delta);
     globalScoreValue.textContent = totalScore;
     globalScoreValue.classList.remove("score-pop");
     void globalScoreValue.offsetWidth;
     globalScoreValue.classList.add("score-pop");
+
+    gameHistory[TODAY].score = totalScore;
+    gameHistory[TODAY].maxPossible += (maxPossibleForRound || 0);
+    saveHistory();
   }
 
   // Spočítá a připíše body za jedno kolo kontroly; vrátí text k připojení do verdiktu.
-  function awardPoints(correctCount, totalCount, perfectBonus){
+  function awardPoints(correctCount, totalCount, perfectBonus, pointsPerCorrect){
+    const perCorrect = pointsPerCorrect || POINTS_CORRECT;
     const wrongCount = totalCount - correctCount;
     const isPerfect = correctCount === totalCount;
-    let gained = correctCount * POINTS_CORRECT - wrongCount * POINTS_WRONG;
+    let gained = correctCount * perCorrect - wrongCount * POINTS_WRONG;
     if(isPerfect) gained += perfectBonus;
-    addPoints(gained);
-    const sign = gained >= 0 ? "+" : "";
-    return " " + sign + gained + " bodů.";
+    const maxPossible = totalCount * perCorrect + perfectBonus;
+    addPoints(gained, maxPossible);
+    return " Získáváš " + gained + " bodů z " + maxPossible + " možných.";
   }
 
-  document.getElementById("resetScore").addEventListener("click", ()=>{
-    totalScore = 0;
-    globalScoreValue.textContent = "0";
+
+  // ---------- HISTORIE — modální okno ----------
+  const historyModal = document.getElementById("historyModal");
+  const historyContent = document.getElementById("historyContent");
+
+  function renderHistory(){
+    const dates = Object.keys(gameHistory).sort().reverse();
+    if(dates.length === 0){
+      historyContent.innerHTML = '<p class="hint">Zatím žádná historie — zahraj si aspoň jedno kolo a vrať se sem.</p>';
+      return;
+    }
+    const rows = dates.map(date=>{
+      const entry = gameHistory[date];
+      const score = entry.score || 0;
+      const maxPossible = entry.maxPossible || 0;
+      const missed = Math.max(0, maxPossible - score);
+      const hasData = maxPossible > 0;
+      const pct = hasData ? Math.round((score / maxPossible) * 100) : null;
+      const pctClass = pct === null ? "" : (pct >= 70 ? "pct-good" : (pct < 40 ? "pct-bad" : ""));
+      const pctText = pct === null ? "–" : pct + " %";
+      const isToday = date === TODAY;
+      const label = formatDateLabel(date) + (isToday ? " (dnes)" : "");
+      return "<tr" + (isToday ? ' class="today-row"' : "") + "><td>" + label + "</td><td>" + score + "</td><td>" + missed + "</td><td class=\"" + pctClass + "\">" + pctText + "</td></tr>";
+    }).join("");
+    historyContent.innerHTML =
+      '<table class="history-table"><thead><tr><th>Datum</th><th>Skóre</th><th>Nezískáno</th><th>Úspěšnost</th></tr></thead><tbody>' +
+      rows +
+      "</tbody></table>";
+  }
+
+  function openHistory(){
+    renderHistory();
+    historyModal.classList.add("show");
+  }
+  function closeHistory(){
+    historyModal.classList.remove("show");
+  }
+
+  document.getElementById("historyBtn").addEventListener("click", openHistory);
+  document.getElementById("historyClose").addEventListener("click", closeHistory);
+  historyModal.addEventListener("click", (e)=>{
+    if(e.target === historyModal) closeHistory();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && historyModal.classList.contains("show")) closeHistory();
   });
 
   function clearVerdictStyles(container){
@@ -842,7 +1027,7 @@
       celebrateVerdict(verdict1);
     }else{
       verdict1.className = "verdict show partial";
-      verdict1.textContent = "Zatím to není přesné — " + correct + " z 66 knih je na správném místě. Zkus to upravit (červené knihy jsou špatně)." + pointsMsg;
+      verdict1.textContent = "Zatím to není přesné." + pointsMsg;
     }
   }
 
@@ -909,7 +1094,7 @@
       celebrateVerdict(verdict2);
     }else{
       verdict2.className = "verdict show partial";
-      verdict2.textContent = "❌ Ještě to není ono — červené knihy jsou na špatném místě." + pointsMsg;
+      verdict2.textContent = "❌ Ještě to není ono." + pointsMsg;
     }
   }
 
@@ -961,7 +1146,7 @@
       celebrateVerdict(verdict3);
     }else{
       verdict3.className = "verdict show partial";
-      verdict3.textContent = "Zatím to není přesné — " + correct + " z 12 knih je na správném místě. Zkus to upravit (červené knihy jsou špatně)." + pointsMsg;
+      verdict3.textContent = "Zatím to není přesné." + pointsMsg;
     }
   }
 
@@ -1045,7 +1230,7 @@
       celebrateVerdict(verdict4);
     }else{
       verdict4.className = "verdict show partial";
-      verdict4.textContent = "Zatím to není přesné — pořadí knih: " + orderCorrect + "/5, přiřazení pisatelů: " + matchCorrect + "/5. Červené položky nesedí." + pointsMsg;
+      verdict4.textContent = "Zatím to není přesné." + pointsMsg;
     }
   }
 
@@ -1055,7 +1240,7 @@
   attachSortable(list4writers);
   buildMode4();
 
-  // ---------- MODE 5 : knihy a doba psaní ----------
+  // ---------- MODE 5 : knihy a doba dokončení psaní ----------
   const list5books = document.getElementById("list5books");
   const list5periods = document.getElementById("list5periods");
   const verdict5 = document.getElementById("verdict5");
@@ -1074,7 +1259,7 @@
     shuffle(mode5Selected).forEach(idx=>{
       list5periods.appendChild(makePeriodItem(idx));
     });
-    score5.textContent = "Knihy: 0/5 · Doba psaní: 0/5";
+    score5.textContent = "Knihy: 0/5 · Doba dokončení: 0/5";
   }
 
   function checkMode5(){
@@ -1109,16 +1294,16 @@
       }
     });
 
-    score5.textContent = "Knihy: " + orderCorrect + "/5 · Doba psaní: " + matchCorrect + "/5";
-    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15);
+    score5.textContent = "Knihy: " + orderCorrect + "/5 · Doba dokončení: " + matchCorrect + "/5";
+    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15, 5);
     verdict5.classList.add("show");
     if(orderCorrect === 5 && matchCorrect === 5){
       verdict5.className = "verdict show perfect";
-      verdict5.textContent = randomPerfectMessage() + " Knihy sedí a doba psaní je správně přiřazená!" + pointsMsg;
+      verdict5.textContent = randomPerfectMessage() + " Knihy sedí a doba dokončení psaní je správně přiřazená!" + pointsMsg;
       celebrateVerdict(verdict5);
     }else{
       verdict5.className = "verdict show partial";
-      verdict5.textContent = "Zatím to není přesné — pořadí knih: " + orderCorrect + "/5, přiřazení doby psaní: " + matchCorrect + "/5. Červené položky nesedí." + pointsMsg;
+      verdict5.textContent = "Zatím to není přesné." + pointsMsg;
     }
   }
 
