@@ -311,7 +311,7 @@
   .two-col .sortable-list{
     max-height: none;
   }
-  #panel4 .book-item{
+  #panel4 .book-item, #panel5 .book-item{
     width: 100%;
     min-width: 0;
     min-height: 62px;
@@ -321,17 +321,17 @@
     justify-content: flex-start;
     text-align: left;
   }
-  #panel4 .book-item .name{ line-height: 1.25; }
+  #panel4 .book-item .name, #panel5 .book-item .name{ line-height: 1.25; }
 
   @media (max-width: 480px){
     .two-col{ gap: 8px; }
-    #panel4 .book-item{
+    #panel4 .book-item, #panel5 .book-item{
       min-height: 56px;
       padding: 7px 8px;
       font-size: 0.82em;
       gap: 6px;
     }
-    #panel4 .book-item .handle{ font-size: 0.9em; }
+    #panel4 .book-item .handle, #panel5 .book-item .handle{ font-size: 0.9em; }
     .two-col .col h3{ font-size: 0.8em; }
   }
 
@@ -432,6 +432,7 @@
       <option value="3">Režim 2 · Malí proroci</option>
       <option value="4">Režim 3 · Knihy a pisatelé</option>
       <option value="1">Režim 4 · Všech 66 knih</option>
+      <option value="5">Režim 5 · Kniha a doba psaní</option>
     </select>
   </nav>
 
@@ -522,6 +523,34 @@
     </div>
   </section>
 
+  <!-- MODE 5 -->
+  <section class="panel" id="panel5">
+    <div class="card">
+      <h2>Seřaď knihy a přiřaď dobu psaní</h2>
+      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check5">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle5">Nových 5 knih</button>
+        <span class="score" id="score5">Knihy: 0/5 · Doba psaní: 0/5</span>
+      </div>
+      <div class="verdict" id="verdict5"></div>
+      <div class="two-col">
+        <div class="col">
+          <h3>Knihy</h3>
+          <ul class="sortable-list" id="list5books"></ul>
+        </div>
+        <div class="col">
+          <h3>Doba psaní</h3>
+          <ul class="sortable-list" id="list5periods"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě / správná doba</span>
+        <span><span class="swatch r"></span> na špatném místě / špatná doba</span>
+      </div>
+    </div>
+  </section>
+
   <footer>Vytvořeno pro procvičování pořadí 66 knih biblického kánonu.</footer>
 </div>
 
@@ -564,6 +593,24 @@
     "Juda (Ježíšův bratr)","apoštol Jan"
   ];
 
+  // Doba psaní (podle přehledu na jw.org)
+  const WRITING_PERIOD = [
+    "asi 1513 př. n. l.","asi 1512 př. n. l.","asi 1512 př. n. l.","asi 1473 př. n. l.","asi 1473 př. n. l.",
+    "asi 1450 př. n. l.","asi 1100 př. n. l.","asi 1090 př. n. l.","asi 1078 př. n. l.","asi 1040 př. n. l.",
+    "580 př. n. l.","580 př. n. l.","asi 460 př. n. l.","asi 460 př. n. l.","asi 460 př. n. l.",
+    "po 443 př. n. l.","asi 475 př. n. l.","asi 1473 př. n. l.","asi 460 př. n. l.","asi 717 př. n. l.",
+    "před 1000 př. n. l.","asi 1020 př. n. l.","po 732 př. n. l.","580 př. n. l.","607 př. n. l.",
+    "asi 591 př. n. l.","asi 536 př. n. l.","po 745 př. n. l.","asi 820 př. n. l. (?)","asi 804 př. n. l.",
+    "asi 607 př. n. l.","asi 844 př. n. l.","před 717 př. n. l.","před 632 př. n. l.","asi 628 př. n. l. (?)",
+    "před 648 př. n. l.","520 př. n. l.","518 př. n. l.","po 443 př. n. l.","asi 41 n. l.",
+    "asi 60–65 n. l.","asi 56–58 n. l.","asi 98 n. l.","asi 61 n. l.","asi 56 n. l.",
+    "asi 55 n. l.","asi 55 n. l.","asi 50–52 n. l.","asi 60–61 n. l.","asi 60–61 n. l.",
+    "asi 60–61 n. l.","asi 50 n. l.","asi 51 n. l.","asi 61–64 n. l.","asi 65 n. l.",
+    "asi 61–64 n. l.","asi 60–61 n. l.","asi 61 n. l.","před 62 n. l.","asi 62–64 n. l.",
+    "asi 64 n. l.","asi 98 n. l.","asi 98 n. l.","asi 98 n. l.","asi 65 n. l.",
+    "asi 96 n. l."
+  ];
+
   function shuffle(arr){
     const a = arr.slice();
     for(let i=a.length-1;i>0;i--){
@@ -588,6 +635,15 @@
     li.draggable = true;
     li.dataset.book = bookIndex;
     li.innerHTML = '<span class="handle">✍️</span><span class="name">'+WRITERS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function makePeriodItem(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.book = bookIndex;
+    li.innerHTML = '<span class="handle">🕑</span><span class="name">'+WRITING_PERIOD[bookIndex]+'</span>';
     return li;
   }
 
@@ -999,6 +1055,79 @@
   attachSortable(list4writers);
   buildMode4();
 
+  // ---------- MODE 5 : knihy a doba psaní ----------
+  const list5books = document.getElementById("list5books");
+  const list5periods = document.getElementById("list5periods");
+  const verdict5 = document.getElementById("verdict5");
+  const score5 = document.getElementById("score5");
+  let mode5Selected = [];
+
+  function buildMode5(){
+    verdict5.className = "verdict";
+    verdict5.textContent = "";
+    list5books.innerHTML = "";
+    list5periods.innerHTML = "";
+    mode5Selected = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
+    shuffle(mode5Selected).forEach(idx=>{
+      list5books.appendChild(makeItem(idx));
+    });
+    shuffle(mode5Selected).forEach(idx=>{
+      list5periods.appendChild(makePeriodItem(idx));
+    });
+    score5.textContent = "Knihy: 0/5 · Doba psaní: 0/5";
+  }
+
+  function checkMode5(){
+    clearVerdictStyles(list5books);
+    clearVerdictStyles(list5periods);
+
+    const bookItems = [...list5books.querySelectorAll(".book-item")];
+    const bookIndices = bookItems.map(li=>parseInt(li.dataset.idx,10));
+    const sortedIndices = bookIndices.slice().sort((a,b)=>a-b);
+
+    let orderCorrect = 0;
+    bookItems.forEach((li, pos)=>{
+      if(bookIndices[pos] === sortedIndices[pos]){
+        li.classList.add("correct");
+        orderCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const periodItems = [...list5periods.querySelectorAll(".book-item")];
+    let matchCorrect = 0;
+    periodItems.forEach((li, pos)=>{
+      const forBook = bookIndices[pos];
+      const correctPeriod = WRITING_PERIOD[forBook];
+      const shownPeriod = WRITING_PERIOD[parseInt(li.dataset.book,10)];
+      if(forBook !== undefined && shownPeriod === correctPeriod){
+        li.classList.add("correct");
+        matchCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    score5.textContent = "Knihy: " + orderCorrect + "/5 · Doba psaní: " + matchCorrect + "/5";
+    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15);
+    verdict5.classList.add("show");
+    if(orderCorrect === 5 && matchCorrect === 5){
+      verdict5.className = "verdict show perfect";
+      verdict5.textContent = randomPerfectMessage() + " Knihy sedí a doba psaní je správně přiřazená!" + pointsMsg;
+      celebrateVerdict(verdict5);
+    }else{
+      verdict5.className = "verdict show partial";
+      verdict5.textContent = "Zatím to není přesné — pořadí knih: " + orderCorrect + "/5, přiřazení doby psaní: " + matchCorrect + "/5. Červené položky nesedí." + pointsMsg;
+    }
+  }
+
+  document.getElementById("check5").addEventListener("click", checkMode5);
+  document.getElementById("shuffle5").addEventListener("click", buildMode5);
+  attachSortable(list5books);
+  attachSortable(list5periods);
+  buildMode5();
+
   // ---------- NÁPOVĚDNÁ IKONKA (dotyk / klik) ----------
   const scoreHelpIcon = document.getElementById("scoreHelpIcon");
   if(scoreHelpIcon){
@@ -1013,7 +1142,7 @@
 
   // ---------- VÝBĚR REŽIMU ----------
   const modeSelect = document.getElementById("modeSelect");
-  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4") };
+  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4"), "5": document.getElementById("panel5") };
   modeSelect.addEventListener("change", ()=>{
     Object.values(panels).forEach(p=>p.classList.remove("active"));
     panels[modeSelect.value].classList.add("active");
