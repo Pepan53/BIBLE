@@ -548,7 +548,6 @@
       <div class="toolbar">
         <button class="action" id="check2">Zkontrolovat</button>
         <button class="action secondary" id="next2">Další čtyři knihy</button>
-        <span class="score" id="score2">Skóre: 0 / 0 kol</span>
       </div>
       <div class="verdict" id="verdict2"></div>
       <ul class="sortable-list" id="list2"></ul>
@@ -1052,8 +1051,6 @@
   // ---------- MODE 2 ----------
   const list2 = document.getElementById("list2");
   const verdict2 = document.getElementById("verdict2");
-  const score2 = document.getElementById("score2");
-  let rounds = 0, roundsCorrect = 0;
 
   function buildMode2(){
     verdict2.className = "verdict";
@@ -1083,9 +1080,6 @@
         allCorrect = false;
       }
     });
-    rounds++;
-    if(allCorrect) roundsCorrect++;
-    score2.textContent = "Skóre: " + roundsCorrect + " / " + rounds + " kol";
     const pointsMsg = awardPoints(correctCount, 4, 5);
     verdict2.classList.add("show");
     if(allCorrect){
