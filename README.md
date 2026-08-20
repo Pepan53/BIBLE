@@ -1,0 +1,2 @@
+# BIBLE
+Cvičení biblických informací 
