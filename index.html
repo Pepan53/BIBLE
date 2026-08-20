@@ -515,8 +515,8 @@
       <option value="2">Režim 1 · Čtyři knihy</option>
       <option value="3">Režim 2 · Malí proroci</option>
       <option value="4">Režim 3 · Knihy a pisatelé</option>
-      <option value="1">Režim 4 · Všech 66 knih</option>
-      <option value="5">Režim 5 · Kniha a doba dokončení psaní</option>
+      <option value="5">Režim 4 · Kniha a doba dokončení psaní</option>
+      <option value="1">Režim 5 · Všech 66 knih</option>
     </select>
   </nav>
 
@@ -529,7 +529,6 @@
         <button class="action" id="check1">Zkontrolovat</button>
         <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
         <button class="action secondary" id="reveal1">Zobrazit řešení</button>
-        <span class="score" id="score1">0 / 66 správně</span>
       </div>
       <div class="verdict" id="verdict1"></div>
       <ul class="sortable-list" id="list1"></ul>
@@ -567,7 +566,6 @@
         <button class="action" id="check3">Zkontrolovat</button>
         <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
         <button class="action secondary" id="reveal3">Zobrazit řešení</button>
-        <span class="score" id="score3">0 / 12 správně</span>
       </div>
       <div class="verdict" id="verdict3"></div>
       <ul class="sortable-list" id="list3"></ul>
@@ -586,7 +584,6 @@
       <div class="toolbar">
         <button class="action" id="check4">Zkontrolovat</button>
         <button class="action secondary" id="shuffle4">Nových 5 knih</button>
-        <span class="score" id="score4">Knihy: 0/5 · Pisatelé: 0/5</span>
       </div>
       <div class="verdict" id="verdict4"></div>
       <div class="two-col">
@@ -614,7 +611,6 @@
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
         <button class="action secondary" id="shuffle5">Nových 5 knih</button>
-        <span class="score" id="score5">Knihy: 0/5 · Doba dokončení: 0/5</span>
       </div>
       <div class="verdict" id="verdict5"></div>
       <div class="two-col">
@@ -935,6 +931,19 @@
     return " Získáváš " + gained + " bodů z " + maxPossible + " možných.";
   }
 
+  // Body za jedno kolo se připíšou jen jednou — opakované kliknutí na
+  // „Zkontrolovat“ na stejném (nezměněném) kole už body znovu nepřičítá.
+  // Nové kolo (zamíchání, další knihy, nový výběr) flag zase odemkne.
+  const roundScored = { 1:false, 2:false, 3:false, 4:false, 5:false };
+
+  function scoreRoundOnce(modeKey, correctCount, totalCount, perfectBonus, pointsPerCorrect){
+    if(roundScored[modeKey]){
+      return " Body za toto kolo už byly připsány.";
+    }
+    roundScored[modeKey] = true;
+    return awardPoints(correctCount, totalCount, perfectBonus, pointsPerCorrect);
+  }
+
 
   // ---------- HISTORIE — modální okno ----------
   const historyModal = document.getElementById("historyModal");
@@ -991,9 +1000,9 @@
   // ---------- MODE 1 ----------
   const list1 = document.getElementById("list1");
   const verdict1 = document.getElementById("verdict1");
-  const score1 = document.getElementById("score1");
 
   function buildMode1(){
+    roundScored[1] = false;
     verdict1.className = "verdict";
     verdict1.textContent = "";
     list1.innerHTML = "";
@@ -1001,7 +1010,6 @@
     order.forEach(idx=>{
       list1.appendChild(makeItem(idx));
     });
-    score1.textContent = "0 / 66 správně";
   }
 
   function checkMode1(){
@@ -1017,8 +1025,7 @@
         li.classList.add("incorrect");
       }
     });
-    score1.textContent = correct + " / 66 správně";
-    const pointsMsg = awardPoints(correct, 66, 30);
+    const pointsMsg = scoreRoundOnce(1, correct, 66, 30);
     verdict1.classList.add("show");
     if(correct === 66){
       verdict1.className = "verdict show perfect";
@@ -1031,6 +1038,7 @@
   }
 
   function revealMode1(){
+    roundScored[1] = false;
     list1.innerHTML = "";
     BOOKS.forEach((_, idx)=>{
       const li = makeItem(idx);
@@ -1039,7 +1047,6 @@
     clearVerdictStyles(list1);
     verdict1.className = "verdict show perfect";
     verdict1.textContent = "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
-    score1.textContent = "66 / 66 správně";
   }
 
   document.getElementById("check1").addEventListener("click", checkMode1);
@@ -1053,6 +1060,7 @@
   const verdict2 = document.getElementById("verdict2");
 
   function buildMode2(){
+    roundScored[2] = false;
     verdict2.className = "verdict";
     verdict2.textContent = "";
     list2.innerHTML = "";
@@ -1080,7 +1088,7 @@
         allCorrect = false;
       }
     });
-    const pointsMsg = awardPoints(correctCount, 4, 5);
+    const pointsMsg = scoreRoundOnce(2, correctCount, 4, 5);
     verdict2.classList.add("show");
     if(allCorrect){
       verdict2.className = "verdict show perfect";
@@ -1105,9 +1113,8 @@
 
   const list3 = document.getElementById("list3");
   const verdict3 = document.getElementById("verdict3");
-  const score3 = document.getElementById("score3");
-
   function buildMode3(){
+    roundScored[3] = false;
     verdict3.className = "verdict";
     verdict3.textContent = "";
     list3.innerHTML = "";
@@ -1115,7 +1122,6 @@
     order.forEach(idx=>{
       list3.appendChild(makeItem(idx));
     });
-    score3.textContent = "0 / 12 správně";
   }
 
   function checkMode3(){
@@ -1131,8 +1137,7 @@
         li.classList.add("incorrect");
       }
     });
-    score3.textContent = correct + " / 12 správně";
-    const pointsMsg = awardPoints(correct, 12, 15);
+    const pointsMsg = scoreRoundOnce(3, correct, 12, 15);
     verdict3.classList.add("show");
     if(correct === 12){
       verdict3.className = "verdict show perfect";
@@ -1145,6 +1150,7 @@
   }
 
   function revealMode3(){
+    roundScored[3] = false;
     list3.innerHTML = "";
     MINOR_PROPHETS.forEach(idx=>{
       list3.appendChild(makeItem(idx));
@@ -1152,7 +1158,6 @@
     clearVerdictStyles(list3);
     verdict3.className = "verdict show perfect";
     verdict3.textContent = "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
-    score3.textContent = "12 / 12 správně";
   }
 
   document.getElementById("check3").addEventListener("click", checkMode3);
@@ -1165,10 +1170,10 @@
   const list4books = document.getElementById("list4books");
   const list4writers = document.getElementById("list4writers");
   const verdict4 = document.getElementById("verdict4");
-  const score4 = document.getElementById("score4");
   let mode4Selected = [];
 
   function buildMode4(){
+    roundScored[4] = false;
     verdict4.className = "verdict";
     verdict4.textContent = "";
     list4books.innerHTML = "";
@@ -1180,7 +1185,6 @@
     shuffle(mode4Selected).forEach(idx=>{
       list4writers.appendChild(makeWriterItem(idx));
     });
-    score4.textContent = "Knihy: 0/5 · Pisatelé: 0/5";
   }
 
   function checkMode4(){
@@ -1215,8 +1219,7 @@
       }
     });
 
-    score4.textContent = "Knihy: " + orderCorrect + "/5 · Pisatelé: " + matchCorrect + "/5";
-    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15);
+    const pointsMsg = scoreRoundOnce(4, orderCorrect + matchCorrect, 10, 15);
     verdict4.classList.add("show");
     if(orderCorrect === 5 && matchCorrect === 5){
       verdict4.className = "verdict show perfect";
@@ -1238,10 +1241,10 @@
   const list5books = document.getElementById("list5books");
   const list5periods = document.getElementById("list5periods");
   const verdict5 = document.getElementById("verdict5");
-  const score5 = document.getElementById("score5");
   let mode5Selected = [];
 
   function buildMode5(){
+    roundScored[5] = false;
     verdict5.className = "verdict";
     verdict5.textContent = "";
     list5books.innerHTML = "";
@@ -1253,7 +1256,6 @@
     shuffle(mode5Selected).forEach(idx=>{
       list5periods.appendChild(makePeriodItem(idx));
     });
-    score5.textContent = "Knihy: 0/5 · Doba dokončení: 0/5";
   }
 
   function checkMode5(){
@@ -1288,8 +1290,7 @@
       }
     });
 
-    score5.textContent = "Knihy: " + orderCorrect + "/5 · Doba dokončení: " + matchCorrect + "/5";
-    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15, 5);
+    const pointsMsg = scoreRoundOnce(5, orderCorrect + matchCorrect, 10, 15, 5);
     verdict5.classList.add("show");
     if(orderCorrect === 5 && matchCorrect === 5){
       verdict5.className = "verdict show perfect";
