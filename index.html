@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblické knihy — procvičování pořadí</title>
+<style>
+  :root{
+    --bg: #f6f1e6;
+    --bg-panel: #fffdf8;
+    --ink: #2c2317;
+    --ink-soft: #6b5d48;
+    --gold: #a9812f;
+    --gold-dark: #7d5e20;
+    --maroon: #7a2e2e;
+    --maroon-dark: #5c2020;
+    --green: #3c7a3c;
+    --green-bg: #e6f2e2;
+    --red: #b0433a;
+    --red-bg: #fbe6e2;
+    --border: #d9cdb2;
+    --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  header{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+  .global-score-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 6px 0 4px;
+  }
+  .global-score-bar .value-pill{
+    background: linear-gradient(135deg,#f1e6ce,#e7d5a8);
+    color: var(--maroon-dark);
+    font-weight: 700;
+    font-size: 1.05em;
+    padding: 8px 20px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .global-score-bar .value-pill .num{
+    font-size: 1.15em;
+    display:inline-block;
+  }
+  .score-pop{ animation: score-pop .45s ease; }
+  @keyframes score-pop{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.22); color: var(--green); }
+    100%{ transform: scale(1); }
+  }
+  .reset-score-btn{
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--ink-soft);
+    padding: 7px 14px;
+    border-radius: 16px;
+    font-size: 0.8em;
+    cursor: pointer;
+  }
+  .reset-score-btn:hover{ border-color: var(--maroon); color: var(--maroon-dark); }
+
+  .help-icon{
+    position: relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--gold);
+    color: var(--gold-dark);
+    font-size: 0.78em;
+    font-weight: 700;
+    cursor: help;
+  }
+  .help-icon .tooltip{
+    display:none;
+    position: absolute;
+    top: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    background: var(--ink);
+    color: #fff8ec;
+    font-weight: 400;
+    font-size: 0.82em;
+    line-height: 1.4;
+    padding: 10px 12px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 20;
+    text-align: left;
+  }
+  .help-icon .tooltip::after{
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--ink);
+  }
+  .help-icon:hover .tooltip,
+  .help-icon:focus .tooltip,
+  .help-icon.tooltip-open .tooltip{
+    display:block;
+  }
+
+  h1{
+    font-family: Georgia, "Palatino Linotype", serif;
+    color: var(--maroon-dark);
+    font-size: 1.9em;
+    margin: 0 0 6px;
+    letter-spacing: 0.3px;
+  }
+  nav.tabs{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 10px;
+    margin: 22px 0 20px;
+    flex-wrap: wrap;
+  }
+  .mode-select-label{
+    color: var(--ink-soft);
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+  .mode-select{
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--maroon-dark);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    min-width: 240px;
+  }
+  .mode-select:hover{ border-color: var(--gold); }
+  .mode-select:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .card{
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .card h2{
+    font-family: Georgia, serif;
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+    margin: 0 0 8px;
+  }
+  .hint{
+    color: var(--ink-soft);
+    font-size: 0.9em;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+
+  .toolbar{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    margin-bottom: 14px;
+  }
+  button.action{
+    background: var(--gold);
+    color: #fff8ec;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 7px;
+    font-size: 0.92em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, transform .05s ease;
+  }
+  button.action:hover{ background: var(--gold-dark); }
+  button.action:active{ transform: translateY(1px); }
+  button.action.secondary{
+    background: transparent;
+    color: var(--maroon-dark);
+    border: 1.5px solid var(--maroon);
+  }
+  button.action.secondary:hover{ background: rgba(122,46,46,0.07); }
+
+  .score{
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--maroon-dark);
+    font-size: 0.95em;
+    background: #f1e6ce;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .verdict{
+    margin: 4px 0 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+    display:none;
+  }
+  .verdict.show{ display:block; }
+  .verdict.perfect{ background: var(--green-bg); color: var(--green); border: 1px solid #b9dcb0; font-size: 1.05em; }
+  .verdict.partial{ background: var(--red-bg); color: var(--red); border: 1px solid #edc3bc; }
+  .verdict.celebrate{ animation: verdict-pop .55s cubic-bezier(.34,1.56,.64,1); }
+
+  @keyframes verdict-pop{
+    0%{ transform: scale(0.85); }
+    50%{ transform: scale(1.06); }
+    100%{ transform: scale(1); }
+  }
+
+  .firework-particle{
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 0 6px 1px currentColor;
+    animation-name: firework-burst;
+    animation-timing-function: cubic-bezier(.15,.65,.35,1);
+    animation-fill-mode: forwards;
+  }
+  @keyframes firework-burst{
+    0%{ transform: translate3d(0,0,0) scale(1); opacity: 1; }
+    65%{ opacity: 1; }
+    100%{ transform: translate3d(var(--dx), var(--dy), 0) scale(0.25); opacity: 0; }
+  }
+
+  .firework-flash{
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+    animation: firework-flash .45s ease-out forwards;
+  }
+  @keyframes firework-flash{
+    0%{ transform: scale(0.3); opacity: 1; }
+    100%{ transform: scale(7); opacity: 0; }
+  }
+
+  .sortable-list{
+    list-style: none;
+    margin: 0; padding: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    background: #fbf7ee;
+  }
+  #list2.sortable-list{ max-height: none; }
+
+  .two-col{
+    display:flex;
+    gap: 14px;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+  .two-col .col{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .two-col .col h3{
+    font-family: Georgia, serif;
+    color: var(--gold-dark);
+    font-size: 0.95em;
+    margin: 0 0 8px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .two-col .sortable-list{
+    max-height: none;
+  }
+  #panel4 .book-item{
+    width: 100%;
+    min-width: 0;
+    min-height: 62px;
+    box-sizing: border-box;
+    margin: 6px 0;
+    padding: 8px 10px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  #panel4 .book-item .name{ line-height: 1.25; }
+
+  @media (max-width: 480px){
+    .two-col{ gap: 8px; }
+    #panel4 .book-item{
+      min-height: 56px;
+      padding: 7px 8px;
+      font-size: 0.82em;
+      gap: 6px;
+    }
+    #panel4 .book-item .handle{ font-size: 0.9em; }
+    .two-col .col h3{ font-size: 0.8em; }
+  }
+
+  .book-item{
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    margin: 6px auto;
+    width: min(40vw, 100%);
+    min-width: 200px;
+    cursor: grab;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+    font-size: 0.98em;
+    user-select: none;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .book-item:active{ cursor: grabbing; }
+  .book-item .handle{
+    color: var(--gold-dark);
+    font-size: 1.05em;
+    opacity: 0.6;
+  }
+  .book-item .pos{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eee0c0;
+    color: var(--gold-dark);
+    font-size: 0.78em;
+    font-weight: 700;
+  }
+  .book-item .name{ flex: 1; }
+  .book-item.dragging{ opacity: 0.4; }
+  .book-item.drop-target{ border-color: var(--gold); }
+  .book-item.correct{
+    background: var(--green-bg);
+    border-color: #b9dcb0;
+  }
+  .book-item.incorrect{
+    background: var(--red-bg);
+    border-color: #edc3bc;
+  }
+
+  #list2 .book-item{ font-size: 1.05em; padding: 14px 16px; }
+
+  .legend{
+    display:flex;
+    gap: 16px;
+    font-size: 0.85em;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .legend span{ display:flex; align-items:center; gap:6px; }
+  .swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .swatch.g{ background: var(--green-bg); border:1px solid #b9dcb0; }
+  .swatch.r{ background: var(--red-bg); border:1px solid #edc3bc; }
+
+  footer{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.82em;
+    margin-top: 26px;
+  }
+
+  @media (max-width: 480px){
+    h1{ font-size: 1.5em; }
+    .book-item{ font-size: 0.9em; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📖 Pořadí biblických knih</h1>
+  </header>
+
+  <div class="global-score-bar">
+    <span class="value-pill">🏅 Skóre: <span class="num" id="globalScoreValue">0</span> bodů</span>
+    <button class="reset-score-btn" id="resetScore">Vynulovat skóre</button>
+    <span class="help-icon" id="scoreHelpIcon" tabindex="0">
+      ?
+      <span class="tooltip">Za každou správně umístěnou knihu/pisatele +2 body, za každou chybu −1 bod, a za bezchybné kolo bonus navrch. Skóre je společné pro všechny čtyři režimy a platí, dokud máš hru otevřenou.</span>
+    </span>
+  </div>
+
+  <nav class="tabs">
+    <label for="modeSelect" class="mode-select-label">Zvol režim:</label>
+    <select id="modeSelect" class="mode-select">
+      <option value="1">Režim 1 · Všech 66 knih</option>
+      <option value="2">Režim 2 · Čtyři knihy</option>
+      <option value="3">Režim 3 · Malí proroci</option>
+      <option value="4">Režim 4 · Knihy a pisatelé</option>
+    </select>
+  </nav>
+
+  <!-- MODE 1 -->
+  <section class="panel active" id="panel1">
+    <div class="card">
+      <h2>Seřaď všech 66 knih</h2>
+      <p class="hint">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check1">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
+        <button class="action secondary" id="reveal1">Zobrazit řešení</button>
+        <span class="score" id="score1">0 / 66 správně</span>
+      </div>
+      <div class="verdict" id="verdict1"></div>
+      <ul class="sortable-list" id="list1"></ul>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 2 -->
+  <section class="panel" id="panel2">
+    <div class="card">
+      <h2>Seřaď čtyři knihy</h2>
+      <p class="hint">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check2">Zkontrolovat</button>
+        <button class="action secondary" id="next2">Další čtyři knihy</button>
+        <span class="score" id="score2">Skóre: 0 / 0 kol</span>
+      </div>
+      <div class="verdict" id="verdict2"></div>
+      <ul class="sortable-list" id="list2"></ul>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 3 -->
+  <section class="panel" id="panel3">
+    <div class="card">
+      <h2>Seřaď 12 malých proroků</h2>
+      <p class="hint">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check3">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
+        <button class="action secondary" id="reveal3">Zobrazit řešení</button>
+        <span class="score" id="score3">0 / 12 správně</span>
+      </div>
+      <div class="verdict" id="verdict3"></div>
+      <ul class="sortable-list" id="list3"></ul>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 4 -->
+  <section class="panel" id="panel4">
+    <div class="card">
+      <h2>Seřaď knihy a přiřaď pisatele</h2>
+      <p class="hint">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check4">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle4">Nových 5 knih</button>
+        <span class="score" id="score4">Knihy: 0/5 · Pisatelé: 0/5</span>
+      </div>
+      <div class="verdict" id="verdict4"></div>
+      <div class="two-col">
+        <div class="col">
+          <h3>Knihy</h3>
+          <ul class="sortable-list" id="list4books"></ul>
+        </div>
+        <div class="col">
+          <h3>Pisatelé</h3>
+          <ul class="sortable-list" id="list4writers"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě / správný pisatel</span>
+        <span><span class="swatch r"></span> na špatném místě / špatný pisatel</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>Vytvořeno pro procvičování pořadí 66 knih biblického kánonu.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const BOOKS = [
+    "1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova",
+    "Jozue","Soudci","Rut","1. Samuelova","2. Samuelova",
+    "1. Královská","2. Královská","1. Paralipomenon","2. Paralipomenon",
+    "Ezra","Nehemjáš","Ester","Job","Žalmy","Přísloví",
+    "Kazatel","Šalomounova píseň","Izajáš","Jeremjáš","Nářky",
+    "Ezekiel","Daniel","Ozeáš","Joel","Amos",
+    "Obadjáš","Jonáš","Micheáš","Nahum","Habakuk",
+    "Sefanjáš","Ageus","Zecharjáš","Malachiáš",
+    "Matouš","Marek","Lukáš","Jan","Skutky",
+    "Římanům","1. Korinťanům","2. Korinťanům","Galaťanům","Efezanům",
+    "Filipanům","Kolosanům","1. Tesaloničanům","2. Tesaloničanům",
+    "1. Timoteovi","2. Timoteovi","Titovi","Filemonovi","Hebrejcům",
+    "Jakub","1. Petra","2. Petra","1. Jana","2. Jana","3. Jana",
+    "Juda","Zjevení"
+  ];
+
+  // Pisatelé jednotlivých knih (podle přehledu na jw.org)
+  const WRITERS = [
+    "Mojžíš","Mojžíš","Mojžíš","Mojžíš","Mojžíš",
+    "Jozue","Samuel","Samuel","Samuel, Gad, Natan","Gad, Natan",
+    "Jeremjáš","Jeremjáš","Ezra","Ezra",
+    "Ezra","Nehemjáš","Mordekai","Mojžíš","David a další","Šalomoun, Agur, Lemuel",
+    "Šalomoun","Šalomoun","Izajáš","Jeremjáš","Jeremjáš",
+    "Ezekiel","Daniel","Ozeáš","Joel","Amos",
+    "Obadjáš","Jonáš","Micheáš","Nahum","Habakuk",
+    "Sefanjáš","Ageus","Zecharjáš","Malachiáš",
+    "Matouš","Marek","Lukáš","apoštol Jan","Lukáš",
+    "Pavel","Pavel","Pavel","Pavel","Pavel",
+    "Pavel","Pavel","Pavel","Pavel",
+    "Pavel","Pavel","Pavel","Pavel","Pavel",
+    "Jakub (Ježíšův bratr)","Petr","Petr","apoštol Jan","apoštol Jan","apoštol Jan",
+    "Juda (Ježíšův bratr)","apoštol Jan"
+  ];
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function makeItem(bookIndex, big){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.idx = bookIndex;
+    li.innerHTML = '<span class="handle">☰</span><span class="name">'+BOOKS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function makeWriterItem(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.book = bookIndex;
+    li.innerHTML = '<span class="handle">✍️</span><span class="name">'+WRITERS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function attachSortable(container){
+    let dragEl = null;
+
+    container.addEventListener("dragstart", (e)=>{
+      const li = e.target.closest(".book-item");
+      if(!li) return;
+      dragEl = li;
+      li.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try{ e.dataTransfer.setData("text/plain", li.dataset.idx); }catch(err){}
+    });
+
+    container.addEventListener("dragend", ()=>{
+      if(dragEl) dragEl.classList.remove("dragging");
+      dragEl = null;
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+    });
+
+    container.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      if(!dragEl) return;
+      const afterEl = getDragAfterElement(container, e.clientY);
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+      if(afterEl == null){
+        container.appendChild(dragEl);
+      }else{
+        container.insertBefore(dragEl, afterEl);
+        afterEl.classList.add("drop-target");
+      }
+      // simple autoscroll near edges
+      const rect = container.getBoundingClientRect();
+      const margin = 40;
+      if(e.clientY - rect.top < margin){
+        container.scrollTop -= 12;
+      }else if(rect.bottom - e.clientY < margin){
+        container.scrollTop += 12;
+      }
+    });
+
+    container.addEventListener("drop", (e)=>{
+      e.preventDefault();
+    });
+  }
+
+  function getDragAfterElement(container, y){
+    const els = [...container.querySelectorAll(".book-item:not(.dragging)")];
+    let closest = {offset: Number.NEGATIVE_INFINITY, element: null};
+    for(const el of els){
+      const box = el.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset){
+        closest = {offset, element: el};
+      }
+    }
+    return closest.element;
+  }
+
+  const FIREWORK_COLORS = ["#ff5b5b","#ffd23d","#4fd67a","#4fa8f0","#e05fb8","#ffa941","#5fe0d0","#ffffff"];
+
+  function createFireworkBurst(x, y){
+    const flash = document.createElement("span");
+    flash.className = "firework-flash";
+    flash.style.left = x + "px";
+    flash.style.top = y + "px";
+    flash.style.animationDuration = "1.35s";
+    document.body.appendChild(flash);
+    setTimeout(()=>flash.remove(), 1650);
+
+    const particleCount = 28 + Math.floor(Math.random()*14);
+    const color = FIREWORK_COLORS[Math.floor(Math.random()*FIREWORK_COLORS.length)];
+    for(let i=0;i<particleCount;i++){
+      const angle = (Math.PI*2*i)/particleCount + (Math.random()*0.3 - 0.15);
+      const radius = 55 + Math.random()*95;
+      const dx = (Math.cos(angle)*radius).toFixed(0) + "px";
+      const dy = (Math.sin(angle)*radius + 25).toFixed(0) + "px";
+      const duration = (0.85 + Math.random()*0.5) * 3;
+      const p = document.createElement("span");
+      p.className = "firework-particle";
+      p.style.left = x + "px";
+      p.style.top = y + "px";
+      p.style.background = color;
+      p.style.color = color;
+      p.style.setProperty("--dx", dx);
+      p.style.setProperty("--dy", dy);
+      p.style.animationDuration = duration + "s";
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), duration*1000 + 100);
+    }
+  }
+
+  function launchFireworks(){
+    const bursts = 5;
+    for(let i=0;i<bursts;i++){
+      setTimeout(()=>{
+        const x = window.innerWidth * (0.15 + Math.random()*0.7);
+        const y = window.innerHeight * (0.12 + Math.random()*0.35);
+        createFireworkBurst(x, y);
+      }, i*780);
+    }
+  }
+
+  function celebrateVerdict(el){
+    el.classList.remove("celebrate");
+    // force reflow so the animation can replay
+    void el.offsetWidth;
+    el.classList.add("celebrate");
+    launchFireworks();
+  }
+
+  const PERFECT_MESSAGES = [
+    "🎉 Paráda! Máš to úplně přesně!",
+    "🏆 Famózní! Ani jedna kniha na špatném místě!",
+    "✨ Bezchybně! Tohle je znalost k nezaplacení!",
+    "🙌 Skvělá práce! Sedí to do posledního puntíku!",
+    "🥳 Perfektní! Umíš to nazpaměť!"
+  ];
+
+  function randomPerfectMessage(){
+    return PERFECT_MESSAGES[Math.floor(Math.random()*PERFECT_MESSAGES.length)];
+  }
+
+  // ---------- BODOVÁNÍ ----------
+  const POINTS_CORRECT = 2;
+  const POINTS_WRONG = 1;
+  let totalScore = 0;
+  const globalScoreValue = document.getElementById("globalScoreValue");
+
+  function addPoints(delta){
+    totalScore = Math.max(0, totalScore + delta);
+    globalScoreValue.textContent = totalScore;
+    globalScoreValue.classList.remove("score-pop");
+    void globalScoreValue.offsetWidth;
+    globalScoreValue.classList.add("score-pop");
+  }
+
+  // Spočítá a připíše body za jedno kolo kontroly; vrátí text k připojení do verdiktu.
+  function awardPoints(correctCount, totalCount, perfectBonus){
+    const wrongCount = totalCount - correctCount;
+    const isPerfect = correctCount === totalCount;
+    let gained = correctCount * POINTS_CORRECT - wrongCount * POINTS_WRONG;
+    if(isPerfect) gained += perfectBonus;
+    addPoints(gained);
+    const sign = gained >= 0 ? "+" : "";
+    return " " + sign + gained + " bodů.";
+  }
+
+  document.getElementById("resetScore").addEventListener("click", ()=>{
+    totalScore = 0;
+    globalScoreValue.textContent = "0";
+  });
+
+  function clearVerdictStyles(container){
+    container.querySelectorAll(".book-item").forEach(li=>{
+      li.classList.remove("correct","incorrect");
+    });
+  }
+
+  // ---------- MODE 1 ----------
+  const list1 = document.getElementById("list1");
+  const verdict1 = document.getElementById("verdict1");
+  const score1 = document.getElementById("score1");
+
+  function buildMode1(){
+    verdict1.className = "verdict";
+    verdict1.textContent = "";
+    list1.innerHTML = "";
+    const order = shuffle(BOOKS.map((_,i)=>i));
+    order.forEach(idx=>{
+      list1.appendChild(makeItem(idx));
+    });
+    score1.textContent = "0 / 66 správně";
+  }
+
+  function checkMode1(){
+    clearVerdictStyles(list1);
+    const items = [...list1.querySelectorAll(".book-item")];
+    let correct = 0;
+    items.forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === pos){
+        li.classList.add("correct");
+        correct++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+    score1.textContent = correct + " / 66 správně";
+    const pointsMsg = awardPoints(correct, 66, 30);
+    verdict1.classList.add("show");
+    if(correct === 66){
+      verdict1.className = "verdict show perfect";
+      verdict1.textContent = randomPerfectMessage() + " Všech 66 knih je ve správném pořadí!" + pointsMsg;
+      celebrateVerdict(verdict1);
+    }else{
+      verdict1.className = "verdict show partial";
+      verdict1.textContent = "Zatím to není přesné — " + correct + " z 66 knih je na správném místě. Zkus to upravit (červené knihy jsou špatně)." + pointsMsg;
+    }
+  }
+
+  function revealMode1(){
+    list1.innerHTML = "";
+    BOOKS.forEach((_, idx)=>{
+      const li = makeItem(idx);
+      list1.appendChild(li);
+    });
+    clearVerdictStyles(list1);
+    verdict1.className = "verdict show perfect";
+    verdict1.textContent = "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
+    score1.textContent = "66 / 66 správně";
+  }
+
+  document.getElementById("check1").addEventListener("click", checkMode1);
+  document.getElementById("shuffle1").addEventListener("click", buildMode1);
+  document.getElementById("reveal1").addEventListener("click", revealMode1);
+  attachSortable(list1);
+  buildMode1();
+
+  // ---------- MODE 2 ----------
+  const list2 = document.getElementById("list2");
+  const verdict2 = document.getElementById("verdict2");
+  const score2 = document.getElementById("score2");
+  let rounds = 0, roundsCorrect = 0;
+
+  function buildMode2(){
+    verdict2.className = "verdict";
+    verdict2.textContent = "";
+    list2.innerHTML = "";
+    const pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,4);
+    const shuffled = shuffle(pool);
+    shuffled.forEach(idx=>{
+      list2.appendChild(makeItem(idx));
+    });
+  }
+
+  function checkMode2(){
+    clearVerdictStyles(list2);
+    const items = [...list2.querySelectorAll(".book-item")];
+    const indices = items.map(li=>parseInt(li.dataset.idx,10));
+    const sortedCopy = indices.slice().sort((a,b)=>a-b);
+    let allCorrect = true;
+    let correctCount = 0;
+    items.forEach((li, pos)=>{
+      const idx = indices[pos];
+      if(idx === sortedCopy[pos]){
+        li.classList.add("correct");
+        correctCount++;
+      }else{
+        li.classList.add("incorrect");
+        allCorrect = false;
+      }
+    });
+    rounds++;
+    if(allCorrect) roundsCorrect++;
+    score2.textContent = "Skóre: " + roundsCorrect + " / " + rounds + " kol";
+    const pointsMsg = awardPoints(correctCount, 4, 5);
+    verdict2.classList.add("show");
+    if(allCorrect){
+      verdict2.className = "verdict show perfect";
+      verdict2.textContent = randomPerfectMessage() + pointsMsg;
+      celebrateVerdict(verdict2);
+    }else{
+      verdict2.className = "verdict show partial";
+      verdict2.textContent = "❌ Ještě to není ono — červené knihy jsou na špatném místě." + pointsMsg;
+    }
+  }
+
+  document.getElementById("check2").addEventListener("click", checkMode2);
+  document.getElementById("next2").addEventListener("click", buildMode2);
+  attachSortable(list2);
+  buildMode2();
+
+  // ---------- MODE 3 : malí proroci ----------
+  const MINOR_PROPHETS = BOOKS.reduce((acc, name, idx)=>{
+    if(idx >= 27 && idx <= 38) acc.push(idx);
+    return acc;
+  }, []);
+
+  const list3 = document.getElementById("list3");
+  const verdict3 = document.getElementById("verdict3");
+  const score3 = document.getElementById("score3");
+
+  function buildMode3(){
+    verdict3.className = "verdict";
+    verdict3.textContent = "";
+    list3.innerHTML = "";
+    const order = shuffle(MINOR_PROPHETS);
+    order.forEach(idx=>{
+      list3.appendChild(makeItem(idx));
+    });
+    score3.textContent = "0 / 12 správně";
+  }
+
+  function checkMode3(){
+    clearVerdictStyles(list3);
+    const items = [...list3.querySelectorAll(".book-item")];
+    let correct = 0;
+    items.forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === MINOR_PROPHETS[pos]){
+        li.classList.add("correct");
+        correct++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+    score3.textContent = correct + " / 12 správně";
+    const pointsMsg = awardPoints(correct, 12, 15);
+    verdict3.classList.add("show");
+    if(correct === 12){
+      verdict3.className = "verdict show perfect";
+      verdict3.textContent = randomPerfectMessage() + " Všech 12 malých proroků je ve správném pořadí!" + pointsMsg;
+      celebrateVerdict(verdict3);
+    }else{
+      verdict3.className = "verdict show partial";
+      verdict3.textContent = "Zatím to není přesné — " + correct + " z 12 knih je na správném místě. Zkus to upravit (červené knihy jsou špatně)." + pointsMsg;
+    }
+  }
+
+  function revealMode3(){
+    list3.innerHTML = "";
+    MINOR_PROPHETS.forEach(idx=>{
+      list3.appendChild(makeItem(idx));
+    });
+    clearVerdictStyles(list3);
+    verdict3.className = "verdict show perfect";
+    verdict3.textContent = "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
+    score3.textContent = "12 / 12 správně";
+  }
+
+  document.getElementById("check3").addEventListener("click", checkMode3);
+  document.getElementById("shuffle3").addEventListener("click", buildMode3);
+  document.getElementById("reveal3").addEventListener("click", revealMode3);
+  attachSortable(list3);
+  buildMode3();
+
+  // ---------- MODE 4 : knihy a pisatelé ----------
+  const list4books = document.getElementById("list4books");
+  const list4writers = document.getElementById("list4writers");
+  const verdict4 = document.getElementById("verdict4");
+  const score4 = document.getElementById("score4");
+  let mode4Selected = [];
+
+  function buildMode4(){
+    verdict4.className = "verdict";
+    verdict4.textContent = "";
+    list4books.innerHTML = "";
+    list4writers.innerHTML = "";
+    mode4Selected = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
+    shuffle(mode4Selected).forEach(idx=>{
+      list4books.appendChild(makeItem(idx));
+    });
+    shuffle(mode4Selected).forEach(idx=>{
+      list4writers.appendChild(makeWriterItem(idx));
+    });
+    score4.textContent = "Knihy: 0/5 · Pisatelé: 0/5";
+  }
+
+  function checkMode4(){
+    clearVerdictStyles(list4books);
+    clearVerdictStyles(list4writers);
+
+    const bookItems = [...list4books.querySelectorAll(".book-item")];
+    const bookIndices = bookItems.map(li=>parseInt(li.dataset.idx,10));
+    const sortedIndices = bookIndices.slice().sort((a,b)=>a-b);
+
+    let orderCorrect = 0;
+    bookItems.forEach((li, pos)=>{
+      if(bookIndices[pos] === sortedIndices[pos]){
+        li.classList.add("correct");
+        orderCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const writerItems = [...list4writers.querySelectorAll(".book-item")];
+    let matchCorrect = 0;
+    writerItems.forEach((li, pos)=>{
+      const forBook = bookIndices[pos];
+      const correctWriter = WRITERS[forBook];
+      const shownWriter = WRITERS[parseInt(li.dataset.book,10)];
+      if(forBook !== undefined && shownWriter === correctWriter){
+        li.classList.add("correct");
+        matchCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    score4.textContent = "Knihy: " + orderCorrect + "/5 · Pisatelé: " + matchCorrect + "/5";
+    const pointsMsg = awardPoints(orderCorrect + matchCorrect, 10, 15);
+    verdict4.classList.add("show");
+    if(orderCorrect === 5 && matchCorrect === 5){
+      verdict4.className = "verdict show perfect";
+      verdict4.textContent = randomPerfectMessage() + " Knihy sedí a pisatelé jsou správně přiřazení!" + pointsMsg;
+      celebrateVerdict(verdict4);
+    }else{
+      verdict4.className = "verdict show partial";
+      verdict4.textContent = "Zatím to není přesné — pořadí knih: " + orderCorrect + "/5, přiřazení pisatelů: " + matchCorrect + "/5. Červené položky nesedí." + pointsMsg;
+    }
+  }
+
+  document.getElementById("check4").addEventListener("click", checkMode4);
+  document.getElementById("shuffle4").addEventListener("click", buildMode4);
+  attachSortable(list4books);
+  attachSortable(list4writers);
+  buildMode4();
+
+  // ---------- NÁPOVĚDNÁ IKONKA (dotyk / klik) ----------
+  const scoreHelpIcon = document.getElementById("scoreHelpIcon");
+  if(scoreHelpIcon){
+    scoreHelpIcon.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      scoreHelpIcon.classList.toggle("tooltip-open");
+    });
+    document.addEventListener("click", ()=>{
+      scoreHelpIcon.classList.remove("tooltip-open");
+    });
+  }
+
+  // ---------- VÝBĚR REŽIMU ----------
+  const modeSelect = document.getElementById("modeSelect");
+  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4") };
+  modeSelect.addEventListener("change", ()=>{
+    Object.values(panels).forEach(p=>p.classList.remove("active"));
+    panels[modeSelect.value].classList.add("active");
+  });
+
+})();
+</script>
+</body>
+</html>
