@@ -6,6 +6,7 @@
 <title>Biblické knihy — procvičování pořadí</title>
 <style>
   :root{
+    color-scheme: light;
     --bg: #f6f1e6;
     --bg-panel: #fffdf8;
     --ink: #2c2317;
@@ -20,6 +21,26 @@
     --red-bg: #fbe6e2;
     --border: #d9cdb2;
     --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
+    --heading-font: Georgia, "Palatino Linotype", serif;
+    --list-bg: #fbf7ee;
+  }
+  :root[data-theme="friendly"]{
+    --bg: #eef8ff;
+    --bg-panel: #ffffff;
+    --ink: #223047;
+    --ink-soft: #55637e;
+    --gold: #ffb100;
+    --gold-dark: #e69500;
+    --maroon: #ff6f59;
+    --maroon-dark: #e2543f;
+    --green: #2fb380;
+    --green-bg: #e3faf0;
+    --red: #ef5b5b;
+    --red-bg: #ffe9e9;
+    --border: #cfe8fb;
+    --shadow: 0 2px 10px rgba(40, 100, 160, 0.12);
+    --heading-font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
+    --list-bg: #f3faff;
   }
   *{ box-sizing: border-box; }
   html,body{
@@ -28,6 +49,7 @@
     color: var(--ink);
     font-family: "Segoe UI", Verdana, Arial, sans-serif;
     min-height:100vh;
+    transition: background .25s ease, color .25s ease;
   }
   .wrap{
     max-width: 860px;
@@ -83,6 +105,32 @@
     justify-content:center;
     padding: 0;
   }
+
+  .theme-toggle-btn{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--gold-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.1em;
+    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
+    box-shadow: var(--shadow);
+    z-index: 5000;
+    transition: background .25s ease, border-color .2s ease, transform .1s ease;
+  }
+  .theme-toggle-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
+  .theme-toggle-btn:active{ transform: scale(0.96); }
+  @media (max-width: 480px){
+    .theme-toggle-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
+  }
   .history-btn:hover{ border-color: var(--gold); background: #f1e6ce; }
 
   .modal-overlay{
@@ -115,7 +163,7 @@
   }
   .modal-header h3{
     margin: 0;
-    font-family: Georgia, serif;
+    font-family: var(--heading-font);
     color: var(--maroon-dark);
     font-size: 1.15em;
   }
@@ -229,7 +277,7 @@
   }
 
   h1{
-    font-family: Georgia, "Palatino Linotype", serif;
+    font-family: var(--heading-font);
     color: var(--maroon-dark);
     font-size: 1.9em;
     margin: 0 0 6px;
@@ -272,9 +320,10 @@
     padding: 18px 20px;
     box-shadow: var(--shadow);
     margin-bottom: 18px;
+    transition: background .25s ease, border-color .25s ease;
   }
   .card h2{
-    font-family: Georgia, serif;
+    font-family: var(--heading-font);
     color: var(--maroon-dark);
     font-size: 1.15em;
     margin: 0 0 8px;
@@ -402,7 +451,8 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 8px;
-    background: #fbf7ee;
+    background: var(--list-bg);
+    transition: background .25s ease, border-color .25s ease;
   }
   #list2.sortable-list{ max-height: none; }
 
@@ -417,7 +467,7 @@
     min-width: 0;
   }
   .two-col .col h3{
-    font-family: Georgia, serif;
+    font-family: var(--heading-font);
     color: var(--gold-dark);
     font-size: 0.95em;
     line-height: 1.25;
@@ -536,6 +586,7 @@
 </style>
 </head>
 <body>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">☀️</button>
 <div class="wrap">
   <header>
     <h1>📖 Pořadí biblických knih</h1>
@@ -705,6 +756,50 @@
 <script>
 (function(){
   "use strict";
+
+  // ---------- VZHLED (klasický / světlý přátelský) ----------
+  const THEME_KEY = "bibleGameTheme";
+
+  function loadTheme(){
+    try{
+      return localStorage.getItem(THEME_KEY) || "classic";
+    }catch(err){
+      return "classic";
+    }
+  }
+  function saveTheme(theme){
+    try{ localStorage.setItem(THEME_KEY, theme); }catch(err){}
+  }
+
+  let currentTheme = loadTheme();
+  const themeToggleBtn = document.getElementById("themeToggle");
+
+  function applyTheme(theme){
+    if(theme === "friendly"){
+      document.documentElement.setAttribute("data-theme", "friendly");
+      if(themeToggleBtn){
+        themeToggleBtn.textContent = "📜";
+        themeToggleBtn.title = "Přepnout na klasické zobrazení";
+        themeToggleBtn.setAttribute("aria-label", "Přepnout na klasické zobrazení");
+      }
+    }else{
+      document.documentElement.removeAttribute("data-theme");
+      if(themeToggleBtn){
+        themeToggleBtn.textContent = "☀️";
+        themeToggleBtn.title = "Přepnout na světlé přátelské zobrazení";
+        themeToggleBtn.setAttribute("aria-label", "Přepnout na světlé přátelské zobrazení");
+      }
+    }
+  }
+
+  applyTheme(currentTheme);
+  if(themeToggleBtn){
+    themeToggleBtn.addEventListener("click", ()=>{
+      currentTheme = currentTheme === "friendly" ? "classic" : "friendly";
+      saveTheme(currentTheme);
+      applyTheme(currentTheme);
+    });
+  }
 
   const BOOKS = [
     "1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova",
