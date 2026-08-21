@@ -621,7 +621,8 @@
     .book-item{ font-size: 0.9em; padding: 9px 10px; }
     .btn-full{ display:none; }
     .btn-short{ display:inline; }
-    .toolbar button.action{ padding: 9px 12px; }
+    .toolbar{ gap: 6px; }
+    .toolbar button.action{ padding: 8px 9px; font-size: 0.85em; }
   }
 </style>
 </head>
@@ -695,7 +696,7 @@
       <p class="hint" id="hint1">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check1">Zkontrolovat</button>
-        <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
+        <button class="action secondary" id="shuffle1"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
         <button class="action secondary" id="reveal1"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
         <button class="action secondary" id="overview1" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
@@ -735,7 +736,7 @@
       <p class="hint" id="hint3">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check3">Zkontrolovat</button>
-        <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
+        <button class="action secondary" id="shuffle3"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
         <button class="action secondary" id="reveal3"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
         <button class="action secondary" id="overview3" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
@@ -755,7 +756,7 @@
       <p class="hint" id="hint4">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check4">Zkontrolovat</button>
-        <button class="action secondary" id="shuffle4">Nových 5 knih</button>
+        <button class="action secondary" id="shuffle4"><span class="btn-full">Nových 5 knih</span><span class="btn-short">Další</span></button>
         <button class="action secondary" id="reveal4"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
         <button class="action secondary" id="overview4" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
@@ -784,7 +785,7 @@
       <p class="hint" id="hint5">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
-        <button class="action secondary" id="shuffle5">Nových 5 knih</button>
+        <button class="action secondary" id="shuffle5"><span class="btn-full">Nových 5 knih</span><span class="btn-short">Další</span></button>
         <button class="action secondary" id="reveal5"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
         <button class="action secondary" id="overview5" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
@@ -1299,6 +1300,28 @@
   const dailyTextModal = document.getElementById("dailyTextModal");
   const dailyTextTitle = document.getElementById("dailyTextTitle");
   let remindBeforeNextRound = false;
+  let laterTimer = null;
+  const LATER_REMIND_MS = 15 * 60 * 1000; // 15 minut
+
+  function clearLaterTimer(){
+    if(laterTimer){
+      clearTimeout(laterTimer);
+      laterTimer = null;
+    }
+  }
+  // Naplánuje opětovné zobrazení za 15 minut — pokud mezitím nezačne nové
+  // kolo (to ho zobrazí dřív přes maybeShowDailyTextReminder) a text ještě
+  // není označen jako přečtený.
+  function scheduleLaterReminder(){
+    clearLaterTimer();
+    laterTimer = setTimeout(()=>{
+      laterTimer = null;
+      if(remindBeforeNextRound && !isDailyTextReadToday()){
+        remindBeforeNextRound = false;
+        openDailyTextModal();
+      }
+    }, LATER_REMIND_MS);
+  }
 
   function isDailyTextReadToday(){
     return !!(gameHistory[TODAY] && gameHistory[TODAY].dailyTextRead);
@@ -1306,6 +1329,8 @@
   function markDailyTextRead(){
     gameHistory[TODAY].dailyTextRead = true;
     saveHistory();
+    remindBeforeNextRound = false;
+    clearLaterTimer();
   }
   function clearDailyTextRead(){
     gameHistory[TODAY].dailyTextRead = false;
@@ -1319,6 +1344,12 @@
   }
   function closeDailyTextModal(){
     dailyTextModal.classList.remove("show");
+  }
+  // Zavření křížkem/mimo okno/Escape = žádná odpověď, takže se dialog má
+  // ještě před dalším kolem znovu připomenout (pokud dnes není přečteno).
+  function closeDailyTextModalUnanswered(){
+    remindBeforeNextRound = true;
+    closeDailyTextModal();
   }
   // Wol.jw.org nedovoluje vlastní stránku zobrazit v iframe (blokuje to),
   // takže se otevírá jako menší samostatné okno vedle hry.
@@ -1341,10 +1372,11 @@
     remindBeforeNextRound = true;
     clearDailyTextRead();
     closeDailyTextModal();
+    scheduleLaterReminder();
   });
-  document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModal);
+  document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModalUnanswered);
   dailyTextModal.addEventListener("click", (e)=>{
-    if(e.target === dailyTextModal) closeDailyTextModal();
+    if(e.target === dailyTextModal) closeDailyTextModalUnanswered();
   });
   document.getElementById("dailyTextBtn").addEventListener("click", openDailyTextModal);
 
@@ -1353,10 +1385,13 @@
     openDailyTextModal();
   }
 
-  // Odpověď „Později“ — připomínka se vrátí před dalším kolem (nové knihy/zamíchání).
+  // Odpověď „Později“ — připomínka se vrátí buď před dalším kolem
+  // (nové knihy/zamíchání), nebo nejpozději za 15 minut — podle toho, co
+  // nastane dřív.
   function maybeShowDailyTextReminder(){
     if(remindBeforeNextRound && !isDailyTextReadToday()){
       remindBeforeNextRound = false;
+      clearLaterTimer();
       openDailyTextModal();
     }
   }
@@ -1398,7 +1433,7 @@
     if(e.key !== "Escape") return;
     if(historyModal.classList.contains("show")) closeHistory();
     if(overviewModal.classList.contains("show")) closeOverview();
-    if(dailyTextModal.classList.contains("show")) closeDailyTextModal();
+    if(dailyTextModal.classList.contains("show")) closeDailyTextModalUnanswered();
   });
 
   function clearVerdictStyles(container){
