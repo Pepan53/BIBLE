@@ -178,6 +178,7 @@
   }
   .overview-table tr:last-child td{ border-bottom: none; }
   .overview-table td:first-child{ font-weight: 600; color: var(--maroon-dark); }
+  .overview-table tr.testament-gap td{ padding: 8px 0; border-bottom: none; }
 
   .help-icon{
     position: relative;
@@ -327,6 +328,7 @@
     border: 1.5px solid var(--maroon);
   }
   button.action.secondary:hover{ background: rgba(122,46,46,0.07); }
+  .btn-short{ display:none; }
 
   .score{
     margin-left: auto;
@@ -527,6 +529,9 @@
   @media (max-width: 480px){
     h1{ font-size: 1.5em; }
     .book-item{ font-size: 0.9em; padding: 9px 10px; }
+    .btn-full{ display:none; }
+    .btn-short{ display:inline; }
+    .toolbar button.action{ padding: 9px 12px; }
   }
 </style>
 </head>
@@ -558,7 +563,7 @@
   <div class="modal-overlay overview-modal" id="overviewModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>📖 Přehled všech knih</h3>
+        <h3>Přehled biblických knih</h3>
         <button class="modal-close" id="overviewClose" aria-label="Zavřít">✕</button>
       </div>
       <div id="overviewContent"></div>
@@ -584,8 +589,8 @@
       <div class="toolbar">
         <button class="action" id="check1">Zkontrolovat</button>
         <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
-        <button class="action secondary" id="reveal1">Zobrazit řešení</button>
-        <button class="action secondary" id="overview1">Přehled</button>
+        <button class="action secondary" id="reveal1"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview1" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
       <div class="verdict" id="verdict1"></div>
       <ul class="sortable-list" id="list1"></ul>
@@ -603,9 +608,9 @@
       <p class="hint" id="hint2">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check2">Zkontrolovat</button>
-        <button class="action secondary" id="next2">Další čtyři knihy</button>
-        <button class="action secondary" id="reveal2">Zobrazit řešení</button>
-        <button class="action secondary" id="overview2">Přehled</button>
+        <button class="action secondary" id="next2"><span class="btn-full">Další čtyři knihy</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal2"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview2" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
       <div class="verdict" id="verdict2"></div>
       <ul class="sortable-list" id="list2"></ul>
@@ -624,8 +629,8 @@
       <div class="toolbar">
         <button class="action" id="check3">Zkontrolovat</button>
         <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
-        <button class="action secondary" id="reveal3">Zobrazit řešení</button>
-        <button class="action secondary" id="overview3">Přehled</button>
+        <button class="action secondary" id="reveal3"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview3" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
       <div class="verdict" id="verdict3"></div>
       <ul class="sortable-list" id="list3"></ul>
@@ -644,8 +649,8 @@
       <div class="toolbar">
         <button class="action" id="check4">Zkontrolovat</button>
         <button class="action secondary" id="shuffle4">Nových 5 knih</button>
-        <button class="action secondary" id="reveal4">Zobrazit řešení</button>
-        <button class="action secondary" id="overview4">Přehled</button>
+        <button class="action secondary" id="reveal4"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview4" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
       <div class="verdict" id="verdict4"></div>
       <div class="two-col">
@@ -673,8 +678,8 @@
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
         <button class="action secondary" id="shuffle5">Nových 5 knih</button>
-        <button class="action secondary" id="reveal5">Zobrazit řešení</button>
-        <button class="action secondary" id="overview5">Přehled</button>
+        <button class="action secondary" id="reveal5"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview5" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
       <div class="verdict" id="verdict5"></div>
       <div class="two-col">
@@ -694,7 +699,7 @@
     </div>
   </section>
 
-  <footer>Vytvořeno pro procvičování pořadí 66 knih biblického kánonu.<br>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
 
 <script>
@@ -1101,6 +1106,7 @@
 
   function buildOverviewTable(){
     const rows = BOOKS.map((name, idx)=>
+      (idx === 39 ? '<tr class="testament-gap"><td colspan="4"></td></tr>' : "") +
       "<tr><td>" + name + "</td><td>" + WRITING_PERIOD[idx] + "</td><td>" + WRITERS[idx] + "</td><td>" + COVERED_PERIOD[idx] + "</td></tr>"
     ).join("");
     overviewContent.innerHTML =
