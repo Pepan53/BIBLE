@@ -140,7 +140,7 @@
     padding: 0;
   }
 
-  .theme-toggle-btn{
+  .theme-toggle-btn, .daily-text-btn{
     position: fixed;
     top: 16px;
     right: 16px;
@@ -160,10 +160,12 @@
     z-index: 5000;
     transition: background .25s ease, border-color .2s ease, transform .1s ease;
   }
-  .theme-toggle-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
-  .theme-toggle-btn:active{ transform: scale(0.96); }
+  .daily-text-btn{ right: 64px; }
+  .theme-toggle-btn:hover, .daily-text-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
+  .theme-toggle-btn:active, .daily-text-btn:active{ transform: scale(0.96); }
   @media (max-width: 480px){
-    .theme-toggle-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
+    .theme-toggle-btn, .daily-text-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
+    .daily-text-btn{ right: 54px; }
   }
   .history-btn:hover{ border-color: var(--gold); background: #f1e6ce; }
 
@@ -237,6 +239,27 @@
   .history-table .pct-bad{ color: var(--red); }
 
   .overview-modal .modal-box{ max-width: 780px; }
+  .daily-text-modal .modal-box{ max-width: 420px; text-align: center; transition: max-width .2s ease; }
+  .daily-text-modal.expanded .modal-box{ max-width: 640px; }
+  .daily-text-modal .modal-header{ justify-content: center; position: relative; }
+  .daily-text-modal .modal-close{ position: absolute; right: 0; top: 0; }
+  .daily-text-toolbar{ justify-content: center; margin-bottom: 0; }
+  .daily-text-frame-wrap{
+    width: 100%;
+    height: 55vh;
+    min-height: 320px;
+    max-height: 560px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: var(--list-bg);
+  }
+  .daily-text-frame{ width:100%; height:100%; border:none; display:block; }
+  .daily-text-fallback{ font-size: 0.85em; margin: 0 0 14px; }
+  @media (max-width: 480px){
+    .daily-text-frame-wrap{ height: 50vh; min-height: 260px; }
+  }
   .table-scroll{ overflow-x: auto; }
   .overview-table{
     width: 100%;
@@ -621,6 +644,7 @@
 </head>
 <body>
 <button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">☀️</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
 <div class="wrap">
   <header>
     <h1>📖 Pořadí biblických knih</h1>
@@ -652,6 +676,32 @@
         <button class="modal-close" id="overviewClose" aria-label="Zavřít">✕</button>
       </div>
       <div id="overviewContent"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay daily-text-modal" id="dailyTextModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="dailyTextTitle">Denní text</h3>
+        <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div id="dailyTextQuestion">
+        <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+        <div class="toolbar daily-text-toolbar">
+          <button class="action" id="dailyTextYes">Ano</button>
+          <button class="action secondary" id="dailyTextNo">Ne</button>
+          <button class="action secondary" id="dailyTextLater">Později</button>
+        </div>
+      </div>
+      <div id="dailyTextReveal" style="display:none;">
+        <div class="daily-text-frame-wrap">
+          <iframe id="dailyTextFrame" class="daily-text-frame" title="Denní text — wol.jw.org"></iframe>
+        </div>
+        <p class="hint daily-text-fallback">Pokud se náhled výše nenačte, otevři denní text přímo na <a id="dailyTextFallbackLink" href="#" target="_blank" rel="noopener">wol.jw.org ↗</a></p>
+        <div class="toolbar daily-text-toolbar">
+          <button class="action" id="dailyTextRevealClose">Zavřít</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1236,10 +1286,11 @@
       const pctText = pct === null ? "–" : pct + " %";
       const isToday = date === TODAY;
       const label = formatDateLabel(date) + (isToday ? " (dnes)" : "");
-      return "<tr" + (isToday ? ' class="today-row"' : "") + "><td>" + label + "</td><td>" + score + "</td><td>" + missed + "</td><td class=\"" + pctClass + "\">" + pctText + "</td></tr>";
+      const dailyTextMark = entry.dailyTextRead ? '<span class="pct-good">✓</span>' : "–";
+      return "<tr" + (isToday ? ' class="today-row"' : "") + "><td>" + label + "</td><td>" + score + "</td><td>" + missed + "</td><td class=\"" + pctClass + "\">" + pctText + "</td><td>" + dailyTextMark + "</td></tr>";
     }).join("");
     historyContent.innerHTML =
-      '<table class="history-table"><thead><tr><th>Datum</th><th>Skóre</th><th>Nezískáno</th><th>Úspěšnost</th></tr></thead><tbody>' +
+      '<table class="history-table"><thead><tr><th>Datum</th><th>Skóre</th><th>Nezískáno</th><th>Úspěšnost</th><th>Denní text</th></tr></thead><tbody>' +
       rows +
       "</tbody></table>";
   }
@@ -1257,6 +1308,91 @@
   historyModal.addEventListener("click", (e)=>{
     if(e.target === historyModal) closeHistory();
   });
+
+  // ---------- DENNÍ TEXT — připomínka + živý náhled z wol.jw.org ----------
+  // Samotný text/komentář nekopírujeme (je to copyright Watch Tower) —
+  // místo toho se zkusí vložit skutečná stránka daného dne přímo do okna
+  // (iframe). Kdyby to wol.jw.org blokoval, je pod náhledem vždy i funkční
+  // odkaz na otevření v nové záložce.
+  const CZ_WEEKDAYS = ["Neděle","Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota"];
+  const CZ_MONTHS_GEN = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+
+  function formatDailyTitle(d){
+    return CZ_WEEKDAYS[d.getDay()] + " " + d.getDate() + ". " + CZ_MONTHS_GEN[d.getMonth()];
+  }
+  function dailyTextUrl(d){
+    return "https://wol.jw.org/cs/wol/dt/r29/lp-b/" + d.getFullYear() + "/" + (d.getMonth()+1) + "/" + d.getDate();
+  }
+
+  const dailyTextModal = document.getElementById("dailyTextModal");
+  const dailyTextTitle = document.getElementById("dailyTextTitle");
+  const dailyTextQuestion = document.getElementById("dailyTextQuestion");
+  const dailyTextReveal = document.getElementById("dailyTextReveal");
+  const dailyTextFrame = document.getElementById("dailyTextFrame");
+  const dailyTextFallbackLink = document.getElementById("dailyTextFallbackLink");
+  let remindBeforeNextRound = false;
+
+  function isDailyTextReadToday(){
+    return !!(gameHistory[TODAY] && gameHistory[TODAY].dailyTextRead);
+  }
+  function markDailyTextRead(){
+    gameHistory[TODAY].dailyTextRead = true;
+    saveHistory();
+  }
+
+  function openDailyTextModal(){
+    const now = new Date();
+    dailyTextTitle.textContent = formatDailyTitle(now);
+    dailyTextQuestion.style.display = "";
+    dailyTextReveal.style.display = "none";
+    dailyTextFrame.src = "about:blank";
+    dailyTextModal.classList.remove("expanded");
+    dailyTextModal.classList.add("show");
+  }
+  function closeDailyTextModal(){
+    dailyTextModal.classList.remove("show");
+    dailyTextFrame.src = "about:blank";
+  }
+  function revealDailyText(){
+    const url = dailyTextUrl(new Date());
+    dailyTextFallbackLink.href = url;
+    dailyTextFrame.src = url;
+    dailyTextQuestion.style.display = "none";
+    dailyTextReveal.style.display = "";
+    dailyTextModal.classList.add("expanded");
+  }
+
+  document.getElementById("dailyTextYes").addEventListener("click", ()=>{
+    markDailyTextRead();
+    closeDailyTextModal();
+  });
+  document.getElementById("dailyTextNo").addEventListener("click", ()=>{
+    markDailyTextRead();
+    revealDailyText();
+  });
+  document.getElementById("dailyTextLater").addEventListener("click", ()=>{
+    remindBeforeNextRound = true;
+    closeDailyTextModal();
+  });
+  document.getElementById("dailyTextRevealClose").addEventListener("click", closeDailyTextModal);
+  document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModal);
+  dailyTextModal.addEventListener("click", (e)=>{
+    if(e.target === dailyTextModal) closeDailyTextModal();
+  });
+  document.getElementById("dailyTextBtn").addEventListener("click", openDailyTextModal);
+
+  // Automaticky při načtení stránky, pokud dnes ještě nebyla odpověď zaznamenaná.
+  if(!isDailyTextReadToday()){
+    openDailyTextModal();
+  }
+
+  // Odpověď „Později“ — připomínka se vrátí před dalším kolem (nové knihy/zamíchání).
+  function maybeShowDailyTextReminder(){
+    if(remindBeforeNextRound && !isDailyTextReadToday()){
+      remindBeforeNextRound = false;
+      openDailyTextModal();
+    }
+  }
 
   // ---------- PŘEHLED VŠECH KNIH — modální okno ----------
   const overviewModal = document.getElementById("overviewModal");
@@ -1295,6 +1431,7 @@
     if(e.key !== "Escape") return;
     if(historyModal.classList.contains("show")) closeHistory();
     if(overviewModal.classList.contains("show")) closeOverview();
+    if(dailyTextModal.classList.contains("show")) closeDailyTextModal();
   });
 
   function clearVerdictStyles(container){
@@ -1397,6 +1534,7 @@
 
   document.getElementById("check1").addEventListener("click", checkMode1);
   document.getElementById("shuffle1").addEventListener("click", buildMode1);
+  document.getElementById("shuffle1").addEventListener("click", maybeShowDailyTextReminder);
   document.getElementById("reveal1").addEventListener("click", revealMode1);
   attachSortable(list1);
   buildMode1();
@@ -1463,6 +1601,7 @@
 
   document.getElementById("check2").addEventListener("click", checkMode2);
   document.getElementById("next2").addEventListener("click", buildMode2);
+  document.getElementById("next2").addEventListener("click", maybeShowDailyTextReminder);
   document.getElementById("reveal2").addEventListener("click", revealMode2);
   attachSortable(list2);
   buildMode2();
@@ -1526,6 +1665,7 @@
 
   document.getElementById("check3").addEventListener("click", checkMode3);
   document.getElementById("shuffle3").addEventListener("click", buildMode3);
+  document.getElementById("shuffle3").addEventListener("click", maybeShowDailyTextReminder);
   document.getElementById("reveal3").addEventListener("click", revealMode3);
   attachSortable(list3);
   buildMode3();
@@ -1615,6 +1755,7 @@
 
   document.getElementById("check4").addEventListener("click", checkMode4);
   document.getElementById("shuffle4").addEventListener("click", buildMode4);
+  document.getElementById("shuffle4").addEventListener("click", maybeShowDailyTextReminder);
   document.getElementById("reveal4").addEventListener("click", revealMode4);
   attachSortable(list4books);
   attachSortable(list4writers);
@@ -1707,6 +1848,7 @@
 
   document.getElementById("check5").addEventListener("click", checkMode5);
   document.getElementById("shuffle5").addEventListener("click", buildMode5);
+  document.getElementById("shuffle5").addEventListener("click", maybeShowDailyTextReminder);
   document.getElementById("reveal5").addEventListener("click", revealMode5);
   attachSortable(list5books);
   attachSortable(list5periods);
