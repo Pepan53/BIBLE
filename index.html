@@ -243,6 +243,16 @@
   .daily-text-modal .modal-header{ justify-content: center; position: relative; }
   .daily-text-modal .modal-close{ position: absolute; right: 0; top: 0; }
   .daily-text-toolbar{ justify-content: center; margin-bottom: 0; }
+  .daily-text-icon{ width: 84px; height: 84px; margin: 2px auto 8px; }
+  .daily-text-icon svg{ width: 100%; height: 100%; display: block; }
+  .daily-text-word{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.2em;
+    font-weight: 700;
+    margin: 0 0 14px;
+    line-height: 1.3;
+  }
   .table-scroll{ overflow-x: auto; }
   .overview-table{
     width: 100%;
@@ -669,6 +679,8 @@
         <h3 id="dailyTextTitle">Denní text</h3>
         <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
       </div>
+      <div class="daily-text-icon" id="dailyTextIcon"></div>
+      <p class="daily-text-word" id="dailyTextWord"></p>
       <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
       <div class="toolbar daily-text-toolbar">
         <button class="action" id="dailyTextYes">Ano</button>
@@ -1356,9 +1368,82 @@
     saveHistory();
   }
 
+  // ---------- Myšlenka + ikona ke dni (vlastní shrnutí, ne citát/komentář) ----------
+  // 365 krátkých vlastních shrnutí (jedno na každý den roku) — nejde o citát
+  // ani komentář z knihy, jen o vlastní pomůcku k zapamatování hlavní myšlenky.
+  const DAILY_WORDS = ["Duchovní růst", "Přátelství s Jehovou", "Cadokova odvaha", "Následky neposlušnosti", "Radost z poslušnosti", "Uzdravení zraněného srdce", "Naděje na vzkříšení", "Trpělivost s nespravedlností", "Starostlivý Ježíš", "Dluh hříchu", "Čest kázat", "Chvála manželce", "Jehovovo vedení", "Boží sláva", "Úcta k organizaci", "Důvěra ve vedení", "Osobní víra", "Trpělivé školení", "Davidova moudrost", "Náprava vztahu", "Rozhodnutí pro křest", "Boží odpuštění", "Pravá pokora", "Radost ze služby", "Příprava na manželství", "Řešení neshod", "Pevnost ve víře", "Milosrdný Otec", "Zdravý úsudek", "Trpělivá láska", "Moudré rozlišování", "Duch pokoje", "Kristova péče o nás", "Boží odpuštění", "Naděje na vzkříšení", "Duchovní priority", "Duchovní zralost", "Přátelství s Bohem", "Odvaha k neutralitě", "Naděje navzdory hříchu", "Čas na Bibli", "Respekt k svědomí", "Útěcha v úzkosti", "Boží spravedlnost", "Zázrak nasycení", "Chvála za uzdravení", "Dar výkupného", "Odvaha ke křtu", "Vstřebat Boží slovo", "Důvěra ve starší", "Oddělení ovcí a koz", "Živý Bůh", "Důvěra v organizaci", "Pokání a odpuštění", "Prostý život", "Bdělost před pádem", "Dar v podobě bratrů", "Moudrost chrání", "Víra posílená důkazy", "Boží spravedlivý úsudek", "Živí v Boží paměti", "Odvaha z dobrého vzoru", "Vedeni k pokání", "Blízký vztah s Bohem", "Boj s nespravedlností", "Chvála Jehovovi", "Satanovy pomluvy", "Boží trpělivost", "Ověřuj, co slyšíš", "Vytrvalost v pronásledování", "Věrnost až do konce", "Úcta k manželce", "Horlivost ve službě", "Trpělivé poznávání", "Trpělivost s hříšníkem", "Radost z pokání", "Odstup od politiky", "Láska skrze poslušnost", "Úplné odpuštění", "Duchovní ráj", "Modlitba o trpělivost", "Rozvážné namlouvání", "Sebezkoumání provinilce", "Boží pohled na lidi", "Opatrnost s odpadlíky", "Otupělé srdce", "Pozvání na slavnost", "Boží rodina", "Vděčnost za výkupné", "Hlubší poznání", "Víra ve výkupné", "Nová smlouva", "Boží láska", "Vyvrácení pomluvy", "Radost ze vzkříšení", "Duchovní růst", "Boží milosrdenství", "Jehovova ochrana", "Předobraz výkupného", "Uplatňování Bible", "Radost z dávání", "Chvála Jehovy", "Satanovy lži", "Spravedlivý Soudce", "Odvaha pomoct bratrům", "Živý Bůh", "Ostražitost před klamem", "Naděje na odpuštění", "Radost z věrnosti", "Moudrost v namlouvání", "Boží načasování", "Ježíšův vzor", "Vděčnost za výkupné", "Zralost staršího", "Rýžování pravdy", "Odpuštění místo hněvu", "Důvěra místo majetku", "Cesta ke zralosti", "Moudré rozhodování", "Odpuštění po pokání", "Boží nestrannost", "Věrní pomocníci", "Odpuštění minulosti", "Postupná proměna", "Klidná reakce", "Radost z pokání", "Špatné pohnutky", "Dobrý učitel", "Oslava Jehovy", "Odhodlání ke křtu", "Odmítání lží", "Držet se pravdy", "Soucit s hříšníky", "Očištění Božího jména", "Užitek ze zkoušek", "Naléhavost kázání", "Stopy Stvořitele", "Poslední slova", "Služební pomocníci", "Síla od Boha", "Moudré rozhodování", "Smazané hříchy", "Péče o děti", "Duchovní ráj", "Výběr partnera", "Ohleduplnost k zamilovaným", "Věrnost v zármutku", "Boj s pokušením", "Varovné pokárání", "Vytrvat do konce", "Blízkost k Bohu", "Nezasloužené odpuštění", "Odpuštění křivd", "Duchovní zralost", "Boží milosrdenství", "Hledání ztracených", "Radost ze sdílení pravdy", "Radost ve službě", "Malé kroky vpřed", "Poučení a náprava", "Vymazané hříchy", "Klid při nespravedlnosti", "Víra v Ježíše", "Stopy Stvořitele", "Ochrana sboru", "Trvalá oběť", "Duchovní ostražitost", "Smíření s Bohem", "Upřímné odpuštění", "Vytrvalost v pronásledování", "Odvaha ke změně", "Prosba o moudrost", "Hojnost duchovního pokrmu", "Laskavá upřímnost", "Odvaha z víry", "Beze strachu s Jehovou", "Věrné srdce", "Láskyplná výchova", "Radost z dávání", "Trpělivý růst", "Vděčnost, ne nárok", "Nejsi zapomenutý", "Rozhodování podle svědomí", "Naděje na vzkříšení", "Síla z Božího slova", "Věrnost uprostřed odpadlictví", "Vytrvalost v dobrém", "Boží štědrost", "Touha sloužit", "Žít podle Bible", "Prosba o svatého ducha", "Láska k lidem", "Pomstu nechme na Bohu", "Vyvážený vztah k majetku", "Radost v manželství", "Příprava na zkoušky", "Hodnota výkupného", "Víra překoná překážky", "Důvěra z vlastní zkušenosti", "Poznej svoje slabé místo", "Odpuštění kajícímu", "Dar v podobě bratří", "Odpuštění bez trestu", "Království na prvním místě", "Síla uprostřed odporu", "Radost a jednota", "Citlivost k svobodným", "Jehova naše Skála", "Sloužit celým srdcem", "Úplné odpuštění", "Pomoc k pokání", "Nesrovnávej se s druhými", "Naléhavé varování", "Duchovní růst", "Naděje na vzkříšení", "Upřímné uctívání", "Pevnost v pravdě", "Boží trpělivost", "Pomoc v pravou chvíli", "Útěcha od bratrů", "Naděje na věčný život", "Úcta k manželce", "Kristovo smýšlení", "Vykoupení krví", "Východisko ze zkoušky", "Znát svá slabá místa", "Hodnota studia", "Radost z odpuštění", "Připravenost na konec", "Služba z lásky", "Jmenovaní bratři", "Duchovní klid", "Vážnost slibu", "Odvaha k víře", "Radost z kázání", "Bůh jako útočiště", "Nerozdělené srdce", "Láska k nepřátelům", "Trpělivost s hříšníky", "Štědrost k druhým", "Správné priority", "Blízkost v zármutku", "Bůh vidí naše slzy", "Duchovní zralost", "Bázeň před Bohem", "Důvěra v Soudce", "Upřímnost", "Příprava na službu", "Oslava Jehovy", "Jistota odměny", "Radost z pokání", "Bible pro všechny", "Vytrvalost ve zkoušce", "Útěcha po ztrátě", "Obhajoba víry", "Moudrost starších", "Obrazná řeč", "Úcta k manželce", "Starší jako pastýři", "Vděčnost za výkupné", "Na pozoru před pokušením", "Milosrdenství s měřítky", "Podpora bratří", "Zkoumání Písma", "Nesobecká láska", "Moudré rozhodování", "Radost v ráji", "Jehova – naše skála", "Poznání srdce", "Pokorné pokání", "Ochrana sboru", "Síla povzbuzení", "Touha po výsadě", "Ochotná poslušnost", "Naplňující se proroctví", "Bez pomluv", "Zdravá bázeň", "Naděje i pro hříšníka", "Odvaha ke změně", "Jednota v organizaci", "Útěcha v zármutku", "Vzpomínka na Boží skutky", "Chléb věčného života", "Věrnost v manželství", "Ospravedlnění vírou", "Boží smýšlení", "Blízko zlomeným srdcím", "Boží odměna", "Malé kroky k pádu", "Odvaha přes strach", "Posvěcení Božího jména", "Pohostinnost", "Připravenost a bdělost", "Horlivost v kázání", "Bůh si všímá", "Radost z dávání", "Odvaha svědčit", "Vykoupení skrze Krista", "Život vírou", "Proměna mysli", "Kristovo smýšlení", "Poznávání partnera", "Jehova jako skála", "Výlučná oddanost", "Soucitné odpuštění", "Štědrá moudrost", "Dobrá pověst", "Radost z dávání", "Modlitba v nemoci", "Naděje na vzkříšení", "Boží neomezená moc", "Víra jako Noe", "Věrnost slibům", "Pokora", "Boží organizace", "Boží trpělivost", "Vyber si život", "Pravé následování", "Mírnost jako Kristus", "Důvěra v nejistotě", "Boží nestrannost", "Duchovní zralost", "Blízkost k Bohu", "Útěcha v slzách", "Odvaha svědčit", "Vedení rodiny", "Vděčnost za výkupné", "Úleva od pochybností", "Čest být svědkem", "Ochota sloužit", "Útočiště ve sboru", "Boží láska ve výkupném", "Život vírou", "Přitažlivost sboru", "Pochopení Písma", "Důvěra v organizaci", "Důvěra ve vedení", "Vedení k pokání", "Otázky dospívajících", "Víra, která zachraňuje", "Školení druhých", "Nový svět", "Kázání po celém světě", "Manželská věrnost", "Velkorysé odpuštění", "Radost ze služby", "Horlivost do konce", "Pokora", "Když víra kolísá", "Vztah k penězům", "Odolávání pokušení", "Štědré předávání zkušeností", "Místo ve sboru", "Modlitba v zármutku", "Ježíšova láska k lidem", "Svoboda od hříchu", "Věrnost a pilnost", "Moudrá volba práce", "Duchovní ráj", "Království na prvním místě", "Mravní čistota", "Spolehlivost", "Vnitřní pokoj", "Návrat ztraceného", "Radost z dávání"];
+
+  const DAILY_ICONS = {
+    heart: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,150 C55,115 35,85 55,62 C68,47 90,55 100,73 C110,55 132,47 145,62 C165,85 145,115 100,150 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round"/>',
+    dove: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M42,104 C60,72 82,72 100,98 C118,72 140,72 158,104" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M100,98 C100,116 92,128 78,132" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,132 C68,132 60,126 58,116 C68,116 76,120 78,132 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    hourglass: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M68,50 L132,50 L100,100 L132,150 L68,150 L100,100 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round"/><line x1="60" y1="50" x2="140" y2="50" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="60" y1="150" x2="140" y2="150" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="96" r="2.5" fill="var(--c)"/>',
+    sprout: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="60" y1="145" x2="140" y2="145" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,145 C100,110 100,90 100,65" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,110 C80,110 66,96 66,78 C90,78 100,94 100,110 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,90 C120,90 134,76 134,58 C110,58 100,74 100,90 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    sunrise: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="45" y1="128" x2="155" y2="128" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,128 A40,40 0 0 1 140,128" fill="none" stroke="var(--c)" stroke-width="6"/><line x1="100" y1="60" x2="100" y2="76" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="66" y1="76" x2="78" y2="86" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="134" y1="76" x2="122" y2="86" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    anchor: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="56" r="10" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="100" y1="66" x2="100" y2="148" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="76" y1="88" x2="124" y2="88" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,110 C60,132 78,148 100,150 C122,148 140,132 140,110" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/>',
+    lamp: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,58 C112,58 120,68 118,80 C116,90 108,96 108,106 L92,106 C92,96 84,90 82,80 C80,68 88,58 100,58 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="88" y1="106" x2="112" y2="106" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,120 L122,120 L114,146 L86,146 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    wheat: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M70,150 C90,120 110,90 128,58" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><ellipse cx="118" cy="70" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 118 70)"/><ellipse cx="105" cy="88" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 105 88)"/><ellipse cx="128" cy="88" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(60 128 88)"/><ellipse cx="92" cy="106" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 92 106)"/><ellipse cx="115" cy="106" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(60 115 106)"/>',
+    sun: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="30" fill="none" stroke="var(--c)" stroke-width="6"/><g stroke="var(--c)" stroke-width="5" stroke-linecap="round"><line x1="100" y1="50" x2="100" y2="38"/><line x1="100" y1="150" x2="100" y2="162"/><line x1="50" y1="100" x2="38" y2="100"/><line x1="150" y1="100" x2="162" y2="100"/><line x1="65" y1="65" x2="56" y2="56"/><line x1="135" y1="65" x2="144" y2="56"/><line x1="65" y1="135" x2="56" y2="144"/><line x1="135" y1="135" x2="144" y2="144"/></g>',
+    gift: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M55,120 C55,140 75,152 100,152 C125,152 145,140 145,120" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><path d="M55,120 C75,132 125,132 145,120" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,120 C100,100 100,90 100,80" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,92 C86,92 76,82 76,70 C92,70 100,80 100,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M100,80 C114,80 124,70 124,58 C108,58 100,68 100,80 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    mountain: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M45,140 L85,72 L108,104 L122,84 L155,140 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="128" cy="60" r="10" fill="none" stroke="var(--c)" stroke-width="5"/>',
+    ripple: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><ellipse cx="100" cy="112" rx="52" ry="10" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="34" ry="6.5" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="16" ry="3.5" fill="none" stroke="var(--c)" stroke-width="4"/><line x1="100" y1="52" x2="100" y2="90" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,60 C112,60 120,70 118,80" fill="none" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/>',
+    unity: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="84" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/><circle cx="116" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/>',
+    hands: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M92,158 L100,86 C102,68 90,56 74,60" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line x1="80" y1="120" x2="104" y2="116" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    book: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,66 C88,58 68,56 54,60 L54,132 C68,128 88,130 100,138 C112,130 132,128 146,132 L146,60 C132,56 112,58 100,66 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="100" y1="66" x2="100" y2="138" stroke="var(--c)" stroke-width="4"/><line x1="64" y1="78" x2="90" y2="74" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="64" y1="92" x2="90" y2="88" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="74" x2="136" y2="78" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="88" x2="136" y2="92" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
+    scale: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="100" y1="55" x2="100" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="60" y1="70" x2="140" y2="70" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,70 L46,102 C46,112 74,112 74,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M140,70 L126,102 C126,112 154,112 154,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><line x1="78" y1="140" x2="122" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    compass: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="46" fill="none" stroke="var(--c)" stroke-width="5"/><path d="M118,80 L108,108 L82,120 L92,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><circle cx="100" cy="100" r="4" fill="var(--c)"/>',
+    star: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,46 L112,86 L154,86 L120,110 L132,150 L100,126 L68,150 L80,110 L46,86 L88,86 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    storm: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M62,96 C48,96 40,86 40,76 C40,64 50,56 62,58 C64,46 76,38 90,40 C102,42 110,50 112,60 C126,58 138,68 138,80 C138,90 130,96 120,96 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,104 L86,132 L102,132 L90,160" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'
+  };
+  const DAILY_ICON_PALETTE = ["var(--gold-dark)", "var(--maroon-dark)", "var(--green)", "var(--gold)", "var(--maroon)"];
+
+  function stripDia(s){
+    return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+  function dayOfYearIdx(d){
+    const start = new Date(d.getFullYear(), 0, 1);
+    return Math.floor((d - start) / 86400000);
+  }
+  function pickDailyMotif(plainWord){
+    function has(){
+      for(let i=0;i<arguments.length;i++){
+        if(plainWord.indexOf(arguments[i]) !== -1) return true;
+      }
+      return false;
+    }
+    if(has("lask","srdce","vykup","vykoup","obet")) return "heart";
+    if(has("odpust","milosrd","smirit","smireni","smirene","pokani","kajic")) return "dove";
+    if(has("trpeliv")) return "hourglass";
+    if(has("rust","zral","promena")) return "sprout";
+    if(has("nadej","vzkris")) return "sunrise";
+    if(has("vir","duver","spolehliv","vernost","verny","verni")) return "anchor";
+    if(has("moudr")) return "lamp";
+    if(has("pokor","skromn")) return "wheat";
+    if(has("radost","oslav","chval")) return "sun";
+    if(has("vdec","dar","stedr")) return "gift";
+    if(has("odvah","sil","pevnost","vytrval")) return "mountain";
+    if(has("pokoj","klid","krest","krtu")) return "ripple";
+    if(has("pratel","jednot","blizkost","vztah","manzel","rodin","namlouv","partner")) return "unity";
+    if(has("sluz","pomoc","pece","kaz","sbor")) return "hands";
+    if(has("spravedl","soud")) return "scale";
+    if(has("cest","smysl","veden","krok")) return "compass";
+    if(has("buh","boh","boz","jehov","stvorit","slav","svat")) return "star";
+    if(has("zkous","pokuse","pad","nebezpec","varov","pomluv","lez","lzi","klam","satan","odpadl","hrich","provinil","hnev")) return "storm";
+    return "book";
+  }
+  function renderDailyWordAndIcon(d){
+    const idx = dayOfYearIdx(d) % DAILY_WORDS.length;
+    const word = DAILY_WORDS[idx];
+    const motif = pickDailyMotif(stripDia(word));
+    const color = DAILY_ICON_PALETTE[idx % DAILY_ICON_PALETTE.length];
+    document.getElementById("dailyTextWord").textContent = word;
+    document.getElementById("dailyTextIcon").innerHTML =
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="--c:' + color + '">' + DAILY_ICONS[motif] + '</svg>';
+  }
+
   function openDailyTextModal(){
     const now = new Date();
     dailyTextTitle.textContent = formatDailyTitle(now);
+    renderDailyWordAndIcon(now);
     dailyTextModal.classList.add("show");
   }
   function closeDailyTextModal(){
