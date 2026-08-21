@@ -265,11 +265,11 @@
     font-weight: 700;
     margin: 0;
     line-height: 1.35;
-    text-align: left;
+    text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .daily-text-nav{ display: flex; gap: 8px; }
+  .daily-text-nav{ display: flex; justify-content: center; gap: 20px; }
   .daily-text-nav-btn{
     width: 30px;
     height: 30px;
@@ -1528,7 +1528,7 @@
   // takže se otevírá jako menší samostatné okno vedle hry.
   function openDailyTextWindow(){
     window.open(
-      dailyTextUrl(new Date()),
+      dailyTextUrl(dailyPreviewDate),
       "bibleGameDailyText",
       "width=480,height=760,noopener"
     );
