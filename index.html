@@ -252,6 +252,12 @@
   }
   .daily-text-icon{ width: 128px; height: 128px; flex: 0 0 auto; margin: 0; }
   .daily-text-icon svg{ width: 100%; height: 100%; display: block; }
+  .daily-text-word-col{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 auto;
+  }
   .daily-text-word{
     font-family: var(--heading-font);
     color: var(--maroon-dark);
@@ -262,8 +268,25 @@
     text-align: left;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    flex: 1 1 auto;
   }
+  .daily-text-nav{ display: flex; gap: 8px; }
+  .daily-text-nav-btn{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--maroon);
+    background: transparent;
+    color: var(--maroon-dark);
+    font-size: 1.05em;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease, transform .05s ease;
+  }
+  .daily-text-nav-btn:hover{ background: var(--hover-tint); }
+  .daily-text-nav-btn:active{ transform: translateY(1px); }
   @media (max-width: 480px){
     .daily-text-icon{ width: 100px; height: 100px; }
     .daily-text-word{ font-size: 1.15em; }
@@ -707,7 +730,13 @@
       </div>
       <div class="daily-text-row">
         <div class="daily-text-icon" id="dailyTextIcon"></div>
-        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-word-col">
+          <p class="daily-text-word" id="dailyTextWord"></p>
+          <div class="daily-text-nav">
+            <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+            <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+          </div>
+        </div>
       </div>
       <hr class="daily-text-divider" />
       <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
@@ -1333,7 +1362,7 @@
   const CZ_MONTHS_GEN = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
 
   function formatDailyTitle(d){
-    return CZ_WEEKDAYS[d.getDay()] + " " + d.getDate() + ". " + CZ_MONTHS_GEN[d.getMonth()];
+    return CZ_WEEKDAYS[d.getDay()] + " " + d.getDate() + ". " + CZ_MONTHS_GEN[d.getMonth()] + " " + d.getFullYear();
   }
   function dailyTextUrl(d){
     return "https://wol.jw.org/cs/wol/dt/r29/lp-b/" + d.getFullYear() + "/" + (d.getMonth()+1) + "/" + d.getDate();
@@ -1470,14 +1499,24 @@
       '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="--c:' + color + '">' + DAILY_ICONS[motif] + '</svg>';
   }
 
+  // Datum aktuálně zobrazené v náhledu nahoře (může se lišit od "dnes", když
+  // si uživatel prochází jiné dny šipkami). Při zavření okna se vždy vrátí
+  // zpět na dnešek.
+  let dailyPreviewDate = new Date();
+
+  function updateDailyPreview(d){
+    dailyTextTitle.textContent = formatDailyTitle(d);
+    renderDailyWordAndIcon(d);
+  }
+
   function openDailyTextModal(){
-    const now = new Date();
-    dailyTextTitle.textContent = formatDailyTitle(now);
-    renderDailyWordAndIcon(now);
+    dailyPreviewDate = new Date();
+    updateDailyPreview(dailyPreviewDate);
     dailyTextModal.classList.add("show");
   }
   function closeDailyTextModal(){
     dailyTextModal.classList.remove("show");
+    dailyPreviewDate = new Date();
   }
   // Zavření křížkem/mimo okno/Escape = žádná odpověď, takže se dialog má
   // ještě před dalším kolem znovu připomenout (pokud dnes není přečteno).
@@ -1513,6 +1552,16 @@
     if(e.target === dailyTextModal) closeDailyTextModalUnanswered();
   });
   document.getElementById("dailyTextBtn").addEventListener("click", openDailyTextModal);
+  document.getElementById("dailyTextPrev").addEventListener("click", ()=>{
+    dailyPreviewDate = new Date(dailyPreviewDate);
+    dailyPreviewDate.setDate(dailyPreviewDate.getDate() - 1);
+    updateDailyPreview(dailyPreviewDate);
+  });
+  document.getElementById("dailyTextNext").addEventListener("click", ()=>{
+    dailyPreviewDate = new Date(dailyPreviewDate);
+    dailyPreviewDate.setDate(dailyPreviewDate.getDate() + 1);
+    updateDailyPreview(dailyPreviewDate);
+  });
 
   // Automaticky při načtení stránky, pokud dnes ještě nebyla odpověď zaznamenaná.
   // Pokud je aktivní odložení z „Později“ (i z doby před obnovením stránky),
