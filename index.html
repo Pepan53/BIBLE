@@ -250,8 +250,20 @@
     text-align: left;
     margin: 4px 0 16px;
   }
-  .daily-text-icon{ width: 128px; height: 128px; flex: 0 0 auto; margin: 0; }
-  .daily-text-icon svg{ width: 100%; height: 100%; display: block; }
+  .daily-text-icon{ width: 128px; height: 128px; flex: 0 0 auto; margin: 0; cursor: pointer; }
+  .daily-text-icon svg{ width: 100%; height: 100%; display: block; pointer-events: none; }
+  .daily-text-icon-desc{
+    display: none;
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--ink-light, var(--maroon));
+    text-align: center;
+    margin: -6px 0 14px;
+    padding: 6px 10px;
+    background: var(--hover-tint);
+    border-radius: 8px;
+  }
+  .daily-text-icon-desc.show{ display: block; }
   .daily-text-word-col{
     display: flex;
     flex-direction: column;
@@ -729,7 +741,7 @@
         <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
       </div>
       <div class="daily-text-row">
-        <div class="daily-text-icon" id="dailyTextIcon"></div>
+        <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
         <div class="daily-text-word-col">
           <p class="daily-text-word" id="dailyTextWord"></p>
           <div class="daily-text-nav">
@@ -738,6 +750,7 @@
           </div>
         </div>
       </div>
+      <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
       <hr class="daily-text-divider" />
       <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
       <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
@@ -1446,12 +1459,14 @@
     mountain: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M45,140 L85,72 L108,104 L122,84 L155,140 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="128" cy="60" r="10" fill="none" stroke="var(--c)" stroke-width="5"/>',
     ripple: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><ellipse cx="100" cy="112" rx="52" ry="10" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="34" ry="6.5" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="16" ry="3.5" fill="none" stroke="var(--c)" stroke-width="4"/><path d="M100,42 C111,57 118,68 118,78 A18,18 0 1 1 82,78 C82,68 89,57 100,42 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
     unity: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="84" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/><circle cx="116" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/>',
-    hands: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M92,158 L100,86 C102,68 90,56 74,60" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line x1="80" y1="120" x2="104" y2="116" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    hands: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><rect x="66" y="108" width="68" height="48" rx="16" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="72" y="64" width="14" height="54" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="90" y="48" width="14" height="70" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="108" y="42" width="14" height="76" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="126" y="58" width="14" height="60" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="52" y="88" width="16" height="50" rx="8" fill="none" stroke="var(--c)" stroke-width="5" transform="rotate(-38 60 138)"/>',
     book: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,66 C88,58 68,56 54,60 L54,132 C68,128 88,130 100,138 C112,130 132,128 146,132 L146,60 C132,56 112,58 100,66 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="100" y1="66" x2="100" y2="138" stroke="var(--c)" stroke-width="4"/><line x1="64" y1="78" x2="90" y2="74" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="64" y1="92" x2="90" y2="88" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="74" x2="136" y2="78" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="88" x2="136" y2="92" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
     scale: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="100" y1="55" x2="100" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="60" y1="70" x2="140" y2="70" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,70 L46,102 C46,112 74,112 74,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M140,70 L126,102 C126,112 154,112 154,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><line x1="78" y1="140" x2="122" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
     compass: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="46" fill="none" stroke="var(--c)" stroke-width="5"/><path d="M118,80 L108,108 L82,120 L92,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><circle cx="100" cy="100" r="4" fill="var(--c)"/>',
     star: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,46 L112,86 L154,86 L120,110 L132,150 L100,126 L68,150 L80,110 L46,86 L88,86 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
     storm: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M62,96 C48,96 40,86 40,76 C40,64 50,56 62,58 C64,46 76,38 90,40 C102,42 110,50 112,60 C126,58 138,68 138,80 C138,90 130,96 120,96 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,104 L86,132 L102,132 L90,160" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
+    blessing: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M68,50 A34,12 0 0 1 132,50" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="72" y1="54" x2="90" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="100" y1="55" x2="100" y2="134" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="128" y1="54" x2="110" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,140 A24,9 0 0 0 122,140" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    glow: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,38 L111.3,88.7 L162,100 L111.3,111.3 L100,162 L88.7,111.3 L38,100 L88.7,88.7 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><circle cx="100" cy="100" r="6" fill="var(--c)"/>',
     shield: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,46 L140,60 L140,98 C140,128 122,146 100,156 C78,146 60,128 60,98 L60,60 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M82,100 L94,114 L120,82" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
     crown: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M52,132 L52,96 L76,116 L100,80 L124,116 L148,96 L148,132 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="52" y1="132" x2="148" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="80" r="4" fill="var(--c)"/><circle cx="52" cy="96" r="4" fill="var(--c)"/><circle cx="148" cy="96" r="4" fill="var(--c)"/>',
     flame: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,48 C118,76 128,96 120,118 C115,132 106,140 100,150 C94,140 85,132 80,118 C72,96 82,76 100,48 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,90 C106,102 108,112 100,124 C92,112 94,102 100,90 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
@@ -1474,6 +1489,49 @@
     eye: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M48,100 C68,72 132,72 152,100 C132,128 68,128 48,100 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><circle cx="100" cy="100" r="15" fill="none" stroke="var(--c)" stroke-width="5"/><circle cx="100" cy="100" r="4" fill="var(--c)"/>'
   };
   const DAILY_ICON_PALETTE = ["var(--gold-dark)", "var(--maroon-dark)", "var(--green)", "var(--gold)", "var(--maroon)"];
+  const DAILY_ICON_DESCRIPTIONS = {
+    heart: "Srdce – láska, výkupné a obětavost.",
+    dove: "Holubice – odpuštění, milosrdenství a smíření.",
+    hourglass: "Přesýpací hodiny – trpělivost a správný čas.",
+    sprout: "Rostlinka – duchovní růst a zrání.",
+    sunrise: "Východ slunce – naděje a vzkříšení.",
+    anchor: "Kotva – pevná víra a věrnost.",
+    lamp: "Lampa – moudrost a poznávání pravdy.",
+    wheat: "Klas obilí – pokora a prostota.",
+    sun: "Slunce – radost a chvála.",
+    gift: "Dárek – vděčnost a štědrost.",
+    mountain: "Hora – odvaha a síla.",
+    ripple: "Kapka na hladině – klid a pokoj.",
+    unity: "Dva propojené kruhy – přátelství a vztahy.",
+    hands: "Pomáhající ruka – služba a péče o druhé.",
+    book: "Otevřená kniha – Bible a Boží slovo.",
+    scale: "Váhy – spravedlnost a rozlišování.",
+    compass: "Kompas – směřování a priority v životě.",
+    star: "Hvězda – Boží sláva a velikost.",
+    storm: "Bouřka s bleskem – zkoušky a nebezpečí.",
+    shield: "Štít – ochrana a bezpečí.",
+    crown: "Koruna – Boží království a úcta.",
+    flame: "Plamen – horlivost a zápal.",
+    embrace: "Objetí – soucit a útěcha.",
+    handshake: "Podání rukou – důvěra a spolehlivost.",
+    key: "Klíč – pochopení a porozumění.",
+    path: "Cesta se značkou – směřování a rozhodnutí.",
+    nest: "Hnízdo s vejci – péče o rodinu a děti.",
+    candle: "Svíčka – modlitba.",
+    rainbow: "Duha – Boží smlouva a milost.",
+    bridge: "Most – smíření a odpuštění.",
+    tree: "Strom – domov a duchovní ráj.",
+    bell: "Zvon – pozvání a kázání.",
+    ladder: "Žebřík – postup a kroky vpřed.",
+    gate: "Brána – křest a rozhodnutí.",
+    lighthouse: "Maják – varování před nebezpečím.",
+    basket: "Košík – štědrost a sdílení.",
+    feather: "Pírko – mírnost a jemnost.",
+    flock: "Stádo – sbor a bratrství.",
+    eye: "Oko – bdělost a sebezkoumání.",
+    blessing: "Paprsky shůry – Boží požehnání.",
+    glow: "Jiskřička – něco dobrého a duchovního."
+  };
 
   function dayOfYearIdx(d){
     const start = new Date(d.getFullYear(), 0, 1);
@@ -1481,7 +1539,7 @@
   }
   // Předpočítané přiřazení ikon ke dnům (jedna položka na DAILY_WORDS) — zajišťuje,
   // že se žádná ikona za rok neobjeví víc než 10x, a přitom co nejlíp odpovídá tématu slova.
-  const DAILY_MOTIFS = ["sprout","handshake","mountain","lighthouse","sun","heart","sunrise","hourglass","hands","lighthouse","bell","handshake","compass","star","compass","handshake","anchor","hourglass","lamp","handshake","gate","dove","wheat","sun","handshake","handshake","anchor","dove","scale","heart","lamp","ripple","hands","dove","sunrise","compass","sprout","handshake","mountain","sunrise","key","scale","embrace","scale","wheat","sun","heart","mountain","star","handshake","scale","star","handshake","dove","wheat","eye","basket","lamp","anchor","scale","sunrise","lamp","bridge","handshake","scale","sun","lighthouse","hourglass","scale","mountain","anchor","unity","flame","hourglass","hourglass","bridge","compass","heart","dove","tree","hourglass","unity","eye","eye","lighthouse","heart","bell","nest","heart","lamp","heart","rainbow","heart","lighthouse","sunrise","sprout","dove","star","heart","key","sun","sun","lighthouse","scale","mountain","star","eye","dove","anchor","lamp","hourglass","lamp","heart","sprout","lamp","dove","book","sprout","lamp","dove","scale","anchor","dove","sprout","ripple","bridge","scale","lamp","sun","gate","lighthouse","key","embrace","star","lighthouse","bell","star","book","mountain","mountain","key","lighthouse","nest","tree","unity","unity","anchor","lighthouse","storm","mountain","unity","bridge","bridge","sprout","bridge","path","sun","sun","path","key","storm","ripple","anchor","star","flock","book","eye","bridge","bridge","mountain","mountain","key","wheat","book","anchor","star","anchor","nest","sun","hourglass","basket","sunrise","book","sunrise","flame","wheat","flame","basket","hands","key","star","embrace","book","unity","unity","storm","gift","bell","book","book","bridge","basket","bridge","compass","wheat","unity","unity","shield","embrace","book","hands","unity","bell","sprout","sunrise","crown","flame","hourglass","hands","embrace","sunrise","crown","path","gift","storm","book","key","feather","eye","hands","hands","ripple","rainbow","flame","bell","shield","embrace","ladder","hourglass","basket","compass","candle","embrace","sprout","feather","flock","ladder","hands","candle","gift","tree","key","flame","embrace","path","key","rainbow","crown","hands","gift","eye","feather","hands","gate","embrace","flock","tree","shield","embrace","wheat","flock","flame","gift","ladder","candle","storm","rainbow","sunrise","flame","compass","feather","gate","wheat","nest","path","path","ladder","gift","path","flame","crown","basket","eye","flame","eye","gift","candle","gift","path","sprout","path","shield","shield","crown","tree","basket","crown","gift","candle","rainbow","feather","path","rainbow","wheat","compass","ripple","gate","nest","feather","flock","ladder","tree","ripple","gate","nest","nest","gift","flock","ladder","flock","flock","candle","shield","flock","storm","compass","compass","tree","rainbow","feather","ripple","gate","bell","ladder","crown","flock","candle","wheat","shield","storm","storm","basket","tree","candle","rainbow","storm","feather","ripple","tree","crown","gate","nest","ripple","bell","basket"];
+  const DAILY_MOTIFS = ["sprout","handshake","mountain","lighthouse","sun","heart","sunrise","hourglass","hands","lighthouse","bell","handshake","compass","star","compass","handshake","anchor","hourglass","lamp","handshake","gate","dove","wheat","sun","handshake","handshake","anchor","dove","scale","heart","lamp","ripple","hands","dove","sunrise","compass","sprout","handshake","mountain","sunrise","key","scale","embrace","scale","wheat","sun","heart","mountain","star","handshake","scale","star","handshake","dove","wheat","eye","basket","lamp","anchor","scale","sunrise","lamp","bridge","handshake","scale","sun","lighthouse","hourglass","scale","mountain","anchor","unity","flame","hourglass","hourglass","bridge","compass","heart","dove","tree","hourglass","unity","eye","eye","lighthouse","heart","bell","nest","heart","lamp","heart","rainbow","heart","lighthouse","sunrise","sprout","dove","star","heart","key","sun","sun","lighthouse","scale","mountain","star","eye","dove","anchor","lamp","hourglass","lamp","heart","sprout","lamp","dove","blessing","sprout","lamp","dove","scale","anchor","dove","sprout","ripple","bridge","scale","lamp","sun","gate","lighthouse","key","embrace","star","lighthouse","bell","star","blessing","mountain","mountain","key","lighthouse","nest","tree","unity","unity","anchor","lighthouse","storm","mountain","unity","bridge","bridge","sprout","bridge","path","sun","sun","path","key","storm","ripple","anchor","star","flock","blessing","eye","bridge","bridge","mountain","mountain","key","wheat","blessing","anchor","star","anchor","nest","sun","hourglass","basket","sunrise","blessing","sunrise","flame","wheat","flame","basket","hands","key","star","embrace","blessing","unity","unity","storm","gift","bell","blessing","blessing","bridge","basket","bridge","compass","wheat","unity","unity","shield","embrace","rainbow","hands","unity","bell","sprout","sunrise","crown","flame","hourglass","hands","embrace","sunrise","crown","path","gift","storm","blessing","key","rainbow","eye","hands","hands","ripple","rainbow","flame","bell","shield","embrace","blessing","hourglass","basket","compass","glow","embrace","sprout","glow","glow","glow","hands","glow","gift","glow","key","flame","embrace","path","key","glow","crown","hands","gift","eye","rainbow","hands","glow","embrace","glow","tree","shield","embrace","wheat","flock","flame","gift","glow","book","storm","book","sunrise","flame","compass","book","book","wheat","book","path","path","book","gift","path","flame","book","basket","eye","flame","eye","gift","book","gift","path","sprout","path","book","shield","crown","rainbow","basket","crown","gift","candle","book","feather","path","rainbow","wheat","compass","ladder","feather","ladder","feather","candle","gate","flock","ladder","candle","tree","nest","gift","feather","gate","flock","flock","ladder","candle","flock","tree","compass","compass","feather","ripple","gate","nest","ladder","bell","candle","rainbow","flock","shield","wheat","tree","feather","storm","basket","flock","candle","ripple","storm","gate","nest","tree","crown","ladder","shield","ripple","feather","basket"];
   function renderDailyWordAndIcon(d){
     const idx = dayOfYearIdx(d) % DAILY_WORDS.length;
     const word = DAILY_WORDS[idx];
@@ -1490,6 +1548,9 @@
     document.getElementById("dailyTextWord").textContent = word;
     document.getElementById("dailyTextIcon").innerHTML =
       '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="--c:' + color + '">' + DAILY_ICONS[motif] + '</svg>';
+    const descEl = document.getElementById("dailyTextIconDesc");
+    descEl.textContent = DAILY_ICON_DESCRIPTIONS[motif] || "";
+    descEl.classList.remove("show");
   }
 
   // Datum aktuálně zobrazené v náhledu nahoře (může se lišit od "dnes", když
@@ -1554,6 +1615,15 @@
     dailyPreviewDate = new Date(dailyPreviewDate);
     dailyPreviewDate.setDate(dailyPreviewDate.getDate() + 1);
     updateDailyPreview(dailyPreviewDate);
+  });
+  document.getElementById("dailyTextIcon").addEventListener("click", ()=>{
+    document.getElementById("dailyTextIconDesc").classList.toggle("show");
+  });
+  document.getElementById("dailyTextIcon").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" || e.key === " "){
+      e.preventDefault();
+      document.getElementById("dailyTextIconDesc").classList.toggle("show");
+    }
   });
 
   // Automaticky při načtení stránky, pokud dnes ještě nebyla odpověď zaznamenaná.
