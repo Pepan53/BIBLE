@@ -23,6 +23,11 @@
     --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
     --heading-font: Georgia, "Palatino Linotype", serif;
     --list-bg: #fbf7ee;
+    --item-bg: #fff;
+    --tooltip-bg: #2c2317;
+    --ok-border: #b9dcb0;
+    --bad-border: #edc3bc;
+    --hover-tint: rgba(122,46,46,0.07);
   }
   :root[data-theme="friendly"]{
     --bg: #eef8ff;
@@ -41,6 +46,35 @@
     --shadow: 0 2px 10px rgba(40, 100, 160, 0.12);
     --heading-font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
     --list-bg: #f3faff;
+    --item-bg: #ffffff;
+    --tooltip-bg: #223047;
+    --ok-border: #8fdcb4;
+    --bad-border: #ffb3b3;
+    --hover-tint: rgba(255,111,89,0.10);
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #1b1710;
+    --bg-panel: #241f16;
+    --ink: #f3e9d0;
+    --ink-soft: #c9bb99;
+    --gold: #d9a441;
+    --gold-dark: #b8860b;
+    --maroon: #d9695a;
+    --maroon-dark: #f0917c;
+    --green: #6fcf8f;
+    --green-bg: #1f3b2a;
+    --red: #ef7b6c;
+    --red-bg: #3d2220;
+    --border: #4a4030;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    --heading-font: Georgia, "Palatino Linotype", serif;
+    --list-bg: #211c14;
+    --item-bg: #2e2718;
+    --tooltip-bg: #3a2f1e;
+    --ok-border: #3f6b4c;
+    --bad-border: #6b3f3a;
+    --hover-tint: rgba(226,115,95,0.15);
   }
   *{ box-sizing: border-box; }
   html,body{
@@ -176,7 +210,7 @@
     padding: 4px 8px;
     border-radius: 6px;
   }
-  .modal-close:hover{ background: rgba(122,46,46,0.08); color: var(--maroon-dark); }
+  .modal-close:hover{ background: var(--hover-tint); color: var(--maroon-dark); }
 
   .history-table{
     width: 100%;
@@ -250,7 +284,7 @@
     left: 50%;
     transform: translateX(-50%);
     width: 260px;
-    background: var(--ink);
+    background: var(--tooltip-bg);
     color: #fff8ec;
     font-weight: 400;
     font-size: 0.82em;
@@ -268,7 +302,7 @@
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-bottom-color: var(--ink);
+    border-bottom-color: var(--tooltip-bg);
   }
   .help-icon:hover .tooltip,
   .help-icon:focus .tooltip,
@@ -376,7 +410,7 @@
     color: var(--maroon-dark);
     border: 1.5px solid var(--maroon);
   }
-  button.action.secondary:hover{ background: rgba(122,46,46,0.07); }
+  button.action.secondary:hover{ background: var(--hover-tint); }
   .btn-short{ display:none; }
 
   .score{
@@ -399,8 +433,8 @@
     display:none;
   }
   .verdict.show{ display:block; }
-  .verdict.perfect{ background: var(--green-bg); color: var(--green); border: 1px solid #b9dcb0; font-size: 1.05em; }
-  .verdict.partial{ background: var(--red-bg); color: var(--red); border: 1px solid #edc3bc; }
+  .verdict.perfect{ background: var(--green-bg); color: var(--green); border: 1px solid var(--ok-border); font-size: 1.05em; }
+  .verdict.partial{ background: var(--red-bg); color: var(--red); border: 1px solid var(--bad-border); }
   .verdict.celebrate{ animation: verdict-pop .55s cubic-bezier(.34,1.56,.64,1); }
 
   @keyframes verdict-pop{
@@ -508,7 +542,7 @@
   }
 
   .book-item{
-    background: #fff;
+    background: var(--item-bg);
     border: 1.5px solid var(--border);
     border-radius: 8px;
     padding: 11px 14px;
@@ -547,11 +581,11 @@
   .book-item.drop-target{ border-color: var(--gold); }
   .book-item.correct{
     background: var(--green-bg);
-    border-color: #b9dcb0;
+    border-color: var(--ok-border);
   }
   .book-item.incorrect{
     background: var(--red-bg);
-    border-color: #edc3bc;
+    border-color: var(--bad-border);
   }
 
   #list2 .book-item{ font-size: 1.05em; padding: 14px 16px; }
@@ -566,8 +600,8 @@
   }
   .legend span{ display:flex; align-items:center; gap:6px; }
   .swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
-  .swatch.g{ background: var(--green-bg); border:1px solid #b9dcb0; }
-  .swatch.r{ background: var(--red-bg); border:1px solid #edc3bc; }
+  .swatch.g{ background: var(--green-bg); border:1px solid var(--ok-border); }
+  .swatch.r{ background: var(--red-bg); border:1px solid var(--bad-border); }
 
   footer{
     text-align:center;
@@ -757,49 +791,79 @@
 (function(){
   "use strict";
 
-  // ---------- VZHLED (klasický / světlý přátelský) ----------
+  // ---------- VZHLED (klasický / světlý přátelský / tmavý) ----------
+  // Bez výslovné volby hráče se vzhled řídí systémovým nastavením
+  // (tmavý režim systému -> tmavé zobrazení hry). Jakmile hráč klikne
+  // na přepínač, jeho volba se uloží a systémové nastavení se dál
+  // nesleduje.
   const THEME_KEY = "bibleGameTheme";
+  const THEME_ORDER = ["classic", "friendly", "dark"];
 
-  function loadTheme(){
+  function loadExplicitTheme(){
     try{
-      return localStorage.getItem(THEME_KEY) || "classic";
+      const saved = localStorage.getItem(THEME_KEY);
+      return THEME_ORDER.indexOf(saved) !== -1 ? saved : null;
     }catch(err){
-      return "classic";
+      return null;
     }
   }
-  function saveTheme(theme){
+  function saveExplicitTheme(theme){
     try{ localStorage.setItem(THEME_KEY, theme); }catch(err){}
   }
+  function systemPrefersDark(){
+    try{
+      return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    }catch(err){
+      return false;
+    }
+  }
 
-  let currentTheme = loadTheme();
+  let explicitTheme = loadExplicitTheme();
+  let currentTheme = explicitTheme || (systemPrefersDark() ? "dark" : "classic");
   const themeToggleBtn = document.getElementById("themeToggle");
 
+  const THEME_META = {
+    classic: { icon: "☀️", label: "Přepnout na světlé přátelské zobrazení" },
+    friendly: { icon: "🌙", label: "Přepnout na tmavé zobrazení" },
+    dark: { icon: "📜", label: "Přepnout na klasické zobrazení" }
+  };
+
   function applyTheme(theme){
-    if(theme === "friendly"){
-      document.documentElement.setAttribute("data-theme", "friendly");
-      if(themeToggleBtn){
-        themeToggleBtn.textContent = "📜";
-        themeToggleBtn.title = "Přepnout na klasické zobrazení";
-        themeToggleBtn.setAttribute("aria-label", "Přepnout na klasické zobrazení");
-      }
-    }else{
+    if(theme === "classic"){
       document.documentElement.removeAttribute("data-theme");
-      if(themeToggleBtn){
-        themeToggleBtn.textContent = "☀️";
-        themeToggleBtn.title = "Přepnout na světlé přátelské zobrazení";
-        themeToggleBtn.setAttribute("aria-label", "Přepnout na světlé přátelské zobrazení");
-      }
+    }else{
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    if(themeToggleBtn){
+      const meta = THEME_META[theme] || THEME_META.classic;
+      themeToggleBtn.textContent = meta.icon;
+      themeToggleBtn.title = meta.label;
+      themeToggleBtn.setAttribute("aria-label", meta.label);
     }
   }
 
   applyTheme(currentTheme);
+
   if(themeToggleBtn){
     themeToggleBtn.addEventListener("click", ()=>{
-      currentTheme = currentTheme === "friendly" ? "classic" : "friendly";
-      saveTheme(currentTheme);
+      const idx = THEME_ORDER.indexOf(currentTheme);
+      currentTheme = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+      explicitTheme = currentTheme;
+      saveExplicitTheme(currentTheme);
       applyTheme(currentTheme);
     });
   }
+
+  // Dokud hráč vzhled sám nezvolil, sleduj živě systémové přepnutí tmavý/světlý.
+  try{
+    if(window.matchMedia){
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e)=>{
+        if(explicitTheme) return;
+        currentTheme = e.matches ? "dark" : "classic";
+        applyTheme(currentTheme);
+      });
+    }
+  }catch(err){}
 
   const BOOKS = [
     "1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova",
