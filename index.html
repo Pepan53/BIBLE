@@ -154,6 +154,31 @@
   .history-table .pct-good{ color: var(--green); font-weight: 700; }
   .history-table .pct-bad{ color: var(--red); }
 
+  .overview-modal .modal-box{ max-width: 780px; }
+  .table-scroll{ overflow-x: auto; }
+  .overview-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+  .overview-table th, .overview-table td{
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .overview-table th{
+    color: var(--gold-dark);
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-panel);
+  }
+  .overview-table tr:last-child td{ border-bottom: none; }
+  .overview-table td:first-child{ font-weight: 600; color: var(--maroon-dark); }
+
   .help-icon{
     position: relative;
     display:inline-flex;
@@ -393,10 +418,15 @@
     font-family: Georgia, serif;
     color: var(--gold-dark);
     font-size: 0.95em;
+    line-height: 1.25;
     margin: 0 0 8px;
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    min-height: 2.5em;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
   }
   .two-col .sortable-list{
     max-height: none;
@@ -525,6 +555,16 @@
     </div>
   </div>
 
+  <div class="modal-overlay overview-modal" id="overviewModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📖 Přehled všech knih</h3>
+        <button class="modal-close" id="overviewClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div id="overviewContent"></div>
+    </div>
+  </div>
+
   <nav class="tabs">
     <label for="modeSelect" class="mode-select-label">Volba hry</label>
     <select id="modeSelect" class="mode-select">
@@ -545,6 +585,7 @@
         <button class="action" id="check1">Zkontrolovat</button>
         <button class="action secondary" id="shuffle1">Zamíchat znovu</button>
         <button class="action secondary" id="reveal1">Zobrazit řešení</button>
+        <button class="action secondary" id="overview1">Přehled</button>
       </div>
       <div class="verdict" id="verdict1"></div>
       <ul class="sortable-list" id="list1"></ul>
@@ -563,6 +604,8 @@
       <div class="toolbar">
         <button class="action" id="check2">Zkontrolovat</button>
         <button class="action secondary" id="next2">Další čtyři knihy</button>
+        <button class="action secondary" id="reveal2">Zobrazit řešení</button>
+        <button class="action secondary" id="overview2">Přehled</button>
       </div>
       <div class="verdict" id="verdict2"></div>
       <ul class="sortable-list" id="list2"></ul>
@@ -582,6 +625,7 @@
         <button class="action" id="check3">Zkontrolovat</button>
         <button class="action secondary" id="shuffle3">Zamíchat znovu</button>
         <button class="action secondary" id="reveal3">Zobrazit řešení</button>
+        <button class="action secondary" id="overview3">Přehled</button>
       </div>
       <div class="verdict" id="verdict3"></div>
       <ul class="sortable-list" id="list3"></ul>
@@ -600,6 +644,8 @@
       <div class="toolbar">
         <button class="action" id="check4">Zkontrolovat</button>
         <button class="action secondary" id="shuffle4">Nových 5 knih</button>
+        <button class="action secondary" id="reveal4">Zobrazit řešení</button>
+        <button class="action secondary" id="overview4">Přehled</button>
       </div>
       <div class="verdict" id="verdict4"></div>
       <div class="two-col">
@@ -627,6 +673,8 @@
       <div class="toolbar">
         <button class="action" id="check5">Zkontrolovat</button>
         <button class="action secondary" id="shuffle5">Nových 5 knih</button>
+        <button class="action secondary" id="reveal5">Zobrazit řešení</button>
+        <button class="action secondary" id="overview5">Přehled</button>
       </div>
       <div class="verdict" id="verdict5"></div>
       <div class="two-col">
@@ -704,6 +752,25 @@
     "asi 61–64 n. l.","asi 60–61 n. l.","asi 61 n. l.","před 62 n. l.","asi 62–64 n. l.",
     "asi 64 n. l.","asi 98 n. l.","asi 98 n. l.","asi 98 n. l.","asi 65 n. l.",
     "asi 96 n. l."
+  ];
+
+  // Zahrnuté (popisované) časové období v obsahu knihy — podle přehledu na jw.org.
+  // U knih, kde jw.org žádné období neuvádí (žalmy, přísloví, dopisy apod.), je "—".
+  const COVERED_PERIOD = [
+    "od „počátku“ do 1657 př. n. l.","1657–1512 př. n. l.","1 měsíc (1512 př. n. l.)","1512–1473 př. n. l.","2 měsíce (1473 př. n. l.)",
+    "1473 – asi 1450 př. n. l.","asi 1450 – asi 1120 př. n. l.","11 let za vlády soudců","asi 1180–1078 př. n. l.","1077 – asi 1040 př. n. l.",
+    "asi 1040–911 př. n. l.","asi 920–580 př. n. l.","asi 1077–1037 př. n. l.","asi 1037–537 př. n. l.","537 – asi 467 př. n. l.",
+    "456 – po 443 př. n. l.","493 – asi 475 př. n. l.","přes 140 let mezi lety 1657 a 1473 př. n. l.","—","—",
+    "—","—","asi 778 – po 732 př. n. l.","647–580 př. n. l.","—",
+    "613 – asi 591 př. n. l.","618 – asi 536 př. n. l.","před 804 – po 745 př. n. l.","—","—",
+    "—","—","asi 777–717 př. n. l.","—","—",
+    "—","112 dní (520 př. n. l.)","520–518 př. n. l.","—","2 př. n. l. – 33 n. l.",
+    "29–33 n. l.","3 př. n. l. – 33 n. l.","kromě úvodu 29–33 n. l.","33 – asi 61 n. l.","—",
+    "—","—","—","—",
+    "—","—","—","—",
+    "—","—","—","—","—",
+    "—","—","—","—","—","—",
+    "—","—"
   ];
 
   function shuffle(arr){
@@ -799,7 +866,23 @@
     return closest.element;
   }
 
-  const FIREWORK_COLORS = ["#ff5b5b","#ffd23d","#4fd67a","#4fa8f0","#e05fb8","#ffa941","#5fe0d0","#ffffff"];
+  // Zarovnání výšky řádků mezi dvěma sloupci (režimy 4 a 5), aby si
+  // odpovídající řádek vlevo a vpravo měly stejnou výšku i po přetažení
+  // nebo když se text v některé buňce zalomí na víc řádků (mobil).
+  function syncColumnHeights(listA, listB){
+    const itemsA = [...listA.querySelectorAll(".book-item")];
+    const itemsB = [...listB.querySelectorAll(".book-item")];
+    itemsA.forEach(el=>{ el.style.height = ""; });
+    itemsB.forEach(el=>{ el.style.height = ""; });
+    const n = Math.min(itemsA.length, itemsB.length);
+    for(let i=0;i<n;i++){
+      const h = Math.max(itemsA[i].getBoundingClientRect().height, itemsB[i].getBoundingClientRect().height);
+      itemsA[i].style.height = h + "px";
+      itemsB[i].style.height = h + "px";
+    }
+  }
+
+  const FIREWORK_COLORS =["#ff5b5b","#ffd23d","#4fd67a","#4fa8f0","#e05fb8","#ffa941","#5fe0d0","#ffffff"];
 
   function createFireworkBurst(x, y){
     const flash = document.createElement("span");
@@ -952,7 +1035,14 @@
   // Nové kolo (zamíchání, další knihy, nový výběr) flag zase odemkne.
   const roundScored = { 1:false, 2:false, 3:false, 4:false, 5:false };
 
+  // Když si hráč nechá zobrazit řešení, body za to kolo se nepřičítají —
+  // i kdyby pak hned klikl na „Zkontrolovat“ na už správně srovnaném kole.
+  const roundRevealed = { 1:false, 2:false, 3:false, 4:false, 5:false };
+
   function scoreRoundOnce(modeKey, correctCount, totalCount, perfectBonus, pointsPerCorrect){
+    if(roundRevealed[modeKey]){
+      return " Body se nepřičítají — bylo použito zobrazení řešení.";
+    }
     if(roundScored[modeKey]){
       return " Body za toto kolo už byly připsány.";
     }
@@ -1003,8 +1093,43 @@
   historyModal.addEventListener("click", (e)=>{
     if(e.target === historyModal) closeHistory();
   });
+
+  // ---------- PŘEHLED VŠECH KNIH — modální okno ----------
+  const overviewModal = document.getElementById("overviewModal");
+  const overviewContent = document.getElementById("overviewContent");
+  let overviewBuilt = false;
+
+  function buildOverviewTable(){
+    const rows = BOOKS.map((name, idx)=>
+      "<tr><td>" + name + "</td><td>" + WRITING_PERIOD[idx] + "</td><td>" + WRITERS[idx] + "</td><td>" + COVERED_PERIOD[idx] + "</td></tr>"
+    ).join("");
+    overviewContent.innerHTML =
+      '<div class="table-scroll"><table class="overview-table"><thead><tr><th>Název</th><th>Dokončeno</th><th>Pisatel</th><th>Zahrnutá doba</th></tr></thead><tbody>' +
+      rows +
+      "</tbody></table></div>";
+  }
+
+  function openOverview(){
+    if(!overviewBuilt){ buildOverviewTable(); overviewBuilt = true; }
+    overviewModal.classList.add("show");
+  }
+  function closeOverview(){
+    overviewModal.classList.remove("show");
+  }
+
+  [1,2,3,4,5].forEach(k=>{
+    const btn = document.getElementById("overview" + k);
+    if(btn) btn.addEventListener("click", openOverview);
+  });
+  document.getElementById("overviewClose").addEventListener("click", closeOverview);
+  overviewModal.addEventListener("click", (e)=>{
+    if(e.target === overviewModal) closeOverview();
+  });
+
   document.addEventListener("keydown", (e)=>{
-    if(e.key === "Escape" && historyModal.classList.contains("show")) closeHistory();
+    if(e.key !== "Escape") return;
+    if(historyModal.classList.contains("show")) closeHistory();
+    if(overviewModal.classList.contains("show")) closeOverview();
   });
 
   function clearVerdictStyles(container){
@@ -1057,6 +1182,7 @@
 
   function buildMode1(){
     roundScored[1] = false;
+    roundRevealed[1] = false;
     verdict1.className = "verdict";
     verdict1.textContent = "";
     list1.innerHTML = "";
@@ -1093,7 +1219,7 @@
   }
 
   function revealMode1(){
-    roundScored[1] = false;
+    roundRevealed[1] = true;
     list1.innerHTML = "";
     BOOKS.forEach((_, idx)=>{
       const li = makeItem(idx);
@@ -1114,13 +1240,16 @@
   const list2 = document.getElementById("list2");
   const verdict2 = document.getElementById("verdict2");
 
+  let mode2Pool = [];
+
   function buildMode2(){
     roundScored[2] = false;
+    roundRevealed[2] = false;
     verdict2.className = "verdict";
     verdict2.textContent = "";
     list2.innerHTML = "";
-    const pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,4);
-    const shuffled = shuffle(pool);
+    mode2Pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,4);
+    const shuffled = shuffle(mode2Pool);
     shuffled.forEach(idx=>{
       list2.appendChild(makeItem(idx));
     });
@@ -1156,8 +1285,20 @@
     }
   }
 
+  function revealMode2(){
+    roundRevealed[2] = true;
+    list2.innerHTML = "";
+    mode2Pool.slice().sort((a,b)=>a-b).forEach(idx=>{
+      list2.appendChild(makeItem(idx));
+    });
+    clearVerdictStyles(list2);
+    verdict2.className = "verdict show perfect";
+    verdict2.textContent = "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
+  }
+
   document.getElementById("check2").addEventListener("click", checkMode2);
   document.getElementById("next2").addEventListener("click", buildMode2);
+  document.getElementById("reveal2").addEventListener("click", revealMode2);
   attachSortable(list2);
   buildMode2();
 
@@ -1171,6 +1312,7 @@
   const verdict3 = document.getElementById("verdict3");
   function buildMode3(){
     roundScored[3] = false;
+    roundRevealed[3] = false;
     verdict3.className = "verdict";
     verdict3.textContent = "";
     list3.innerHTML = "";
@@ -1207,7 +1349,7 @@
   }
 
   function revealMode3(){
-    roundScored[3] = false;
+    roundRevealed[3] = true;
     list3.innerHTML = "";
     MINOR_PROPHETS.forEach(idx=>{
       list3.appendChild(makeItem(idx));
@@ -1231,6 +1373,7 @@
 
   function buildMode4(){
     roundScored[4] = false;
+    roundRevealed[4] = false;
     verdict4.className = "verdict";
     verdict4.textContent = "";
     list4books.innerHTML = "";
@@ -1242,6 +1385,7 @@
     shuffle(mode4Selected).forEach(idx=>{
       list4writers.appendChild(makeWriterItem(idx));
     });
+    syncColumnHeights(list4books, list4writers);
   }
 
   function checkMode4(){
@@ -1289,10 +1433,28 @@
     }
   }
 
+  function revealMode4(){
+    roundRevealed[4] = true;
+    list4books.innerHTML = "";
+    list4writers.innerHTML = "";
+    mode4Selected.slice().sort((a,b)=>a-b).forEach(idx=>{
+      list4books.appendChild(makeItem(idx));
+      list4writers.appendChild(makeWriterItem(idx));
+    });
+    syncColumnHeights(list4books, list4writers);
+    clearVerdictStyles(list4books);
+    clearVerdictStyles(list4writers);
+    verdict4.className = "verdict show perfect";
+    verdict4.textContent = "Toto je správné řešení. Zkus si ho teď zapamatovat a zamíchat znovu.";
+  }
+
   document.getElementById("check4").addEventListener("click", checkMode4);
   document.getElementById("shuffle4").addEventListener("click", buildMode4);
+  document.getElementById("reveal4").addEventListener("click", revealMode4);
   attachSortable(list4books);
   attachSortable(list4writers);
+  list4books.addEventListener("dragend", ()=>syncColumnHeights(list4books, list4writers));
+  list4writers.addEventListener("dragend", ()=>syncColumnHeights(list4books, list4writers));
   buildMode4();
 
   // ---------- MODE 5 : knihy a doba dokončení psaní ----------
@@ -1303,6 +1465,7 @@
 
   function buildMode5(){
     roundScored[5] = false;
+    roundRevealed[5] = false;
     verdict5.className = "verdict";
     verdict5.textContent = "";
     list5books.innerHTML = "";
@@ -1314,6 +1477,7 @@
     shuffle(mode5Selected).forEach(idx=>{
       list5periods.appendChild(makePeriodItem(idx));
     });
+    syncColumnHeights(list5books, list5periods);
   }
 
   function checkMode5(){
@@ -1361,11 +1525,38 @@
     }
   }
 
+  function revealMode5(){
+    roundRevealed[5] = true;
+    list5books.innerHTML = "";
+    list5periods.innerHTML = "";
+    mode5Selected.slice().sort((a,b)=>a-b).forEach(idx=>{
+      list5books.appendChild(makeItem(idx));
+      list5periods.appendChild(makePeriodItem(idx));
+    });
+    syncColumnHeights(list5books, list5periods);
+    clearVerdictStyles(list5books);
+    clearVerdictStyles(list5periods);
+    verdict5.className = "verdict show perfect";
+    verdict5.textContent = "Toto je správné řešení. Zkus si ho teď zapamatovat a zamíchat znovu.";
+  }
+
   document.getElementById("check5").addEventListener("click", checkMode5);
   document.getElementById("shuffle5").addEventListener("click", buildMode5);
+  document.getElementById("reveal5").addEventListener("click", revealMode5);
   attachSortable(list5books);
   attachSortable(list5periods);
+  list5books.addEventListener("dragend", ()=>syncColumnHeights(list5books, list5periods));
+  list5periods.addEventListener("dragend", ()=>syncColumnHeights(list5books, list5periods));
   buildMode5();
+
+  let colHeightResizeTimer;
+  window.addEventListener("resize", ()=>{
+    clearTimeout(colHeightResizeTimer);
+    colHeightResizeTimer = setTimeout(()=>{
+      syncColumnHeights(list4books, list4writers);
+      syncColumnHeights(list5books, list5periods);
+    }, 150);
+  });
 
   // ---------- NÁPOVĚDNÉ IKONKY (dotyk / klik) ----------
   const allHelpIcons = document.querySelectorAll(".help-icon");
