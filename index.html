@@ -1302,6 +1302,23 @@
   let remindBeforeNextRound = false;
   let laterTimer = null;
   const LATER_REMIND_MS = 15 * 60 * 1000; // 15 minut
+  const DAILY_SNOOZE_KEY = "bibleGameDailyTextSnoozeUntil";
+
+  // Čas odloženého připomenutí se ukládá i do localStorage, aby fungoval
+  // i po obnovení (refresh) stránky, ne jen v rámci aktuální relace.
+  function loadSnoozeUntil(){
+    try{
+      const raw = localStorage.getItem(DAILY_SNOOZE_KEY);
+      const ts = raw ? parseInt(raw, 10) : NaN;
+      return isNaN(ts) ? null : ts;
+    } catch(e){ return null; }
+  }
+  function saveSnoozeUntil(ts){
+    try{ localStorage.setItem(DAILY_SNOOZE_KEY, String(ts)); } catch(e){}
+  }
+  function clearSnoozeUntil(){
+    try{ localStorage.removeItem(DAILY_SNOOZE_KEY); } catch(e){}
+  }
 
   function clearLaterTimer(){
     if(laterTimer){
@@ -1309,18 +1326,20 @@
       laterTimer = null;
     }
   }
-  // Naplánuje opětovné zobrazení za 15 minut — pokud mezitím nezačne nové
-  // kolo (to ho zobrazí dřív přes maybeShowDailyTextReminder) a text ještě
-  // není označen jako přečtený.
-  function scheduleLaterReminder(){
+  // Naplánuje opětovné zobrazení nejpozději za daný počet milisekund (výchozí
+  // 15 minut) — pokud mezitím nezačne nové kolo (to ho zobrazí dřív přes
+  // maybeShowDailyTextReminder) a text ještě není označen jako přečtený.
+  function scheduleLaterReminder(delayMs){
     clearLaterTimer();
+    const delay = (typeof delayMs === "number") ? delayMs : LATER_REMIND_MS;
     laterTimer = setTimeout(()=>{
       laterTimer = null;
+      clearSnoozeUntil();
       if(remindBeforeNextRound && !isDailyTextReadToday()){
         remindBeforeNextRound = false;
         openDailyTextModal();
       }
-    }, LATER_REMIND_MS);
+    }, delay);
   }
 
   function isDailyTextReadToday(){
@@ -1331,6 +1350,7 @@
     saveHistory();
     remindBeforeNextRound = false;
     clearLaterTimer();
+    clearSnoozeUntil();
   }
   function clearDailyTextRead(){
     gameHistory[TODAY].dailyTextRead = false;
@@ -1372,6 +1392,7 @@
     remindBeforeNextRound = true;
     clearDailyTextRead();
     closeDailyTextModal();
+    saveSnoozeUntil(Date.now() + LATER_REMIND_MS);
     scheduleLaterReminder();
   });
   document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModalUnanswered);
@@ -1381,8 +1402,18 @@
   document.getElementById("dailyTextBtn").addEventListener("click", openDailyTextModal);
 
   // Automaticky při načtení stránky, pokud dnes ještě nebyla odpověď zaznamenaná.
+  // Pokud je aktivní odložení z „Později“ (i z doby před obnovením stránky),
+  // dialog se hned nezobrazí — jen se přeplánuje na zbývající čas.
   if(!isDailyTextReadToday()){
-    openDailyTextModal();
+    const pendingSnooze = loadSnoozeUntil();
+    const now = Date.now();
+    if(pendingSnooze && pendingSnooze > now){
+      remindBeforeNextRound = true;
+      scheduleLaterReminder(pendingSnooze - now);
+    } else {
+      if(pendingSnooze) clearSnoozeUntil();
+      openDailyTextModal();
+    }
   }
 
   // Odpověď „Později“ — připomínka se vrátí buď před dalším kolem
@@ -1392,6 +1423,7 @@
     if(remindBeforeNextRound && !isDailyTextReadToday()){
       remindBeforeNextRound = false;
       clearLaterTimer();
+      clearSnoozeUntil();
       openDailyTextModal();
     }
   }
