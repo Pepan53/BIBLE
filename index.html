@@ -1326,17 +1326,16 @@
       laterTimer = null;
     }
   }
-  // Naplánuje opětovné zobrazení nejpozději za daný počet milisekund (výchozí
-  // 15 minut) — pokud mezitím nezačne nové kolo (to ho zobrazí dřív přes
-  // maybeShowDailyTextReminder) a text ještě není označen jako přečtený.
+  // Naplánuje opětovné zobrazení za daný počet milisekund (výchozí 15 minut).
+  // Toto je jediný způsob, jak se dialog po „Později“ znovu objeví — nové
+  // kolo hry ho samo o sobě nespouští.
   function scheduleLaterReminder(delayMs){
     clearLaterTimer();
     const delay = (typeof delayMs === "number") ? delayMs : LATER_REMIND_MS;
     laterTimer = setTimeout(()=>{
       laterTimer = null;
       clearSnoozeUntil();
-      if(remindBeforeNextRound && !isDailyTextReadToday()){
-        remindBeforeNextRound = false;
+      if(!isDailyTextReadToday()){
         openDailyTextModal();
       }
     }, delay);
@@ -1389,7 +1388,6 @@
     openDailyTextWindow();
   });
   document.getElementById("dailyTextLater").addEventListener("click", ()=>{
-    remindBeforeNextRound = true;
     clearDailyTextRead();
     closeDailyTextModal();
     saveSnoozeUntil(Date.now() + LATER_REMIND_MS);
@@ -1408,7 +1406,6 @@
     const pendingSnooze = loadSnoozeUntil();
     const now = Date.now();
     if(pendingSnooze && pendingSnooze > now){
-      remindBeforeNextRound = true;
       scheduleLaterReminder(pendingSnooze - now);
     } else {
       if(pendingSnooze) clearSnoozeUntil();
@@ -1416,9 +1413,9 @@
     }
   }
 
-  // Odpověď „Později“ — připomínka se vrátí buď před dalším kolem
-  // (nové knihy/zamíchání), nebo nejpozději za 15 minut — podle toho, co
-  // nastane dřív.
+  // Zavření křížkem/mimo okno/Escapem (bez odpovědi) — připomínka se vrátí
+  // před dalším kolem. Odpověď „Později“ má vlastní, nezávislé 15minutové
+  // odložení (scheduleLaterReminder) a nové kolo ho nijak neurychluje.
   function maybeShowDailyTextReminder(){
     if(remindBeforeNextRound && !isDailyTextReadToday()){
       remindBeforeNextRound = false;
