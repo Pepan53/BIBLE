@@ -239,27 +239,10 @@
   .history-table .pct-bad{ color: var(--red); }
 
   .overview-modal .modal-box{ max-width: 780px; }
-  .daily-text-modal .modal-box{ max-width: 420px; text-align: center; transition: max-width .2s ease; }
-  .daily-text-modal.expanded .modal-box{ max-width: 640px; }
+  .daily-text-modal .modal-box{ max-width: 420px; text-align: center; }
   .daily-text-modal .modal-header{ justify-content: center; position: relative; }
   .daily-text-modal .modal-close{ position: absolute; right: 0; top: 0; }
   .daily-text-toolbar{ justify-content: center; margin-bottom: 0; }
-  .daily-text-frame-wrap{
-    width: 100%;
-    height: 55vh;
-    min-height: 320px;
-    max-height: 560px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 10px;
-    background: var(--list-bg);
-  }
-  .daily-text-frame{ width:100%; height:100%; border:none; display:block; }
-  .daily-text-fallback{ font-size: 0.85em; margin: 0 0 14px; }
-  @media (max-width: 480px){
-    .daily-text-frame-wrap{ height: 50vh; min-height: 260px; }
-  }
   .table-scroll{ overflow-x: auto; }
   .overview-table{
     width: 100%;
@@ -685,22 +668,11 @@
         <h3 id="dailyTextTitle">Denní text</h3>
         <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
       </div>
-      <div id="dailyTextQuestion">
-        <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
-        <div class="toolbar daily-text-toolbar">
-          <button class="action" id="dailyTextYes">Ano</button>
-          <button class="action secondary" id="dailyTextNo">Ne</button>
-          <button class="action secondary" id="dailyTextLater">Později</button>
-        </div>
-      </div>
-      <div id="dailyTextReveal" style="display:none;">
-        <div class="daily-text-frame-wrap">
-          <iframe id="dailyTextFrame" class="daily-text-frame" title="Denní text — wol.jw.org"></iframe>
-        </div>
-        <p class="hint daily-text-fallback">Pokud se náhled výše nenačte, otevři denní text přímo na <a id="dailyTextFallbackLink" href="#" target="_blank" rel="noopener">wol.jw.org ↗</a></p>
-        <div class="toolbar daily-text-toolbar">
-          <button class="action" id="dailyTextRevealClose">Zavřít</button>
-        </div>
+      <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+      <div class="toolbar daily-text-toolbar">
+        <button class="action" id="dailyTextYes">Ano</button>
+        <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+        <button class="action secondary" id="dailyTextLater">Později</button>
       </div>
     </div>
   </div>
@@ -1326,10 +1298,6 @@
 
   const dailyTextModal = document.getElementById("dailyTextModal");
   const dailyTextTitle = document.getElementById("dailyTextTitle");
-  const dailyTextQuestion = document.getElementById("dailyTextQuestion");
-  const dailyTextReveal = document.getElementById("dailyTextReveal");
-  const dailyTextFrame = document.getElementById("dailyTextFrame");
-  const dailyTextFallbackLink = document.getElementById("dailyTextFallbackLink");
   let remindBeforeNextRound = false;
 
   function isDailyTextReadToday(){
@@ -1339,42 +1307,43 @@
     gameHistory[TODAY].dailyTextRead = true;
     saveHistory();
   }
+  function clearDailyTextRead(){
+    gameHistory[TODAY].dailyTextRead = false;
+    saveHistory();
+  }
 
   function openDailyTextModal(){
     const now = new Date();
     dailyTextTitle.textContent = formatDailyTitle(now);
-    dailyTextQuestion.style.display = "";
-    dailyTextReveal.style.display = "none";
-    dailyTextFrame.src = "about:blank";
-    dailyTextModal.classList.remove("expanded");
     dailyTextModal.classList.add("show");
   }
   function closeDailyTextModal(){
     dailyTextModal.classList.remove("show");
-    dailyTextFrame.src = "about:blank";
   }
-  function revealDailyText(){
-    const url = dailyTextUrl(new Date());
-    dailyTextFallbackLink.href = url;
-    dailyTextFrame.src = url;
-    dailyTextQuestion.style.display = "none";
-    dailyTextReveal.style.display = "";
-    dailyTextModal.classList.add("expanded");
+  // Wol.jw.org nedovoluje vlastní stránku zobrazit v iframe (blokuje to),
+  // takže se otevírá jako menší samostatné okno vedle hry.
+  function openDailyTextWindow(){
+    window.open(
+      dailyTextUrl(new Date()),
+      "bibleGameDailyText",
+      "width=480,height=760,noopener"
+    );
   }
 
   document.getElementById("dailyTextYes").addEventListener("click", ()=>{
     markDailyTextRead();
     closeDailyTextModal();
   });
-  document.getElementById("dailyTextNo").addEventListener("click", ()=>{
+  document.getElementById("dailyTextReadBtn").addEventListener("click", ()=>{
+    openDailyTextWindow();
     markDailyTextRead();
-    revealDailyText();
+    closeDailyTextModal();
   });
   document.getElementById("dailyTextLater").addEventListener("click", ()=>{
     remindBeforeNextRound = true;
+    clearDailyTextRead();
     closeDailyTextModal();
   });
-  document.getElementById("dailyTextRevealClose").addEventListener("click", closeDailyTextModal);
   document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModal);
   dailyTextModal.addEventListener("click", (e)=>{
     if(e.target === dailyTextModal) closeDailyTextModal();
