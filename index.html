@@ -1444,7 +1444,7 @@
     sun: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="30" fill="none" stroke="var(--c)" stroke-width="6"/><g stroke="var(--c)" stroke-width="5" stroke-linecap="round"><line x1="100" y1="50" x2="100" y2="38"/><line x1="100" y1="150" x2="100" y2="162"/><line x1="50" y1="100" x2="38" y2="100"/><line x1="150" y1="100" x2="162" y2="100"/><line x1="65" y1="65" x2="56" y2="56"/><line x1="135" y1="65" x2="144" y2="56"/><line x1="65" y1="135" x2="56" y2="144"/><line x1="135" y1="135" x2="144" y2="144"/></g>',
     gift: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M55,120 C55,140 75,152 100,152 C125,152 145,140 145,120" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><path d="M55,120 C75,132 125,132 145,120" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,120 C100,100 100,90 100,80" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,92 C86,92 76,82 76,70 C92,70 100,80 100,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M100,80 C114,80 124,70 124,58 C108,58 100,68 100,80 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
     mountain: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M45,140 L85,72 L108,104 L122,84 L155,140 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="128" cy="60" r="10" fill="none" stroke="var(--c)" stroke-width="5"/>',
-    ripple: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><ellipse cx="100" cy="112" rx="52" ry="10" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="34" ry="6.5" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="16" ry="3.5" fill="none" stroke="var(--c)" stroke-width="4"/><line x1="100" y1="52" x2="100" y2="90" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,60 C112,60 120,70 118,80" fill="none" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/>',
+    ripple: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><ellipse cx="100" cy="112" rx="52" ry="10" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="34" ry="6.5" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="16" ry="3.5" fill="none" stroke="var(--c)" stroke-width="4"/><path d="M100,42 C111,57 118,68 118,78 A18,18 0 1 1 82,78 C82,68 89,57 100,42 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
     unity: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="84" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/><circle cx="116" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/>',
     hands: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M92,158 L100,86 C102,68 90,56 74,60" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><line x1="80" y1="120" x2="104" y2="116" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
     book: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,66 C88,58 68,56 54,60 L54,132 C68,128 88,130 100,138 C112,130 132,128 146,132 L146,60 C132,56 112,58 100,66 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="100" y1="66" x2="100" y2="138" stroke="var(--c)" stroke-width="4"/><line x1="64" y1="78" x2="90" y2="74" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="64" y1="92" x2="90" y2="88" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="74" x2="136" y2="78" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="88" x2="136" y2="92" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
@@ -1469,24 +1469,24 @@
       }
       return false;
     }
-    if(has("lask","srdce","vykup","vykoup","obet")) return "heart";
-    if(has("odpust","milosrd","smirit","smireni","smirene","pokani","kajic")) return "dove";
+    if(has("lask","srdc","vykup","vykoup","obet","utech","soucit","uprimnost","zarmutk","nemoc")) return "heart";
+    if(has("odpust","milosrd","smirit","smireni","smirene","pokani","kajic","cistot","ztracen")) return "dove";
     if(has("trpeliv")) return "hourglass";
-    if(has("rust","zral","promena")) return "sprout";
-    if(has("nadej","vzkris")) return "sunrise";
-    if(has("vir","duver","spolehliv","vernost","verny","verni")) return "anchor";
-    if(has("moudr")) return "lamp";
-    if(has("pokor","skromn")) return "wheat";
+    if(has("rust","zral","promena","raj")) return "sprout";
+    if(has("nadej","vzkris","zapomenut","novy svet","pochybnost")) return "sunrise";
+    if(has("vir","duver","spolehliv","vernost","verny","verni","slib","smlouv")) return "anchor";
+    if(has("moudr","vzor","pravd","ucit","obrazn","dospiva","skolen","poucen","naprava","ostrazit","pripraven","bdel","hlubsi","studi")) return "lamp";
+    if(has("pokor","skromn","nasycen","prost","chleb","pokrm","mirnost")) return "wheat";
     if(has("radost","oslav","chval")) return "sun";
-    if(has("vdec","dar","stedr")) return "gift";
-    if(has("odvah","sil","pevnost","vytrval")) return "mountain";
+    if(has("vdec","dar","stedr","odmen","vysad","pohostin")) return "gift";
+    if(has("odvah","sil","pevnost","vytrva","horliv")) return "mountain";
     if(has("pokoj","klid","krest","krtu")) return "ripple";
-    if(has("pratel","jednot","blizkost","vztah","manzel","rodin","namlouv","partner")) return "unity";
-    if(has("sluz","pomoc","pece","kaz","sbor")) return "hands";
-    if(has("spravedl","soud")) return "scale";
-    if(has("cest","smysl","veden","krok")) return "compass";
-    if(has("buh","boh","boz","jehov","stvorit","slav","svat")) return "star";
-    if(has("zkous","pokuse","pad","nebezpec","varov","pomluv","lez","lzi","klam","satan","odpadl","hrich","provinil","hnev")) return "storm";
+    if(has("pratel","jednot","blizkost","vztah","manzel","rodin","namlouv","partner","neshod","srovnav","svobodn","zamilovan")) return "unity";
+    if(has("sluz","slouz","pomoc","pece","kaz","sbor","bratr","pastyr","ochot","starostliv")) return "hands";
+    if(has("spravedl","soud","svedomi","usudek","oddelen","pohnutk","overuj","slab")) return "scale";
+    if(has("cest","smysl","veden","krok","priorit","prvnim","politik","vyber","nasledov")) return "compass";
+    if(has("buh","boh","boz","jehov","stvorit","slav","svat","uct","proro","bazen","oddan")) return "star";
+    if(has("zkous","pokuse","pad","nebezpec","varov","pomluv","lez","lzi","klam","satan","odpadl","hrich","provinil","hnev","nasledk","neposlusnost")) return "storm";
     return "book";
   }
   function renderDailyWordAndIcon(d){
