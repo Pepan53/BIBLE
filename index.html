@@ -243,15 +243,42 @@
   .daily-text-modal .modal-header{ justify-content: center; position: relative; }
   .daily-text-modal .modal-close{ position: absolute; right: 0; top: 0; }
   .daily-text-toolbar{ justify-content: center; margin-bottom: 0; }
-  .daily-text-icon{ width: 84px; height: 84px; margin: 2px auto 8px; }
+  .daily-text-row{
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-align: left;
+    margin: 4px 0 16px;
+  }
+  .daily-text-icon{ width: 128px; height: 128px; flex: 0 0 auto; margin: 0; }
   .daily-text-icon svg{ width: 100%; height: 100%; display: block; }
   .daily-text-word{
     font-family: var(--heading-font);
     color: var(--maroon-dark);
     font-size: 1.2em;
     font-weight: 700;
-    margin: 0 0 14px;
-    line-height: 1.3;
+    margin: 0;
+    line-height: 1.35;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1 1 auto;
+  }
+  @media (max-width: 480px){
+    .daily-text-icon{ width: 100px; height: 100px; }
+    .daily-text-word{ font-size: 1.15em; }
+  }
+  .daily-text-divider{
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 16px;
+  }
+  .daily-text-date{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+    margin: 0 0 10px;
+    text-align: center;
   }
   .table-scroll{ overflow-x: auto; }
   .overview-table{
@@ -676,11 +703,14 @@
   <div class="modal-overlay daily-text-modal" id="dailyTextModal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="dailyTextTitle">Denní text</h3>
         <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
       </div>
-      <div class="daily-text-icon" id="dailyTextIcon"></div>
-      <p class="daily-text-word" id="dailyTextWord"></p>
+      <div class="daily-text-row">
+        <div class="daily-text-icon" id="dailyTextIcon"></div>
+        <p class="daily-text-word" id="dailyTextWord"></p>
+      </div>
+      <hr class="daily-text-divider" />
+      <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
       <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
       <div class="toolbar daily-text-toolbar">
         <button class="action" id="dailyTextYes">Ano</button>
