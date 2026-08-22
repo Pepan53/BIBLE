@@ -794,7 +794,7 @@
   <nav class="tabs">
     <label for="modeSelect" class="mode-select-label">Volba hry</label>
     <select id="modeSelect" class="mode-select">
-      <option value="2">1 · Čtyři knihy</option>
+      <option value="2">1 · Pět knih</option>
       <option value="3">2 · Malí proroci</option>
       <option value="4">3 · Knihy a pisatelé</option>
       <option value="5">4 · Kniha a doba dokončení psaní</option>
@@ -835,11 +835,11 @@
   <!-- MODE 2 -->
   <section class="panel active" id="panel2">
     <div class="card">
-      <h2>Seřaď čtyři knihy<span class="help-icon hint-icon" id="hint2Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</span></span></h2>
-      <p class="hint" id="hint2">Zobrazí se čtyři náhodné knihy. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
+      <h2>Seřaď pět knih<span class="help-icon hint-icon" id="hint2Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zobrazí se pět náhodných knih. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint2">Zobrazí se pět náhodných knih. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
       <div class="toolbar">
         <button class="action" id="check2">Zkontrolovat</button>
-        <button class="action secondary" id="next2"><span class="btn-full">Další čtyři knihy</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="next2"><span class="btn-full">Dalších pět knih</span><span class="btn-short">Další</span></button>
         <button class="action secondary" id="reveal2"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
         <button class="action secondary" id="overview2" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
       </div>
@@ -1919,7 +1919,7 @@
     verdict2.textContent = "";
     list2.innerHTML = "";
     hideSolutionColumn(2);
-    mode2Pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,4);
+    mode2Pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
     const shuffled = shuffle(mode2Pool);
     shuffled.forEach(idx=>{
       list2.appendChild(makeItem(idx));
@@ -1943,7 +1943,7 @@
         allCorrect = false;
       }
     });
-    const pointsMsg = scoreRoundOnce(2, correctCount, 4, 5);
+    const pointsMsg = scoreRoundOnce(2, correctCount, 5, 6);
     verdict2.classList.add("show");
     if(allCorrect){
       verdict2.className = "verdict show perfect";
