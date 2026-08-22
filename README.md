@@ -1,2 +1,2 @@
 # BIBLE
-Cvičení biblických informací 
+Procvičování znalostí Bible
