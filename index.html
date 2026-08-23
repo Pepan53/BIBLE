@@ -624,6 +624,70 @@
   .solution-item{ cursor: default; }
   .solution-item:active{ cursor: default; }
   .solution-item .pos{ flex-shrink: 0; }
+
+  .tile-section-title{
+    font-family: var(--heading-font);
+    color: var(--gold-dark);
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px;
+    text-align: left;
+  }
+  .tile-section-title:first-of-type{ margin-top: 4px; }
+  .book-tile-grid{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 8px;
+  }
+  .book-tile{
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--item-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    font-size: 0.85em;
+    line-height: 1.15;
+    cursor: grab;
+    user-select: none;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .book-tile:active{ cursor: grabbing; }
+  .book-tile.dragging{ opacity: 0.4; }
+  .book-tile.drop-target{ border-color: var(--gold); }
+  .book-tile.correct{
+    background: var(--green-bg);
+    border-color: var(--ok-border);
+  }
+  .book-tile.incorrect{
+    background: var(--red-bg);
+    border-color: var(--bad-border);
+  }
+  @media (max-width: 480px){
+    .book-tile-grid{ grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; }
+    .book-tile{ font-size: 0.78em; }
+    .tile-section-title{ font-size: 0.9em; }
+  }
+  /* Na tabletu a počítači je místa dost, tak jsou čtverečky větší a
+     prostornější — spíš obdélníky s čitelnějším textem než malé čtverečky. */
+  @media (min-width: 640px){
+    .book-tile-grid{ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+    .book-tile{
+      aspect-ratio: auto;
+      min-height: 64px;
+      padding: 8px 10px;
+      font-size: 1.05em;
+      border-radius: 10px;
+    }
+    .tile-section-title{ font-size: 1.1em; margin: 22px 0 10px; }
+  }
   #panel4 .book-item, #panel5 .book-item{
     width: 100%;
     min-width: 0;
@@ -696,6 +760,27 @@
   }
 
   #list2 .book-item, #list2Solution .book-item{ font-size: 1.05em; padding: 14px 16px; }
+
+  .item-arrow{
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--item-bg);
+    color: var(--gold-dark);
+    font-size: 0.9em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .item-arrow:hover{ background: var(--hover-tint); border-color: var(--gold); }
+  .item-arrow:active{ transform: scale(0.92); }
+  #list1.hide-arrows .item-arrow{ display: none; }
 
   .legend{
     display:flex;
@@ -800,6 +885,7 @@
       <option value="5">4 · Kniha a doba dokončení psaní</option>
       <option value="6">5 · Křesťanská řecká písma</option>
       <option value="1">6 · Všech 66 knih</option>
+      <option value="7">7 · Všech 66 knih (čtverečky)</option>
     </select>
   </nav>
 
@@ -977,6 +1063,29 @@
     </div>
   </section>
 
+  <!-- MODE 7 -->
+  <section class="panel" id="panel7">
+    <div class="card">
+      <h2>Seřaď všech 66 knih (čtverečky)<span class="help-icon hint-icon" id="hint7Icon" tabindex="0" style="display:none;">?<span class="tooltip">Čtverečky se zkratkami knih jsou zamíchané úplně — i mezi oběma skupinami. Přetahováním je rozděl a seřaď tak, aby v horní skupině byla Hebrejsko-aramejská písma a ve spodní Křesťanská řecká písma, obojí ve správném pořadí, pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint7">Čtverečky se zkratkami knih jsou zamíchané úplně — i mezi oběma skupinami. Přetahováním je rozděl a seřaď tak, aby v horní skupině byla Hebrejsko-aramejská písma a ve spodní Křesťanská řecká písma, obojí ve správném pořadí, pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check7">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle7"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal7"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview7" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict7"></div>
+      <h3 class="tile-section-title">Hebrejsko-aramejská písma</h3>
+      <ul class="book-tile-grid" id="grid7ot"></ul>
+      <h3 class="tile-section-title">Křesťanská řecká písma</h3>
+      <ul class="book-tile-grid" id="grid7nt"></ul>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
   <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
 
@@ -1075,6 +1184,24 @@
     "Juda","Zjevení"
   ];
 
+  // Krátké zkratky knih pro režim 7 (mřížka čtverečků) — v pořadí odpovídajícím BOOKS.
+  const BOOK_ABBR = [
+    "1Mo","2Mo","3Mo","4Mo","5Mo",
+    "Joz","Sd","Rut","1Sa","2Sa",
+    "1Kr","2Kr","1Pa","2Pa",
+    "Ezr","Ne","Es","Job","Ža","Př",
+    "Ka","Pís","Iz","Jer","Ná",
+    "Eze","Da","Oz","Joe","Am",
+    "Ob","Jon","Mi","Na","Hab",
+    "Sef","Ag","Ze","Mal",
+    "Mt","Mr","Lk","Jan","Sk",
+    "Ří","1Ko","2Ko","Ga","Ef",
+    "Flp","Kol","1Te","2Te",
+    "1Ti","2Ti","Tit","Flm","Heb",
+    "Jk","1Pe","2Pe","1Ja","2Ja","3Ja",
+    "Juda","Zj"
+  ];
+
   // Pisatelé jednotlivých knih (podle přehledu na jw.org)
   const WRITERS = [
     "Mojžíš","Mojžíš","Mojžíš","Mojžíš","Mojžíš",
@@ -1148,12 +1275,71 @@
     return li;
   }
 
+  // Varianta pro hru 6 (Všech 66 knih) — u dlouhého seznamu je jinak
+  // přetahování na velkou vzdálenost nepohodlné, tak přidáme šipky pro
+  // rychlý skok o 15 pozic. Vlevo šipka dolů, vpravo šipka nahoru.
+  function makeItemWithArrows(bookIndex){
+    const li = makeItem(bookIndex);
+    const downBtn = document.createElement("button");
+    downBtn.type = "button";
+    downBtn.className = "item-arrow item-arrow-down";
+    downBtn.draggable = false;
+    downBtn.title = "Posunout o 15 pozic níž";
+    downBtn.setAttribute("aria-label", "Posunout o 15 pozic níž");
+    downBtn.textContent = "↓";
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "item-arrow item-arrow-up";
+    upBtn.draggable = false;
+    upBtn.title = "Posunout o 15 pozic výš";
+    upBtn.setAttribute("aria-label", "Posunout o 15 pozic výš");
+    upBtn.textContent = "↑";
+
+    li.insertBefore(downBtn, li.firstChild);
+    li.appendChild(upBtn);
+
+    downBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      moveItemBy(li, 15);
+    });
+    upBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      moveItemBy(li, -15);
+    });
+
+    return li;
+  }
+
+  function moveItemBy(li, delta){
+    const container = li.parentElement;
+    if(!container) return;
+    const items = [...container.children];
+    const i = items.indexOf(li);
+    if(i === -1) return;
+    items.splice(i, 1);
+    let target = i + delta;
+    if(target < 0) target = 0;
+    if(target > items.length) target = items.length;
+    items.splice(target, 0, li);
+    items.forEach(item=>{ container.appendChild(item); });
+  }
+
   function makeSolutionItem(bookIndex, pos){
     const li = document.createElement("li");
     li.className = "book-item solution-item";
     li.draggable = false;
     li.dataset.idx = bookIndex;
     li.innerHTML = '<span class="pos">'+(pos+1)+'</span><span class="name">'+BOOKS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function makeTile(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-tile";
+    li.draggable = true;
+    li.dataset.idx = bookIndex;
+    li.title = BOOKS[bookIndex];
+    li.textContent = BOOK_ABBR[bookIndex];
     return li;
   }
 
@@ -1230,6 +1416,77 @@
       }
     }
     return closest.element;
+  }
+
+  // Přetahování čtverečků v mřížce (režim 7) — na rozdíl od jednosloupcového
+  // seznamu se tu při hledání "kam vložit" musí brát v úvahu vodorovná i
+  // svislá pozice kurzoru (položky jsou zalomené vedle sebe do řádků).
+  // Sdílený stav ("dragEl") napříč všemi předanými kontejnery umožňuje
+  // přetáhnout čtvereček i mezi dvěma bloky (Hebrejsko-aramejská /
+  // Křesťanská řecká písma), ne jen v rámci jednoho z nich.
+  function attachSortableGrid(...containers){
+    let dragEl = null;
+
+    function clearDropTargets(){
+      containers.forEach(c=> c.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target")));
+    }
+
+    containers.forEach(container=>{
+      container.addEventListener("dragstart", (e)=>{
+        const tile = e.target.closest(".book-tile");
+        if(!tile) return;
+        dragEl = tile;
+        tile.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        try{ e.dataTransfer.setData("text/plain", tile.dataset.idx); }catch(err){}
+      });
+
+      container.addEventListener("dragend", ()=>{
+        if(dragEl) dragEl.classList.remove("dragging");
+        dragEl = null;
+        clearDropTargets();
+      });
+
+      container.addEventListener("dragover", (e)=>{
+        e.preventDefault();
+        if(!dragEl) return;
+        clearDropTargets();
+        placeTileAt(container, dragEl, e.clientX, e.clientY);
+      });
+
+      container.addEventListener("drop", (e)=>{
+        e.preventDefault();
+      });
+    });
+  }
+
+  function placeTileAt(container, dragEl, x, y){
+    const tiles = [...container.querySelectorAll(".book-tile:not(.dragging)")];
+    if(tiles.length === 0){
+      container.appendChild(dragEl);
+      return;
+    }
+    let closest = null;
+    let closestDist = Infinity;
+    tiles.forEach(el=>{
+      const box = el.getBoundingClientRect();
+      const cx = box.left + box.width/2;
+      const cy = box.top + box.height/2;
+      const dist = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+      if(dist < closestDist){
+        closestDist = dist;
+        closest = {el, cx, cy, box};
+      }
+    });
+    const sameRow = Math.abs(y - closest.cy) < closest.box.height * 0.6;
+    const after = sameRow ? (x > closest.cx) : (y > closest.cy);
+    if(after){
+      if(closest.el.nextSibling) container.insertBefore(dragEl, closest.el.nextSibling);
+      else container.appendChild(dragEl);
+    }else{
+      container.insertBefore(dragEl, closest.el);
+    }
+    closest.el.classList.add("drop-target");
   }
 
   // Zarovnání výšky řádků mezi dvěma sloupci (režimy 4 a 5), aby si
@@ -1399,11 +1656,11 @@
   // Body za jedno kolo se připíšou jen jednou — opakované kliknutí na
   // „Zkontrolovat“ na stejném (nezměněném) kole už body znovu nepřičítá.
   // Nové kolo (zamíchání, další knihy, nový výběr) flag zase odemkne.
-  const roundScored = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false };
+  const roundScored = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
 
   // Když si hráč nechá zobrazit řešení, body za to kolo se nepřičítají —
   // i kdyby pak hned klikl na „Zkontrolovat“ na už správně srovnaném kole.
-  const roundRevealed = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false };
+  const roundRevealed = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
 
   function scoreRoundOnce(modeKey, correctCount, totalCount, perfectBonus, pointsPerCorrect){
     if(roundRevealed[modeKey]){
@@ -1771,7 +2028,7 @@
     overviewModal.classList.remove("show");
   }
 
-  [1,2,3,4,5,6].forEach(k=>{
+  [1,2,3,4,5,6,7].forEach(k=>{
     const btn = document.getElementById("overview" + k);
     if(btn) btn.addEventListener("click", openOverview);
   });
@@ -1791,6 +2048,24 @@
     container.querySelectorAll(".book-item").forEach(li=>{
       li.classList.remove("correct","incorrect");
     });
+  }
+
+  function isListFullyCorrect(container, targetIndices){
+    const items = [...container.querySelectorAll(".book-item")];
+    if(items.length !== targetIndices.length) return false;
+    return items.every((li, pos)=> parseInt(li.dataset.idx,10) === targetIndices[pos]);
+  }
+
+  function clearTileStyles(container){
+    container.querySelectorAll(".book-tile").forEach(li=>{
+      li.classList.remove("correct","incorrect");
+    });
+  }
+
+  function isTileGridFullyCorrect(container, targetIndices){
+    const tiles = [...container.querySelectorAll(".book-tile")];
+    if(tiles.length !== targetIndices.length) return false;
+    return tiles.every((li, pos)=> parseInt(li.dataset.idx,10) === targetIndices[pos]);
   }
 
   function hideSolutionColumn(modeKey){
@@ -1847,7 +2122,7 @@
     collapseHint(modeKey);
   }
 
-  [1,2,3,4,5,6].forEach(k=>{ if(solvedModes[k]) collapseHint(k); });
+  [1,2,3,4,5,6,7].forEach(k=>{ if(solvedModes[k]) collapseHint(k); });
 
   // ---------- MODE 1 ----------
   const list1 = document.getElementById("list1");
@@ -1860,9 +2135,10 @@
     verdict1.textContent = "";
     list1.innerHTML = "";
     hideSolutionColumn(1);
+    list1.classList.remove("hide-arrows");
     const order = shuffle(BOOKS.map((_,i)=>i));
     order.forEach(idx=>{
-      list1.appendChild(makeItem(idx));
+      list1.appendChild(makeItemWithArrows(idx));
     });
   }
 
@@ -1894,9 +2170,14 @@
 
   function revealMode1(){
     roundRevealed[1] = true;
-    showSolutionColumn(1, BOOKS.map((_, idx)=>idx));
-    verdict1.className = "verdict show partial";
-    verdict1.textContent = "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+    list1.classList.add("hide-arrows");
+    const target = BOOKS.map((_, idx)=>idx);
+    const allCorrect = isListFullyCorrect(list1, target);
+    showSolutionColumn(1, target);
+    verdict1.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict1.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
   }
 
   document.getElementById("check1").addEventListener("click", checkMode1);
@@ -1958,9 +2239,13 @@
 
   function revealMode2(){
     roundRevealed[2] = true;
-    showSolutionColumn(2, mode2Pool.slice().sort((a,b)=>a-b));
-    verdict2.className = "verdict show partial";
-    verdict2.textContent = "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+    const target = mode2Pool.slice().sort((a,b)=>a-b);
+    const allCorrect = isListFullyCorrect(list2, target);
+    showSolutionColumn(2, target);
+    verdict2.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict2.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
   }
 
   document.getElementById("check2").addEventListener("click", checkMode2);
@@ -2019,9 +2304,12 @@
 
   function revealMode3(){
     roundRevealed[3] = true;
+    const allCorrect = isListFullyCorrect(list3, MINOR_PROPHETS);
     showSolutionColumn(3, MINOR_PROPHETS);
-    verdict3.className = "verdict show partial";
-    verdict3.textContent = "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+    verdict3.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict3.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
   }
 
   document.getElementById("check3").addEventListener("click", checkMode3);
@@ -2080,9 +2368,12 @@
 
   function revealMode6(){
     roundRevealed[6] = true;
+    const allCorrect = isListFullyCorrect(list6, CHRISTIAN_GREEK_SCRIPTURES);
     showSolutionColumn(6, CHRISTIAN_GREEK_SCRIPTURES);
-    verdict6.className = "verdict show partial";
-    verdict6.textContent = "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+    verdict6.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict6.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
   }
 
   document.getElementById("check6").addEventListener("click", checkMode6);
@@ -2091,6 +2382,82 @@
   document.getElementById("reveal6").addEventListener("click", revealMode6);
   attachSortable(list6);
   buildMode6();
+
+  // ---------- MODE 7 : Všech 66 knih (mřížka čtverečků) ----------
+  const grid7ot = document.getElementById("grid7ot");
+  const grid7nt = document.getElementById("grid7nt");
+  const verdict7 = document.getElementById("verdict7");
+
+  function buildMode7(){
+    roundScored[7] = false;
+    roundRevealed[7] = false;
+    verdict7.className = "verdict";
+    verdict7.textContent = "";
+    grid7ot.innerHTML = "";
+    grid7nt.innerHTML = "";
+    // Zamíchá se úplně všech 66 knih dohromady, teprve pak se rozdělí na
+    // prvních 39 a zbylých 27 čtverečků — takže se knihy promíchají i mezi
+    // oběma skupinami a hráč je musí přetáhnout i mezi bloky, ne jen v rámci
+    // jednoho z nich.
+    const allShuffled = shuffle(BOOKS.map((_,i)=>i));
+    const otOrder = allShuffled.slice(0,39);
+    const ntOrder = allShuffled.slice(39,66);
+    otOrder.forEach(idx=>{ grid7ot.appendChild(makeTile(idx)); });
+    ntOrder.forEach(idx=>{ grid7nt.appendChild(makeTile(idx)); });
+  }
+
+  function checkMode7(){
+    clearTileStyles(grid7ot);
+    clearTileStyles(grid7nt);
+    let correct = 0;
+    [...grid7ot.querySelectorAll(".book-tile")].forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === pos){ li.classList.add("correct"); correct++; }
+      else{ li.classList.add("incorrect"); }
+    });
+    [...grid7nt.querySelectorAll(".book-tile")].forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === 39+pos){ li.classList.add("correct"); correct++; }
+      else{ li.classList.add("incorrect"); }
+    });
+    const pointsMsg = scoreRoundOnce(7, correct, 66, 30);
+    verdict7.classList.add("show");
+    if(correct === 66){
+      verdict7.className = "verdict show perfect";
+      verdict7.textContent = randomPerfectMessage() + " Všech 66 knih je ve správném pořadí!" + pointsMsg;
+      markModeSolved(7);
+      celebrateVerdict(verdict7);
+    }else{
+      verdict7.className = "verdict show partial";
+      verdict7.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode7(){
+    roundRevealed[7] = true;
+    const otTarget = BOOKS.map((_,i)=>i).slice(0,39);
+    const ntTarget = BOOKS.map((_,i)=>i).slice(39,66);
+    const allCorrect = isTileGridFullyCorrect(grid7ot, otTarget) && isTileGridFullyCorrect(grid7nt, ntTarget);
+    if(!allCorrect){
+      grid7ot.innerHTML = "";
+      otTarget.forEach(idx=>{ grid7ot.appendChild(makeTile(idx)); });
+      grid7nt.innerHTML = "";
+      ntTarget.forEach(idx=>{ grid7nt.appendChild(makeTile(idx)); });
+    }
+    clearTileStyles(grid7ot);
+    clearTileStyles(grid7nt);
+    verdict7.className = "verdict show perfect";
+    verdict7.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí je úplně správně."
+      : "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
+  }
+
+  document.getElementById("check7").addEventListener("click", checkMode7);
+  document.getElementById("shuffle7").addEventListener("click", buildMode7);
+  document.getElementById("shuffle7").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal7").addEventListener("click", revealMode7);
+  attachSortableGrid(grid7ot, grid7nt);
+  buildMode7();
 
   // ---------- MODE 4 : knihy a pisatelé ----------
   const list4books = document.getElementById("list4books");
@@ -2303,7 +2670,7 @@
 
   // ---------- VÝBĚR REŽIMU ----------
   const modeSelect = document.getElementById("modeSelect");
-  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4"), "5": document.getElementById("panel5"), "6": document.getElementById("panel6") };
+  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4"), "5": document.getElementById("panel5"), "6": document.getElementById("panel6"), "7": document.getElementById("panel7") };
   modeSelect.addEventListener("change", ()=>{
     Object.values(panels).forEach(p=>p.classList.remove("active"));
     panels[modeSelect.value].classList.add("active");
