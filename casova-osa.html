@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Časová osa — biblické postavy a události</title>
+<style>
+  :root{
+    --bg: #f6f1e6;
+    --bg-panel: #fffdf8;
+    --ink: #2c2317;
+    --ink-soft: #6b5d48;
+    --gold: #a9812f;
+    --gold-dark: #7d5e20;
+    --maroon: #7a2e2e;
+    --maroon-dark: #5c2020;
+    --green: #3c7a3c;
+    --green-bg: #e6f2e2;
+    --red: #b0433a;
+    --red-bg: #fbe6e2;
+    --border: #d9cdb2;
+    --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
+    --heading-font: Georgia, "Palatino Linotype", serif;
+    --item-bg: #fff;
+
+    --c-patriarchove: #3f6fa8;
+    --c-kralove: #7a2e2e;
+    --c-soudci: #3c7a3c;
+    --c-proroci: #7a4fa0;
+    --c-udalosti: #b8860b;
+    --c-ostatni: #6b5d48;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    min-height:100vh;
+  }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 20px 14px 60px; }
+  header{ text-align:center; margin-bottom: 16px; }
+  h1{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.5em;
+    margin: 6px 0 4px;
+  }
+  .subtitle{ color: var(--ink-soft); font-size: 0.92em; margin-bottom: 4px; }
+
+  .panel{
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.05em;
+    margin: 0 0 10px;
+  }
+
+  .cat-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cat-check{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    background: var(--item-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.92em;
+  }
+  .cat-check input{ width: 17px; height: 17px; flex-shrink:0; accent-color: var(--maroon); }
+  .cat-dot{
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink:0;
+  }
+  .cat-count{ margin-left:auto; color: var(--ink-soft); font-size: 0.85em; }
+
+  .quick-btns{ display:flex; gap:8px; margin-bottom: 12px; }
+  .quick-btns button{
+    flex:1;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 0.85em;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .quick-btns button:hover{ border-color: var(--gold); }
+
+  .row-line{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .row-line label{ font-size: 0.92em; color: var(--ink-soft); }
+  select{
+    font-size: 0.95em;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--item-bg);
+    color: var(--ink);
+  }
+
+  .btn{
+    display:inline-block;
+    background: linear-gradient(135deg,#f1e6ce,#e7d5a8);
+    color: var(--maroon-dark);
+    font-weight: 700;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-size: 0.95em;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn.secondary{
+    background: var(--bg-panel);
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .btn.wide{ width:100%; text-align:center; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 8px; }
+  .btn-row .btn{ flex:1; min-width: 120px; }
+
+  .score-bar{
+    text-align:center;
+    margin-bottom: 14px;
+    font-weight:700;
+    color: var(--maroon-dark);
+  }
+  .score-pop{ animation: score-pop .45s ease; }
+  @keyframes score-pop{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.2); color: var(--green); }
+    100%{ transform: scale(1); }
+  }
+
+  #gameArea{ display:none; }
+  #gameArea.active{ display:block; }
+  #setupHint{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+  }
+
+  .card-list{ list-style:none; margin:0; padding:0; }
+  .card{
+    background: var(--item-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .card .pos{
+    font-weight:700;
+    color: var(--ink-soft);
+    width: 22px;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .card .dot{
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink:0;
+  }
+  .card .name{ flex:1; font-size: 0.98em; }
+  .card .yearLabel{
+    font-size: 0.82em;
+    color: var(--ink-soft);
+    display:none;
+    white-space: nowrap;
+  }
+  .card.revealed .yearLabel{ display:inline; }
+  .card .handle{
+    cursor: grab;
+    color: var(--gold-dark);
+    font-size: 1.1em;
+    flex-shrink:0;
+    padding: 2px 4px;
+    touch-action: none;
+    user-select: none;
+  }
+  .card.dragging{ opacity: 0.4; }
+  .card.drop-target{ border-color: var(--gold); }
+  .card.correct{ background: var(--green-bg); border-color: #b9dcb0; }
+  .card.incorrect{ background: var(--red-bg); border-color: #edc3bc; }
+
+  .verdict{
+    text-align:center;
+    font-weight:700;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 12px 0;
+    display:none;
+  }
+  .verdict.show{ display:block; }
+  .verdict.perfect{ background: var(--green-bg); color: var(--green); }
+  .verdict.partial{ background: var(--red-bg); color: var(--red); }
+
+  .legend-note{
+    font-size: 0.8em;
+    color: var(--ink-soft);
+    text-align:center;
+    margin-top: 6px;
+  }
+
+  .gear-btn{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--gold-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2em;
+    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
+    box-shadow: var(--shadow);
+    z-index: 5000;
+    transition: transform .1s ease, border-color .2s ease;
+  }
+  .gear-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
+  .gear-btn:active{ transform: scale(0.96); }
+  @media (max-width: 480px){
+    .gear-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1.05em; }
+  }
+
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 22, 10, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background: var(--bg-panel);
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(30,22,10,0.35);
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+  }
+  .modal-header h2{
+    margin: 0;
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+  }
+  .modal-close{
+    background: transparent;
+    border: none;
+    font-size: 1.3em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 6px;
+    line-height:1;
+  }
+  .modal-close:hover{ background: var(--hover-tint, rgba(122,46,46,0.07)); color: var(--maroon-dark); }
+
+  footer{ text-align:center; color: var(--ink-soft); font-size: 0.78em; margin-top: 30px; }
+</style>
+</head>
+<body>
+<button class="gear-btn" id="gearBtn" title="Nastavení" aria-label="Nastavení">⚙</button>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Nastavení kola</h2>
+      <button class="modal-close" id="closeModalBtn">✕</button>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="quick-btns">
+      <button id="selAll">Vybrat vše</button>
+      <button id="selNone">Zrušit vše</button>
+    </div>
+    <div class="row-line">
+      <label for="roundSize">Počet karet v kole:</label>
+      <select id="roundSize">
+        <option value="6">6</option>
+        <option value="8" selected>8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
+        <option value="15">15</option>
+      </select>
+    </div>
+    <button class="btn wide" id="startBtn">Spustit / nové kolo</button>
+    <div id="setupHint"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Časová osa</h1>
+    <div class="subtitle">Seřaď biblické postavy a události chronologicky</div>
+  </header>
+
+  <div class="btn-row">
+    <button class="btn" id="checkBtn">Zkontrolovat</button>
+    <button class="btn secondary" id="revealBtn">Zobrazit řešení</button>
+    <button class="btn secondary" id="shuffleBtn">Zamíchat znovu</button>
+  </div>
+
+  <div class="score-bar" id="scoreBar">Skóre: 0 správně z 0 kol</div>
+
+  <div id="gameArea">
+    <div class="verdict" id="verdict"></div>
+    <ol class="card-list" id="cardList"></ol>
+    <div class="legend-note">Karty přetahuj za úchyt ☰ na správné místo. Řazení: od nejstaršího nahoře po nejnovější dole. U některých soudců a proroků jde jen o přibližné/pořadové zařazení (~), protože mapa u nich neuvádí přesný letopočet.</div>
+  </div>
+
+  <footer>Zdroj dat: mapa „Slíbené potomstvo“</footer>
+</div>
+
+
+<script>
+(function(){
+
+  // ---------- DATA ----------
+  // year: kladné = n.l., záporné = př.n.l. (řazeno vzestupně = chronologicky)
+  // approx: true = mapa neuvádí přesný rok, jde o přibližné/pořadové zařazení
+  const CATS = {
+    patriarchove: { label: "Patriarchové", color: "var(--c-patriarchove)" },
+    kralove:      { label: "Králové",      color: "var(--c-kralove)" },
+    soudci:       { label: "Soudci",       color: "var(--c-soudci)" },
+    proroci:      { label: "Proroci",      color: "var(--c-proroci)" },
+    udalosti:     { label: "Události",     color: "var(--c-udalosti)" },
+    ostatni:      { label: "Ostatní",      color: "var(--c-ostatni)" },
+  };
+
+  const DATA = [
+    // --- PATRIARCHOVÉ ---
+    {name:"Adam", cat:"patriarchove", year:-4026},
+    {name:"Set", cat:"patriarchove", year:-3896},
+    {name:"Enoš", cat:"patriarchove", year:-3791},
+    {name:"Kainan", cat:"patriarchove", year:-3701},
+    {name:"Mahalalel", cat:"patriarchove", year:-3631},
+    {name:"Jered", cat:"patriarchove", year:-3566},
+    {name:"Enoch", cat:"patriarchove", year:-3404},
+    {name:"Metuzalém", cat:"patriarchove", year:-3339},
+    {name:"Lámech", cat:"patriarchove", year:-3152},
+    {name:"Noe", cat:"patriarchove", year:-2970},
+    {name:"Sem", cat:"patriarchove", year:-2468},
+    {name:"Arpakšad", cat:"patriarchove", year:-2368},
+    {name:"Šelach", cat:"patriarchove", year:-2333},
+    {name:"Heber", cat:"patriarchove", year:-2303},
+    {name:"Peleg", cat:"patriarchove", year:-2269},
+    {name:"Reu", cat:"patriarchove", year:-2239},
+    {name:"Serug", cat:"patriarchove", year:-2207},
+    {name:"Náchor", cat:"patriarchove", year:-2177},
+    {name:"Terach", cat:"patriarchove", year:-2148},
+    {name:"Abraham", cat:"patriarchove", year:-2018},
+    {name:"Izák", cat:"patriarchove", year:-1918},
+    {name:"Jákob (Izrael)", cat:"patriarchove", year:-1856},
+    {name:"Josef", cat:"patriarchove", year:-1767},
+
+    // --- KRÁLOVÉ ---
+    {name:"Saul", cat:"kralove", year:-1117},
+    {name:"David", cat:"kralove", year:-1077},
+    {name:"Šalomoun", cat:"kralove", year:-1037},
+    {name:"Rechoboam (Juda)", cat:"kralove", year:-997},
+    {name:"Jeroboam (Izrael)", cat:"kralove", year:-997},
+    {name:"Abijáš (Juda)", cat:"kralove", year:-980},
+    {name:"Nadab (Izrael)", cat:"kralove", year:-976},
+    {name:"Baaša (Izrael)", cat:"kralove", year:-975},
+    {name:"Asa (Juda)", cat:"kralove", year:-978},
+    {name:"Elah (Izrael)", cat:"kralove", year:-952},
+    {name:"Zimri (Izrael)", cat:"kralove", year:-951},
+    {name:"Omri a Tibni (Izrael)", cat:"kralove", year:-951},
+    {name:"Omri (Izrael)", cat:"kralove", year:-947},
+    {name:"Achab (Izrael)", cat:"kralove", year:-940},
+    {name:"Jehošafat (Juda)", cat:"kralove", year:-937},
+    {name:"Achazjáš (Izrael)", cat:"kralove", year:-919},
+    {name:"Jehoram (Izrael)", cat:"kralove", year:-917},
+    {name:"Jehoram (Juda)", cat:"kralove", year:-913},
+    {name:"Achazjáš (Juda)", cat:"kralove", year:-906},
+    {name:"Atalja (Juda)", cat:"kralove", year:-905},
+    {name:"Jehu (Izrael)", cat:"kralove", year:-905},
+    {name:"Jehoaš (Juda)", cat:"kralove", year:-898},
+    {name:"Jehoachaz (Izrael)", cat:"kralove", year:-876},
+    {name:"Jehoaš (Izrael)", cat:"kralove", year:-859},
+    {name:"Amacjáš (Juda)", cat:"kralove", year:-858},
+    {name:"Jeroboam II. (Izrael)", cat:"kralove", year:-844},
+    {name:"Uzzijáš / Azarjáš (Juda)", cat:"kralove", year:-829},
+    {name:"Zecharjáš (Izrael)", cat:"kralove", year:-803},
+    {name:"Šallum (Izrael)", cat:"kralove", year:-791},
+    {name:"Menachem (Izrael)", cat:"kralove", year:-791},
+    {name:"Pekachjáš (Izrael)", cat:"kralove", year:-780},
+    {name:"Jotam (Juda)", cat:"kralove", year:-778},
+    {name:"Pekach (Izrael)", cat:"kralove", year:-778},
+    {name:"Achaz (Juda)", cat:"kralove", year:-762},
+    {name:"Hošea (Izrael)", cat:"kralove", year:-758},
+    {name:"Ezekjáš (Juda)", cat:"kralove", year:-746},
+    {name:"Manasse (Juda)", cat:"kralove", year:-716},
+    {name:"Amon (Juda)", cat:"kralove", year:-661},
+    {name:"Josijáš (Juda)", cat:"kralove", year:-659},
+    {name:"Jehoachaz (Juda)", cat:"kralove", year:-628},
+    {name:"Jehojakim (Juda)", cat:"kralove", year:-628},
+    {name:"Jehojakin (Juda)", cat:"kralove", year:-618},
+    {name:"Sedekjáš (Juda)", cat:"kralove", year:-617},
+
+    // --- SOUDCI (jen Jefta má v mapě přesný letopočet, ostatní jen pořadí 1-12) ---
+    {name:"Otniel", cat:"soudci", year:-1350, approx:true},
+    {name:"Ehud", cat:"soudci", year:-1325, approx:true},
+    {name:"Šamgar", cat:"soudci", year:-1300, approx:true},
+    {name:"Barák (a Debora)", cat:"soudci", year:-1275, approx:true},
+    {name:"Gedeon", cat:"soudci", year:-1250, approx:true},
+    {name:"Tola", cat:"soudci", year:-1225, approx:true},
+    {name:"Jair", cat:"soudci", year:-1200, approx:true},
+    {name:"Jefta", cat:"soudci", year:-1173},
+    {name:"Ibcan", cat:"soudci", year:-1150, approx:true},
+    {name:"Elon", cat:"soudci", year:-1135, approx:true},
+    {name:"Abdon", cat:"soudci", year:-1125, approx:true},
+    {name:"Samson", cat:"soudci", year:-1120, approx:true},
+
+    // --- PROROCI ---
+    {name:"Mojžíš", cat:"proroci", year:-1513},
+    {name:"Samuel", cat:"proroci", year:-1120, approx:true},
+    {name:"Natan", cat:"proroci", year:-1070, approx:true},
+    {name:"Gad", cat:"proroci", year:-1070, approx:true},
+    {name:"Heman", cat:"proroci", year:-1070, approx:true},
+    {name:"Jedutun", cat:"proroci", year:-1070, approx:true},
+    {name:"Cadok", cat:"proroci", year:-1070, approx:true},
+    {name:"Achijáš", cat:"proroci", year:-997, approx:true},
+    {name:"Iddo", cat:"proroci", year:-997, approx:true},
+    {name:"Šemajáš", cat:"proroci", year:-997, approx:true},
+    {name:"Jehu (syn Chananiho)", cat:"proroci", year:-940, approx:true},
+    {name:"Azarjáš (syn Odeda)", cat:"proroci", year:-940, approx:true},
+    {name:"Chanani", cat:"proroci", year:-937, approx:true},
+    {name:"Elijáš", cat:"proroci", year:-937},
+    {name:"Jachaziel", cat:"proroci", year:-937, approx:true},
+    {name:"Mikajáš", cat:"proroci", year:-937, approx:true},
+    {name:"Eliezer", cat:"proroci", year:-923, approx:true},
+    {name:"Eliša", cat:"proroci", year:-919},
+    {name:"Jonáš", cat:"proroci", year:-829},
+    {name:"Ámos", cat:"proroci", year:-820},
+    {name:"Joel", cat:"proroci", year:-804, approx:true},
+    {name:"Ozeáš", cat:"proroci", year:-803},
+    {name:"Micheáš", cat:"proroci", year:-778, approx:true},
+    {name:"Izajáš", cat:"proroci", year:-778},
+    {name:"Oded", cat:"proroci", year:-762},
+    {name:"Chulda", cat:"proroci", year:-659, approx:true},
+    {name:"Sefanjáš", cat:"proroci", year:-648},
+    {name:"Jeremjáš", cat:"proroci", year:-647},
+    {name:"Nahum", cat:"proroci", year:-632},
+    {name:"Habakuk", cat:"proroci", year:-628, approx:true},
+    {name:"Urijáš", cat:"proroci", year:-628, approx:true},
+    {name:"Daniel", cat:"proroci", year:-618},
+    {name:"Ezekiel", cat:"proroci", year:-613},
+    {name:"Obadjáš", cat:"proroci", year:-607, approx:true},
+    {name:"Zecharjáš (poexilní prorok)", cat:"proroci", year:-536},
+    {name:"Ageus", cat:"proroci", year:-536},
+    {name:"Malachiáš", cat:"proroci", year:-443},
+
+    // --- UDÁLOSTI ---
+    {name:"Stvoření Adama", cat:"udalosti", year:-4026},
+    {name:"Celosvětová potopa", cat:"udalosti", year:-2370},
+    {name:"Věž v Babylonu, založení Babylóna", cat:"udalosti", year:-2269},
+    {name:"Abraham překračuje Eufrat, začátek 430 let", cat:"udalosti", year:-1943},
+    {name:"Smlouva o obřízce", cat:"udalosti", year:-1919},
+    {name:"Izák odstaven, začátek 400 let trápení", cat:"udalosti", year:-1913},
+    {name:"Izrael vchází do Egypta", cat:"udalosti", year:-1728},
+    {name:"Job zkoušen", cat:"udalosti", year:-1613, approx:true},
+    {name:"Egypt dosahuje významného postavení", cat:"udalosti", year:-1600, approx:true},
+    {name:"Exodus z Egypta, Mojžíšova smlouva Zákona", cat:"udalosti", year:-1513},
+    {name:"Smlouva s kmenem Levi", cat:"udalosti", year:-1512},
+    {name:"Vstup do Zaslíbené země, zničení Jericha", cat:"udalosti", year:-1473},
+    {name:"Smlouva s králem Davidem", cat:"udalosti", year:-1077},
+    {name:"Šalomoun začíná stavět chrám", cat:"udalosti", year:-1034},
+    {name:"Rozdělení království na Judu a Izrael", cat:"udalosti", year:-997},
+    {name:"Asýrie dobývá Izrael", cat:"udalosti", year:-740},
+    {name:"Babylon dosahuje významného postavení", cat:"udalosti", year:-632},
+    {name:"Jeruzalém zničen Babylónem", cat:"udalosti", year:-607},
+    {name:"Babylon dobyt Médo-Persií", cat:"udalosti", year:-539},
+    {name:"Návrat Židů, obnova chrámu", cat:"udalosti", year:-537},
+    {name:"Obnova hradeb, začíná „Sedm týdnů“", cat:"udalosti", year:-455},
+    {name:"Jeruzalém obnoven", cat:"udalosti", year:-406},
+    {name:"Řecko dosahuje významného postavení", cat:"udalosti", year:-331},
+    {name:"Řím dosahuje významného postavení", cat:"udalosti", year:-30},
+    {name:"Narození Ježíše", cat:"udalosti", year:-2},
+    {name:"Objevuje se Mesiáš (69. týden)", cat:"udalosti", year:29},
+    {name:"Smrt Mesiáše (½ týdne)", cat:"udalosti", year:33},
+    {name:"Konec 70. týdne", cat:"udalosti", year:36},
+
+    // --- OSTATNÍ ---
+    {name:"Sára", cat:"ostatni", year:-2008},
+    {name:"Išmael", cat:"ostatni", year:-1932},
+    {name:"Job", cat:"ostatni", year:-1613, approx:true},
+    {name:"Jozue", cat:"ostatni", year:-1560, approx:true},
+    {name:"Eleazar (velekněz)", cat:"ostatni", year:-1470, approx:true},
+    {name:"Pinechas (velekněz)", cat:"ostatni", year:-1400, approx:true},
+    {name:"Eli (velekněz)", cat:"ostatni", year:-1120, approx:true},
+    {name:"Achitub (velekněz)", cat:"ostatni", year:-1090, approx:true},
+    {name:"Achimelek (velekněz)", cat:"ostatni", year:-1080, approx:true},
+    {name:"Abjatar (velekněz)", cat:"ostatni", year:-1070, approx:true},
+    {name:"Achimaac (velekněz)", cat:"ostatni", year:-1050, approx:true},
+    {name:"Zerubábel", cat:"ostatni", year:-537},
+    {name:"Ester a Mordechaj", cat:"ostatni", year:-483},
+    {name:"Ezra", cat:"ostatni", year:-468},
+    {name:"Nehemjáš", cat:"ostatni", year:-455},
+    {name:"Herodes Veliký", cat:"ostatni", year:-2, approx:true},
+    {name:"Ježíš Kristus", cat:"ostatni", year:-2},
+    {name:"Tiberius", cat:"ostatni", year:14},
+  ];
+
+  // ---------- STATE ----------
+  let currentRound = [];   // aktuální pořadí karet (jak je uživatel seřadil)
+  let correctOrder = [];   // správné chronologické pořadí (stejné položky)
+  let roundsPlayed = 0;
+  let roundsCorrect = 0;
+  let roundChecked = false;
+
+  // ---------- SETUP UI ----------
+  const catGrid = document.getElementById("catGrid");
+  Object.keys(CATS).forEach(key=>{
+    const count = DATA.filter(d=>d.cat===key).length;
+    const label = document.createElement("label");
+    label.className = "cat-check";
+    label.innerHTML = `
+      <input type="checkbox" value="${key}" checked>
+      <span class="cat-dot" style="background:${CATS[key].color}"></span>
+      <span>${CATS[key].label}</span>
+      <span class="cat-count">${count}</span>
+    `;
+    catGrid.appendChild(label);
+  });
+
+  document.getElementById("selAll").addEventListener("click", ()=>{
+    catGrid.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=true);
+  });
+  document.getElementById("selNone").addEventListener("click", ()=>{
+    catGrid.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false);
+  });
+
+  // ---------- MODAL ----------
+  const settingsModal = document.getElementById("settingsModal");
+  const gearBtn = document.getElementById("gearBtn");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+
+  function openModal(){ settingsModal.classList.add("show"); }
+  function closeModal(){ settingsModal.classList.remove("show"); }
+
+  gearBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+  settingsModal.addEventListener("click", (e)=>{
+    if(e.target === settingsModal) closeModal();
+  });
+
+  function getSelectedCats(){
+    return [...catGrid.querySelectorAll("input[type=checkbox]:checked")].map(cb=>cb.value);
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  // ---------- GAME ----------
+  const gameArea = document.getElementById("gameArea");
+  const cardList = document.getElementById("cardList");
+  const verdict = document.getElementById("verdict");
+  const setupHint = document.getElementById("setupHint");
+  const scoreBar = document.getElementById("scoreBar");
+
+  function updateScoreBar(pop){
+    scoreBar.textContent = `Skóre: ${roundsCorrect} správně z ${roundsPlayed} kol`;
+    if(pop){
+      scoreBar.classList.remove("score-pop");
+      void scoreBar.offsetWidth;
+      scoreBar.classList.add("score-pop");
+    }
+  }
+
+  function startRound(){
+    const cats = getSelectedCats();
+    setupHint.textContent = "";
+    if(cats.length === 0){
+      setupHint.textContent = "Vyber prosím aspoň jednu skupinu.";
+      gameArea.classList.remove("active");
+      return;
+    }
+    const pool = DATA.filter(d=>cats.includes(d.cat));
+    let size = parseInt(document.getElementById("roundSize").value, 10);
+    if(pool.length < size){
+      size = pool.length;
+      setupHint.textContent = `Ve vybraných skupinách je jen ${pool.length} položek, kolo použije všechny.`;
+    }
+    const picked = shuffle(pool).slice(0, size);
+    correctOrder = picked.slice().sort((a,b)=>a.year-b.year);
+    currentRound = shuffle(picked);
+    roundChecked = false;
+    renderCards(currentRound);
+    verdict.className = "verdict";
+    verdict.textContent = "";
+    gameArea.classList.add("active");
+  }
+
+  function renderCards(items){
+    cardList.innerHTML = "";
+    items.forEach((item, idx)=>{
+      const li = document.createElement("li");
+      li.className = "card";
+      li.draggable = true;
+      li.dataset.name = item.name;
+      li.innerHTML = `
+        <span class="handle">☰</span>
+        <span class="pos">${idx+1}.</span>
+        <span class="dot" style="background:${CATS[item.cat].color}"></span>
+        <span class="name">${item.name}<br><span class="yearLabel">${yearLabel(item)}</span></span>
+      `;
+      cardList.appendChild(li);
+    });
+  }
+
+  function yearLabel(item){
+    const y = item.year;
+    const abs = Math.abs(y);
+    const era = y < 0 ? "př.n.l." : "n.l.";
+    return (item.approx ? "~ " : "") + abs + " " + era;
+  }
+
+  function renumberCards(){
+    cardList.querySelectorAll(".card").forEach((li,idx)=>{
+      li.querySelector(".pos").textContent = (idx+1)+".";
+    });
+  }
+
+  // ---------- DRAG & DROP (stejný princip jako ve hře s pořadím knih) ----------
+  function attachSortable(container){
+    let dragEl = null;
+
+    container.addEventListener("dragstart", (e)=>{
+      const li = e.target.closest(".card");
+      if(!li) return;
+      dragEl = li;
+      li.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try{ e.dataTransfer.setData("text/plain", li.dataset.name); }catch(err){}
+    });
+
+    container.addEventListener("dragend", ()=>{
+      if(dragEl) dragEl.classList.remove("dragging");
+      dragEl = null;
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+      renumberCards();
+      if(roundChecked){
+        verdict.className = "verdict";
+        verdict.textContent = "";
+        roundChecked = false;
+      }
+    });
+
+    container.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      if(!dragEl) return;
+      const afterEl = getDragAfterElement(container, e.clientY);
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+      if(afterEl == null){
+        container.appendChild(dragEl);
+      }else{
+        container.insertBefore(dragEl, afterEl);
+        afterEl.classList.add("drop-target");
+      }
+      const rect = container.getBoundingClientRect();
+      const margin = 40;
+      if(e.clientY - rect.top < margin){
+        window.scrollBy(0, -12);
+      }else if(rect.bottom - e.clientY < margin){
+        window.scrollBy(0, 12);
+      }
+    });
+
+    container.addEventListener("drop", (e)=>{
+      e.preventDefault();
+    });
+  }
+
+  function getDragAfterElement(container, y){
+    const els = [...container.querySelectorAll(".card:not(.dragging)")];
+    let closest = {offset: Number.NEGATIVE_INFINITY, element: null};
+    for(const el of els){
+      const box = el.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset){
+        closest = {offset, element: el};
+      }
+    }
+    return closest.element;
+  }
+
+  attachSortable(cardList);
+
+  function getCurrentOrderNames(){
+    return [...cardList.querySelectorAll(".card")].map(li=>li.dataset.name);
+  }
+
+  function checkRound(){
+    let allCorrect = true;
+    const cards = [...cardList.children];
+    const orderNames = getCurrentOrderNames();
+    cards.forEach((li, idx)=>{
+      li.classList.remove("correct","incorrect");
+      const isRight = orderNames[idx] === correctOrder[idx].name;
+      li.classList.add(isRight ? "correct" : "incorrect");
+      if(!isRight) allCorrect = false;
+    });
+    roundsPlayed++;
+    if(allCorrect) roundsCorrect++;
+    roundChecked = true;
+    updateScoreBar(true);
+    verdict.classList.add("show");
+    if(allCorrect){
+      verdict.className = "verdict show perfect";
+      verdict.textContent = "Přesně tak! Pořadí je úplně správně.";
+    }else{
+      verdict.className = "verdict show partial";
+      verdict.textContent = "Zatím to není přesné. Zkus karty přetáhnout na jiné místo (úchyt ☰), nebo si nech zobrazit řešení.";
+    }
+  }
+
+  function revealRound(){
+    renderCards(correctOrder);
+    cardList.querySelectorAll(".card").forEach(li=>li.classList.add("revealed"));
+    verdict.className = "verdict show perfect";
+    verdict.textContent = "Toto je správné chronologické pořadí. Zkus si ho zapamatovat a zamíchat znovu.";
+  }
+
+  document.getElementById("startBtn").addEventListener("click", ()=>{
+    startRound();
+    closeModal();
+  });
+  document.getElementById("checkBtn").addEventListener("click", checkRound);
+  document.getElementById("revealBtn").addEventListener("click", revealRound);
+  document.getElementById("shuffleBtn").addEventListener("click", ()=>{
+    currentRound = shuffle(correctOrder);
+    roundChecked = false;
+    renderCards(currentRound);
+    verdict.className = "verdict";
+    verdict.textContent = "";
+  });
+
+  updateScoreBar(false);
+  startRound();
+
+})();
+</script>
+</body>
+</html>

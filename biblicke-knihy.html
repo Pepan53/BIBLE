@@ -1,0 +1,2682 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblické knihy — procvičování pořadí</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #f6f1e6;
+    --bg-panel: #fffdf8;
+    --ink: #2c2317;
+    --ink-soft: #6b5d48;
+    --gold: #a9812f;
+    --gold-dark: #7d5e20;
+    --maroon: #7a2e2e;
+    --maroon-dark: #5c2020;
+    --green: #3c7a3c;
+    --green-bg: #e6f2e2;
+    --red: #b0433a;
+    --red-bg: #fbe6e2;
+    --border: #d9cdb2;
+    --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
+    --heading-font: Georgia, "Palatino Linotype", serif;
+    --list-bg: #fbf7ee;
+    --item-bg: #fff;
+    --tooltip-bg: #2c2317;
+    --ok-border: #b9dcb0;
+    --bad-border: #edc3bc;
+    --hover-tint: rgba(122,46,46,0.07);
+  }
+  :root[data-theme="friendly"]{
+    --bg: #eef8ff;
+    --bg-panel: #ffffff;
+    --ink: #223047;
+    --ink-soft: #55637e;
+    --gold: #ffb100;
+    --gold-dark: #e69500;
+    --maroon: #ff6f59;
+    --maroon-dark: #e2543f;
+    --green: #2fb380;
+    --green-bg: #e3faf0;
+    --red: #ef5b5b;
+    --red-bg: #ffe9e9;
+    --border: #cfe8fb;
+    --shadow: 0 2px 10px rgba(40, 100, 160, 0.12);
+    --heading-font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
+    --list-bg: #f3faff;
+    --item-bg: #ffffff;
+    --tooltip-bg: #223047;
+    --ok-border: #8fdcb4;
+    --bad-border: #ffb3b3;
+    --hover-tint: rgba(255,111,89,0.10);
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #1b1710;
+    --bg-panel: #241f16;
+    --ink: #f3e9d0;
+    --ink-soft: #c9bb99;
+    --gold: #d9a441;
+    --gold-dark: #b8860b;
+    --maroon: #d9695a;
+    --maroon-dark: #f0917c;
+    --green: #6fcf8f;
+    --green-bg: #1f3b2a;
+    --red: #ef7b6c;
+    --red-bg: #3d2220;
+    --border: #4a4030;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    --heading-font: Georgia, "Palatino Linotype", serif;
+    --list-bg: #211c14;
+    --item-bg: #2e2718;
+    --tooltip-bg: #3a2f1e;
+    --ok-border: #3f6b4c;
+    --bad-border: #6b3f3a;
+    --hover-tint: rgba(226,115,95,0.15);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    min-height:100vh;
+    transition: background .25s ease, color .25s ease;
+  }
+  .wrap{
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  header{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+  .global-score-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 6px 0 4px;
+  }
+  .global-score-bar .value-pill{
+    background: linear-gradient(135deg,#f1e6ce,#e7d5a8);
+    color: var(--maroon-dark);
+    font-weight: 700;
+    font-size: 1.05em;
+    padding: 8px 20px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .global-score-bar .value-pill .num{
+    font-size: 1.15em;
+    display:inline-block;
+  }
+  .score-pop{ animation: score-pop .45s ease; }
+  @keyframes score-pop{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.22); color: var(--green); }
+    100%{ transform: scale(1); }
+  }
+  .history-btn{
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--gold-dark);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 0.95em;
+    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
+  }
+
+  .theme-toggle-btn, .daily-text-btn{
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--gold-dark);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.1em;
+    cursor: pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 0;
+    box-shadow: var(--shadow);
+    z-index: 5000;
+    transition: background .25s ease, border-color .2s ease, transform .1s ease;
+  }
+  .daily-text-btn{ right: 64px; }
+  .theme-toggle-btn:hover, .daily-text-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
+  .theme-toggle-btn:active, .daily-text-btn:active{ transform: scale(0.96); }
+  @media (max-width: 480px){
+    .theme-toggle-btn, .daily-text-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
+    .daily-text-btn{ right: 54px; }
+  }
+  .history-btn:hover{ border-color: var(--gold); background: #f1e6ce; }
+
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(30, 22, 10, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background: var(--bg-panel);
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(30,22,10,0.35);
+  }
+  .modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+  .modal-header h3{
+    margin: 0;
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+  }
+  .modal-close{
+    background: transparent;
+    border: none;
+    font-size: 1.1em;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .modal-close:hover{ background: var(--hover-tint); color: var(--maroon-dark); }
+
+  .history-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92em;
+  }
+  .history-table th, .history-table td{
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-table th{
+    color: var(--gold-dark);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .history-table tr:last-child td{ border-bottom: none; }
+  .history-table td.today-row, .history-table tr.today-row td{
+    font-weight: 700;
+    color: var(--maroon-dark);
+  }
+  .history-table .pct-good{ color: var(--green); font-weight: 700; }
+  .history-table .pct-bad{ color: var(--red); }
+
+  .overview-modal .modal-box{ max-width: 780px; }
+  .daily-text-modal .modal-box{ max-width: 420px; text-align: center; }
+  .daily-text-modal .modal-header{ justify-content: center; position: relative; }
+  .daily-text-modal .modal-close{ position: absolute; right: 0; top: 0; }
+  .daily-text-toolbar{ justify-content: center; margin-bottom: 0; }
+  .daily-text-row{
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-align: left;
+    margin: 4px 0 16px;
+  }
+  .daily-text-icon{ width: 128px; height: 128px; flex: 0 0 auto; margin: 0; cursor: pointer; }
+  .daily-text-icon svg{ width: 100%; height: 100%; display: block; pointer-events: none; }
+  .daily-text-icon-desc{
+    display: none;
+    font-size: 0.85em;
+    font-style: italic;
+    color: var(--ink-light, var(--maroon));
+    text-align: center;
+    margin: -6px 0 14px;
+    padding: 6px 10px;
+    background: var(--hover-tint);
+    border-radius: 8px;
+  }
+  .daily-text-icon-desc.show{ display: block; }
+  .daily-text-word-col{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 auto;
+  }
+  .daily-text-word{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.2em;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.35;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .daily-text-nav{ display: flex; justify-content: center; gap: 20px; }
+  .daily-text-nav-btn{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--maroon);
+    background: transparent;
+    color: var(--maroon-dark);
+    font-size: 1.05em;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease, transform .05s ease;
+  }
+  .daily-text-nav-btn:hover{ background: var(--hover-tint); }
+  .daily-text-nav-btn:active{ transform: translateY(1px); }
+  @media (max-width: 480px){
+    .daily-text-icon{ width: 100px; height: 100px; }
+    .daily-text-word{ font-size: 1.15em; }
+  }
+  .daily-text-divider{
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 16px;
+  }
+  .daily-text-date{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+    margin: 0 0 10px;
+    text-align: center;
+  }
+  .table-scroll{ overflow-x: auto; }
+  .overview-table{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+  .overview-table th, .overview-table td{
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .overview-table th{
+    color: var(--gold-dark);
+    font-size: 0.82em;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-panel);
+  }
+  .overview-table tr:last-child td{ border-bottom: none; }
+  .overview-table td:first-child{ font-weight: 600; color: var(--maroon-dark); }
+  .overview-table tr.testament-gap td{ padding: 8px 0; border-bottom: none; }
+
+  .help-icon{
+    position: relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-panel);
+    border: 1.5px solid var(--gold);
+    color: var(--gold-dark);
+    font-size: 0.78em;
+    font-weight: 700;
+    cursor: help;
+  }
+  .help-icon .tooltip{
+    display:none;
+    position: absolute;
+    top: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    background: var(--tooltip-bg);
+    color: #fff8ec;
+    font-weight: 400;
+    font-size: 0.82em;
+    line-height: 1.4;
+    padding: 10px 12px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 20;
+    text-align: left;
+  }
+  .help-icon .tooltip::after{
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--tooltip-bg);
+  }
+  .help-icon:hover .tooltip,
+  .help-icon:focus .tooltip,
+  .help-icon.tooltip-open .tooltip{
+    display:block;
+  }
+
+  h1{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.9em;
+    margin: 0 0 6px;
+    letter-spacing: 0.3px;
+  }
+  nav.tabs{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap: 10px;
+    margin: 22px 0 20px;
+    flex-wrap: wrap;
+  }
+  .mode-select-label{
+    color: var(--ink-soft);
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+  .mode-select{
+    background: var(--bg-panel);
+    border: 1.5px solid var(--border);
+    color: var(--maroon-dark);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    min-width: 240px;
+  }
+  .mode-select:hover{ border-color: var(--gold); }
+  .mode-select:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .card{
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .card h2{
+    font-family: var(--heading-font);
+    color: var(--maroon-dark);
+    font-size: 1.15em;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .help-icon{
+    flex-shrink: 0;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+  }
+  .card h2 .help-icon .tooltip{
+    left: 0;
+    transform: none;
+    font-weight: 400;
+  }
+  .card h2 .help-icon .tooltip::after{
+    left: 10px;
+    transform: none;
+  }
+  .hint{
+    color: var(--ink-soft);
+    font-size: 0.9em;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+
+  .toolbar{
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    margin-bottom: 14px;
+  }
+  button.action{
+    background: var(--gold);
+    color: #fff8ec;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 7px;
+    font-size: 0.92em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, transform .05s ease;
+  }
+  button.action:hover{ background: var(--gold-dark); }
+  button.action:active{ transform: translateY(1px); }
+  button.action.secondary{
+    background: transparent;
+    color: var(--maroon-dark);
+    border: 1.5px solid var(--maroon);
+  }
+  button.action.secondary:hover{ background: var(--hover-tint); }
+  .btn-short{ display:none; }
+
+  .score{
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--maroon-dark);
+    font-size: 0.95em;
+    background: #f1e6ce;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .verdict{
+    margin: 4px 0 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+    display:none;
+  }
+  .verdict.show{ display:block; }
+  .verdict.perfect{ background: var(--green-bg); color: var(--green); border: 1px solid var(--ok-border); font-size: 1.05em; }
+  .verdict.partial{ background: var(--red-bg); color: var(--red); border: 1px solid var(--bad-border); }
+  .verdict.celebrate{ animation: verdict-pop .55s cubic-bezier(.34,1.56,.64,1); }
+
+  @keyframes verdict-pop{
+    0%{ transform: scale(0.85); }
+    50%{ transform: scale(1.06); }
+    100%{ transform: scale(1); }
+  }
+
+  .firework-particle{
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    box-shadow: 0 0 6px 1px currentColor;
+    animation-name: firework-burst;
+    animation-timing-function: cubic-bezier(.15,.65,.35,1);
+    animation-fill-mode: forwards;
+  }
+  @keyframes firework-burst{
+    0%{ transform: translate3d(0,0,0) scale(1); opacity: 1; }
+    65%{ opacity: 1; }
+    100%{ transform: translate3d(var(--dx), var(--dy), 0) scale(0.25); opacity: 0; }
+  }
+
+  .firework-flash{
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+    animation: firework-flash .45s ease-out forwards;
+  }
+  @keyframes firework-flash{
+    0%{ transform: scale(0.3); opacity: 1; }
+    100%{ transform: scale(7); opacity: 0; }
+  }
+
+  .sortable-list{
+    list-style: none;
+    margin: 0; padding: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+    background: var(--list-bg);
+    transition: background .25s ease, border-color .25s ease;
+  }
+  #list2.sortable-list, #list3.sortable-list, #list6.sortable-list, #list1.sortable-list{ max-height: none; }
+
+  .two-col{
+    display:flex;
+    gap: 14px;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+  .two-col .col{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .two-col .col h3{
+    font-family: var(--heading-font);
+    color: var(--gold-dark);
+    font-size: 0.95em;
+    line-height: 1.25;
+    margin: 0 0 8px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-height: 2.5em;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .two-col .sortable-list{
+    max-height: none;
+  }
+
+  .solution-wrap{
+    display: flex;
+    gap: 14px;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+  .solution-wrap .col{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .solution-wrap .col h3{
+    font-family: var(--heading-font);
+    color: var(--gold-dark);
+    font-size: 0.95em;
+    line-height: 1.25;
+    margin: 0 0 8px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: none;
+  }
+  .solution-wrap.revealed .col h3{ display: block; }
+  .solution-wrap .solution-col{ display: none; }
+  .solution-wrap.revealed .solution-col{ display: block; }
+  .solution-wrap .sortable-list{ max-height: none; }
+  .solution-item{ cursor: default; }
+  .solution-item:active{ cursor: default; }
+  .solution-item .pos{ flex-shrink: 0; }
+
+  .tile-section-title{
+    font-family: var(--heading-font);
+    color: var(--gold-dark);
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 8px;
+    text-align: left;
+  }
+  .tile-section-title:first-of-type{ margin-top: 4px; }
+  .book-tile-grid{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+    gap: 8px;
+  }
+  .book-tile{
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--item-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    font-size: 0.85em;
+    line-height: 1.15;
+    cursor: grab;
+    user-select: none;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .book-tile:active{ cursor: grabbing; }
+  .book-tile.dragging{ opacity: 0.4; }
+  .book-tile.drop-target{ border-color: var(--gold); }
+  .book-tile.correct{
+    background: var(--green-bg);
+    border-color: var(--ok-border);
+  }
+  .book-tile.incorrect{
+    background: var(--red-bg);
+    border-color: var(--bad-border);
+  }
+  @media (max-width: 480px){
+    .book-tile-grid{ grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap: 6px; }
+    .book-tile{ font-size: 0.78em; }
+    .tile-section-title{ font-size: 0.9em; }
+  }
+  /* Na tabletu a počítači je místa dost, tak jsou čtverečky větší a
+     prostornější — spíš obdélníky s čitelnějším textem než malé čtverečky. */
+  @media (min-width: 640px){
+    .book-tile-grid{ grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+    .book-tile{
+      aspect-ratio: auto;
+      min-height: 64px;
+      padding: 8px 10px;
+      font-size: 1.05em;
+      border-radius: 10px;
+    }
+    .tile-section-title{ font-size: 1.1em; margin: 22px 0 10px; }
+  }
+  #panel4 .book-item, #panel5 .book-item{
+    width: 100%;
+    min-width: 0;
+    min-height: 62px;
+    box-sizing: border-box;
+    margin: 6px 0;
+    padding: 8px 10px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  #panel4 .book-item .name, #panel5 .book-item .name{ line-height: 1.25; }
+
+  @media (max-width: 480px){
+    .two-col{ gap: 8px; }
+    #panel4 .book-item, #panel5 .book-item{
+      min-height: 56px;
+      padding: 7px 8px;
+      font-size: 0.82em;
+      gap: 6px;
+    }
+    #panel4 .book-item .handle, #panel5 .book-item .handle{ font-size: 0.9em; }
+    .two-col .col h3{ font-size: 0.8em; }
+  }
+
+  .book-item{
+    background: var(--item-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    margin: 6px auto;
+    width: min(420px, 100%);
+    min-width: 200px;
+    cursor: grab;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+    font-size: 0.98em;
+    user-select: none;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .book-item:active{ cursor: grabbing; }
+  .book-item .handle{
+    color: var(--gold-dark);
+    font-size: 1.05em;
+    opacity: 0.6;
+  }
+  .book-item .pos{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eee0c0;
+    color: var(--gold-dark);
+    font-size: 0.78em;
+    font-weight: 700;
+  }
+  .book-item .name{ flex: 1; }
+  .book-item.dragging{ opacity: 0.4; }
+  .book-item.drop-target{ border-color: var(--gold); }
+  .book-item.correct{
+    background: var(--green-bg);
+    border-color: var(--ok-border);
+  }
+  .book-item.incorrect{
+    background: var(--red-bg);
+    border-color: var(--bad-border);
+  }
+
+  #list2 .book-item, #list2Solution .book-item{ font-size: 1.05em; padding: 14px 16px; }
+
+  .item-arrow{
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--item-bg);
+    color: var(--gold-dark);
+    font-size: 0.9em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .item-arrow:hover{ background: var(--hover-tint); border-color: var(--gold); }
+  .item-arrow:active{ transform: scale(0.92); }
+  #list1.hide-arrows .item-arrow{ display: none; }
+
+  .legend{
+    display:flex;
+    gap: 16px;
+    font-size: 0.85em;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .legend span{ display:flex; align-items:center; gap:6px; }
+  .swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+  .swatch.g{ background: var(--green-bg); border:1px solid var(--ok-border); }
+  .swatch.r{ background: var(--red-bg); border:1px solid var(--bad-border); }
+
+  footer{
+    text-align:center;
+    color: var(--ink-soft);
+    font-size: 0.82em;
+    margin-top: 26px;
+  }
+
+  @media (max-width: 480px){
+    h1{ font-size: 1.5em; }
+    .book-item{ font-size: 0.9em; padding: 9px 10px; }
+    .btn-full{ display:none; }
+    .btn-short{ display:inline; }
+    .toolbar{ gap: 6px; }
+    .toolbar button.action{ padding: 8px 9px; font-size: 0.85em; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">☀️</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+<div class="wrap">
+  <header>
+    <h1>📖 Pořadí biblických knih</h1>
+  </header>
+
+  <div class="global-score-bar">
+    <span class="value-pill">🏅 Skóre: <span class="num" id="globalScoreValue">0</span> bodů</span>
+    <button class="history-btn" id="historyBtn" title="Historie skóre" aria-label="Historie skóre">📈</button>
+    <span class="help-icon" id="scoreHelpIcon" tabindex="0">
+      ?
+      <span class="tooltip">Za každou správně umístěnou knihu nebo pisatele +2 body, u nejtěžší hry (doba dokončení psaní) +5 bodů. Za každou chybu −1 bod, za bezchybné kolo bonus navrch. Skóre je společné pro všech pět her a v tomto prohlížeči vydrží do půlnoci, pak se počítá znovu od nuly. Historie (ikonka grafu) ukazuje přehled po dnech.</span>
+    </span>
+  </div>
+
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📈 Historie skóre po dnech</h3>
+        <button class="modal-close" id="historyClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div id="historyContent"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay overview-modal" id="overviewModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Přehled biblických knih</h3>
+        <button class="modal-close" id="overviewClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div id="overviewContent"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay daily-text-modal" id="dailyTextModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+      </div>
+      <div class="daily-text-row">
+        <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+        <div class="daily-text-word-col">
+          <p class="daily-text-word" id="dailyTextWord"></p>
+          <div class="daily-text-nav">
+            <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+            <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+          </div>
+        </div>
+      </div>
+      <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+      <hr class="daily-text-divider" />
+      <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+      <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+      <div class="toolbar daily-text-toolbar">
+        <button class="action" id="dailyTextYes">Ano</button>
+        <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+        <button class="action secondary" id="dailyTextLater">Později</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <label for="modeSelect" class="mode-select-label">Volba hry</label>
+    <select id="modeSelect" class="mode-select">
+      <option value="2">1 · Pět knih</option>
+      <option value="3">2 · Malí proroci</option>
+      <option value="4">3 · Knihy a pisatelé</option>
+      <option value="5">4 · Kniha a doba dokončení psaní</option>
+      <option value="6">5 · Křesťanská řecká písma</option>
+      <option value="1">6 · Všech 66 knih</option>
+      <option value="7">7 · Všech 66 knih (čtverečky)</option>
+    </select>
+  </nav>
+
+  <!-- MODE 1 -->
+  <section class="panel" id="panel1">
+    <div class="card">
+      <h2>Seřaď všech 66 knih<span class="help-icon hint-icon" id="hint1Icon" tabindex="0" style="display:none;">?<span class="tooltip">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint1">Knihy jsou zamíchané. Přetahováním (klikni, táhni a pusť) je seřaď do správného pořadí, v jakém jdou v Bibli za sebou — od Genesis po Zjevení. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check1">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle1"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal1"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview1" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict1"></div>
+      <div class="solution-wrap" id="wrap1">
+        <div class="col">
+          <h3>Tvé pořadí</h3>
+          <ul class="sortable-list" id="list1"></ul>
+        </div>
+        <div class="col solution-col">
+          <h3>Správné řešení</h3>
+          <ul class="sortable-list" id="list1Solution"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 2 -->
+  <section class="panel active" id="panel2">
+    <div class="card">
+      <h2>Seřaď pět knih<span class="help-icon hint-icon" id="hint2Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zobrazí se pět náhodných knih. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint2">Zobrazí se pět náhodných knih. Přetahováním je seřaď tak, jak jdou v Bibli za sebou (od nejstarší po nejnovější v pořadí knih), pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check2">Zkontrolovat</button>
+        <button class="action secondary" id="next2"><span class="btn-full">Dalších pět knih</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal2"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview2" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict2"></div>
+      <div class="solution-wrap" id="wrap2">
+        <div class="col">
+          <h3>Tvé pořadí</h3>
+          <ul class="sortable-list" id="list2"></ul>
+        </div>
+        <div class="col solution-col">
+          <h3>Správné řešení</h3>
+          <ul class="sortable-list" id="list2Solution"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 3 -->
+  <section class="panel" id="panel3">
+    <div class="card">
+      <h2>Seřaď 12 malých proroků<span class="help-icon hint-icon" id="hint3Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint3">Zamíchá se všech 12 knih malých proroků (Ozeáš až Malachiáš). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check3">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle3"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal3"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview3" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict3"></div>
+      <div class="solution-wrap" id="wrap3">
+        <div class="col">
+          <h3>Tvé pořadí</h3>
+          <ul class="sortable-list" id="list3"></ul>
+        </div>
+        <div class="col solution-col">
+          <h3>Správné řešení</h3>
+          <ul class="sortable-list" id="list3Solution"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 4 -->
+  <section class="panel" id="panel4">
+    <div class="card">
+      <h2>Seřaď knihy a přiřaď pisatele<span class="help-icon hint-icon" id="hint4Icon" tabindex="0" style="display:none;">?<span class="tooltip">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint4">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci jsou zamíchaní pisatelé těchto knih — přetažením je přeskládej tak, aby pisatel odpovídal knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check4">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle4"><span class="btn-full">Nových 5 knih</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal4"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview4" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict4"></div>
+      <div class="two-col">
+        <div class="col">
+          <h3>Knihy</h3>
+          <ul class="sortable-list" id="list4books"></ul>
+        </div>
+        <div class="col">
+          <h3>Pisatelé</h3>
+          <ul class="sortable-list" id="list4writers"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě / správný pisatel</span>
+        <span><span class="swatch r"></span> na špatném místě / špatný pisatel</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 5 -->
+  <section class="panel" id="panel5">
+    <div class="card">
+      <h2>Seřaď knihy a přiřaď dobu dokončení psaní<span class="help-icon hint-icon" id="hint5Icon" tabindex="0" style="display:none;">?<span class="tooltip">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint5">V levém sloupci je 5 náhodných knih — přetažením je seřaď podle pořadí v Bibli. V pravém sloupci je zamíchaná doba dokončení psaní těchto knih — přetažením ji přeskládej tak, aby odpovídala knize ve stejném řádku. Pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check5">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle5"><span class="btn-full">Nových 5 knih</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal5"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview5" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict5"></div>
+      <div class="two-col">
+        <div class="col">
+          <h3>Knihy</h3>
+          <ul class="sortable-list" id="list5books"></ul>
+        </div>
+        <div class="col">
+          <h3>Doba dokončení psaní</h3>
+          <ul class="sortable-list" id="list5periods"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě / správná doba dokončení</span>
+        <span><span class="swatch r"></span> na špatném místě / špatná doba dokončení</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 6 -->
+  <section class="panel" id="panel6">
+    <div class="card">
+      <h2>Seřaď Křesťanská řecká písma<span class="help-icon hint-icon" id="hint6Icon" tabindex="0" style="display:none;">?<span class="tooltip">Zamíchá se všech 27 knih Křesťanských řeckých písem (Matouš až Zjevení). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint6">Zamíchá se všech 27 knih Křesťanských řeckých písem (Matouš až Zjevení). Přetahováním je seřaď do správného pořadí, pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check6">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle6"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal6"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview6" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict6"></div>
+      <div class="solution-wrap" id="wrap6">
+        <div class="col">
+          <h3>Tvé pořadí</h3>
+          <ul class="sortable-list" id="list6"></ul>
+        </div>
+        <div class="col solution-col">
+          <h3>Správné řešení</h3>
+          <ul class="sortable-list" id="list6Solution"></ul>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODE 7 -->
+  <section class="panel" id="panel7">
+    <div class="card">
+      <h2>Seřaď všech 66 knih (čtverečky)<span class="help-icon hint-icon" id="hint7Icon" tabindex="0" style="display:none;">?<span class="tooltip">Čtverečky se zkratkami knih jsou zamíchané úplně — i mezi oběma skupinami. Přetahováním je rozděl a seřaď tak, aby v horní skupině byla Hebrejsko-aramejská písma a ve spodní Křesťanská řecká písma, obojí ve správném pořadí, pak klikni na „Zkontrolovat“.</span></span></h2>
+      <p class="hint" id="hint7">Čtverečky se zkratkami knih jsou zamíchané úplně — i mezi oběma skupinami. Přetahováním je rozděl a seřaď tak, aby v horní skupině byla Hebrejsko-aramejská písma a ve spodní Křesťanská řecká písma, obojí ve správném pořadí, pak klikni na „Zkontrolovat“.</p>
+      <div class="toolbar">
+        <button class="action" id="check7">Zkontrolovat</button>
+        <button class="action secondary" id="shuffle7"><span class="btn-full">Zamíchat znovu</span><span class="btn-short">Další</span></button>
+        <button class="action secondary" id="reveal7"><span class="btn-full">Zobrazit řešení</span><span class="btn-short">Řešení</span></button>
+        <button class="action secondary" id="overview7" aria-label="Přehled biblických knih"><span class="btn-full">Přehled</span><span class="btn-short" aria-hidden="true">📖</span></button>
+      </div>
+      <div class="verdict" id="verdict7"></div>
+      <h3 class="tile-section-title">Hebrejsko-aramejská písma</h3>
+      <ul class="book-tile-grid" id="grid7ot"></ul>
+      <h3 class="tile-section-title">Křesťanská řecká písma</h3>
+      <ul class="book-tile-grid" id="grid7nt"></ul>
+      <div class="legend">
+        <span><span class="swatch g"></span> na správném místě</span>
+        <span><span class="swatch r"></span> na špatném místě</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- VZHLED (klasický / světlý přátelský / tmavý) ----------
+  // Bez výslovné volby hráče se vzhled řídí systémovým nastavením
+  // (tmavý režim systému -> tmavé zobrazení hry). Jakmile hráč klikne
+  // na přepínač, jeho volba se uloží a systémové nastavení se dál
+  // nesleduje.
+  const THEME_KEY = "bibleGameTheme";
+  const THEME_ORDER = ["classic", "friendly", "dark"];
+
+  function loadExplicitTheme(){
+    try{
+      const saved = localStorage.getItem(THEME_KEY);
+      return THEME_ORDER.indexOf(saved) !== -1 ? saved : null;
+    }catch(err){
+      return null;
+    }
+  }
+  function saveExplicitTheme(theme){
+    try{ localStorage.setItem(THEME_KEY, theme); }catch(err){}
+  }
+  function systemPrefersDark(){
+    try{
+      return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    }catch(err){
+      return false;
+    }
+  }
+
+  let explicitTheme = loadExplicitTheme();
+  let currentTheme = explicitTheme || (systemPrefersDark() ? "dark" : "classic");
+  const themeToggleBtn = document.getElementById("themeToggle");
+
+  const THEME_META = {
+    classic: { icon: "☀️", label: "Přepnout na světlé přátelské zobrazení" },
+    friendly: { icon: "🌙", label: "Přepnout na tmavé zobrazení" },
+    dark: { icon: "📜", label: "Přepnout na klasické zobrazení" }
+  };
+
+  function applyTheme(theme){
+    if(theme === "classic"){
+      document.documentElement.removeAttribute("data-theme");
+    }else{
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    if(themeToggleBtn){
+      const meta = THEME_META[theme] || THEME_META.classic;
+      themeToggleBtn.textContent = meta.icon;
+      themeToggleBtn.title = meta.label;
+      themeToggleBtn.setAttribute("aria-label", meta.label);
+    }
+  }
+
+  applyTheme(currentTheme);
+
+  if(themeToggleBtn){
+    themeToggleBtn.addEventListener("click", ()=>{
+      const idx = THEME_ORDER.indexOf(currentTheme);
+      currentTheme = THEME_ORDER[(idx + 1) % THEME_ORDER.length];
+      explicitTheme = currentTheme;
+      saveExplicitTheme(currentTheme);
+      applyTheme(currentTheme);
+    });
+  }
+
+  // Dokud hráč vzhled sám nezvolil, sleduj živě systémové přepnutí tmavý/světlý.
+  try{
+    if(window.matchMedia){
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e)=>{
+        if(explicitTheme) return;
+        currentTheme = e.matches ? "dark" : "classic";
+        applyTheme(currentTheme);
+      });
+    }
+  }catch(err){}
+
+  const BOOKS = [
+    "1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova",
+    "Jozue","Soudci","Rut","1. Samuelova","2. Samuelova",
+    "1. Královská","2. Královská","1. Paralipomenon","2. Paralipomenon",
+    "Ezra","Nehemjáš","Ester","Job","Žalmy","Přísloví",
+    "Kazatel","Šalomounova píseň","Izajáš","Jeremjáš","Nářky",
+    "Ezekiel","Daniel","Ozeáš","Joel","Amos",
+    "Obadjáš","Jonáš","Micheáš","Nahum","Habakuk",
+    "Sefanjáš","Ageus","Zecharjáš","Malachiáš",
+    "Matouš","Marek","Lukáš","Jan","Skutky",
+    "Římanům","1. Korinťanům","2. Korinťanům","Galaťanům","Efezanům",
+    "Filipanům","Kolosanům","1. Tesaloničanům","2. Tesaloničanům",
+    "1. Timoteovi","2. Timoteovi","Titovi","Filemonovi","Hebrejcům",
+    "Jakub","1. Petra","2. Petra","1. Jana","2. Jana","3. Jana",
+    "Juda","Zjevení"
+  ];
+
+  // Krátké zkratky knih pro režim 7 (mřížka čtverečků) — v pořadí odpovídajícím BOOKS.
+  const BOOK_ABBR = [
+    "1Mo","2Mo","3Mo","4Mo","5Mo",
+    "Joz","Sd","Rut","1Sa","2Sa",
+    "1Kr","2Kr","1Pa","2Pa",
+    "Ezr","Ne","Es","Job","Ža","Př",
+    "Ka","Pís","Iz","Jer","Ná",
+    "Eze","Da","Oz","Joe","Am",
+    "Ob","Jon","Mi","Na","Hab",
+    "Sef","Ag","Ze","Mal",
+    "Mt","Mr","Lk","Jan","Sk",
+    "Ří","1Ko","2Ko","Ga","Ef",
+    "Flp","Kol","1Te","2Te",
+    "1Ti","2Ti","Tit","Flm","Heb",
+    "Jk","1Pe","2Pe","1Ja","2Ja","3Ja",
+    "Juda","Zj"
+  ];
+
+  // Pisatelé jednotlivých knih (podle přehledu na jw.org)
+  const WRITERS = [
+    "Mojžíš","Mojžíš","Mojžíš","Mojžíš","Mojžíš",
+    "Jozue","Samuel","Samuel","Samuel, Gad, Natan","Gad, Natan",
+    "Jeremjáš","Jeremjáš","Ezra","Ezra",
+    "Ezra","Nehemjáš","Mordekai","Mojžíš","David a další","Šalomoun, Agur, Lemuel",
+    "Šalomoun","Šalomoun","Izajáš","Jeremjáš","Jeremjáš",
+    "Ezekiel","Daniel","Ozeáš","Joel","Amos",
+    "Obadjáš","Jonáš","Micheáš","Nahum","Habakuk",
+    "Sefanjáš","Ageus","Zecharjáš","Malachiáš",
+    "Matouš","Marek","Lukáš","apoštol Jan","Lukáš",
+    "Pavel","Pavel","Pavel","Pavel","Pavel",
+    "Pavel","Pavel","Pavel","Pavel",
+    "Pavel","Pavel","Pavel","Pavel","Pavel",
+    "Jakub (Ježíšův bratr)","Petr","Petr","apoštol Jan","apoštol Jan","apoštol Jan",
+    "Juda (Ježíšův bratr)","apoštol Jan"
+  ];
+
+  // Doba dokončení psaní (podle přehledu na jw.org)
+  const WRITING_PERIOD = [
+    "asi 1513 př. n. l.","asi 1512 př. n. l.","asi 1512 př. n. l.","asi 1473 př. n. l.","asi 1473 př. n. l.",
+    "asi 1450 př. n. l.","asi 1100 př. n. l.","asi 1090 př. n. l.","asi 1078 př. n. l.","asi 1040 př. n. l.",
+    "580 př. n. l.","580 př. n. l.","asi 460 př. n. l.","asi 460 př. n. l.","asi 460 př. n. l.",
+    "po 443 př. n. l.","asi 475 př. n. l.","asi 1473 př. n. l.","asi 460 př. n. l.","asi 717 př. n. l.",
+    "před 1000 př. n. l.","asi 1020 př. n. l.","po 732 př. n. l.","580 př. n. l.","607 př. n. l.",
+    "asi 591 př. n. l.","asi 536 př. n. l.","po 745 př. n. l.","asi 820 př. n. l. (?)","asi 804 př. n. l.",
+    "asi 607 př. n. l.","asi 844 př. n. l.","před 717 př. n. l.","před 632 př. n. l.","asi 628 př. n. l. (?)",
+    "před 648 př. n. l.","520 př. n. l.","518 př. n. l.","po 443 př. n. l.","asi 41 n. l.",
+    "asi 60–65 n. l.","asi 56–58 n. l.","asi 98 n. l.","asi 61 n. l.","asi 56 n. l.",
+    "asi 55 n. l.","asi 55 n. l.","asi 50–52 n. l.","asi 60–61 n. l.","asi 60–61 n. l.",
+    "asi 60–61 n. l.","asi 50 n. l.","asi 51 n. l.","asi 61–64 n. l.","asi 65 n. l.",
+    "asi 61–64 n. l.","asi 60–61 n. l.","asi 61 n. l.","před 62 n. l.","asi 62–64 n. l.",
+    "asi 64 n. l.","asi 98 n. l.","asi 98 n. l.","asi 98 n. l.","asi 65 n. l.",
+    "asi 96 n. l."
+  ];
+
+  // Zahrnuté (popisované) časové období v obsahu knihy — podle přehledu na jw.org.
+  // U knih, kde jw.org žádné období neuvádí (žalmy, přísloví, dopisy apod.), je "—".
+  const COVERED_PERIOD = [
+    "od „počátku“ do 1657 př. n. l.","1657–1512 př. n. l.","1 měsíc (1512 př. n. l.)","1512–1473 př. n. l.","2 měsíce (1473 př. n. l.)",
+    "1473 – asi 1450 př. n. l.","asi 1450 – asi 1120 př. n. l.","11 let za vlády soudců","asi 1180–1078 př. n. l.","1077 – asi 1040 př. n. l.",
+    "asi 1040–911 př. n. l.","asi 920–580 př. n. l.","asi 1077–1037 př. n. l.","asi 1037–537 př. n. l.","537 – asi 467 př. n. l.",
+    "456 – po 443 př. n. l.","493 – asi 475 př. n. l.","přes 140 let mezi lety 1657 a 1473 př. n. l.","—","—",
+    "—","—","asi 778 – po 732 př. n. l.","647–580 př. n. l.","—",
+    "613 – asi 591 př. n. l.","618 – asi 536 př. n. l.","před 804 – po 745 př. n. l.","—","—",
+    "—","—","asi 777–717 př. n. l.","—","—",
+    "—","112 dní (520 př. n. l.)","520–518 př. n. l.","—","2 př. n. l. – 33 n. l.",
+    "29–33 n. l.","3 př. n. l. – 33 n. l.","kromě úvodu 29–33 n. l.","33 – asi 61 n. l.","—",
+    "—","—","—","—",
+    "—","—","—","—",
+    "—","—","—","—","—",
+    "—","—","—","—","—","—",
+    "—","—"
+  ];
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function makeItem(bookIndex, big){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.idx = bookIndex;
+    li.innerHTML = '<span class="handle">☰</span><span class="name">'+BOOKS[bookIndex]+'</span>';
+    return li;
+  }
+
+  // Varianta pro hru 6 (Všech 66 knih) — u dlouhého seznamu je jinak
+  // přetahování na velkou vzdálenost nepohodlné, tak přidáme šipky pro
+  // rychlý skok o 15 pozic. Vlevo šipka dolů, vpravo šipka nahoru.
+  function makeItemWithArrows(bookIndex){
+    const li = makeItem(bookIndex);
+    const downBtn = document.createElement("button");
+    downBtn.type = "button";
+    downBtn.className = "item-arrow item-arrow-down";
+    downBtn.draggable = false;
+    downBtn.title = "Posunout o 15 pozic níž";
+    downBtn.setAttribute("aria-label", "Posunout o 15 pozic níž");
+    downBtn.textContent = "↓";
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "item-arrow item-arrow-up";
+    upBtn.draggable = false;
+    upBtn.title = "Posunout o 15 pozic výš";
+    upBtn.setAttribute("aria-label", "Posunout o 15 pozic výš");
+    upBtn.textContent = "↑";
+
+    li.insertBefore(downBtn, li.firstChild);
+    li.appendChild(upBtn);
+
+    downBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      moveItemBy(li, 15);
+    });
+    upBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      moveItemBy(li, -15);
+    });
+
+    return li;
+  }
+
+  function moveItemBy(li, delta){
+    const container = li.parentElement;
+    if(!container) return;
+    const items = [...container.children];
+    const i = items.indexOf(li);
+    if(i === -1) return;
+    items.splice(i, 1);
+    let target = i + delta;
+    if(target < 0) target = 0;
+    if(target > items.length) target = items.length;
+    items.splice(target, 0, li);
+    items.forEach(item=>{ container.appendChild(item); });
+  }
+
+  function makeSolutionItem(bookIndex, pos){
+    const li = document.createElement("li");
+    li.className = "book-item solution-item";
+    li.draggable = false;
+    li.dataset.idx = bookIndex;
+    li.innerHTML = '<span class="pos">'+(pos+1)+'</span><span class="name">'+BOOKS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function makeTile(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-tile";
+    li.draggable = true;
+    li.dataset.idx = bookIndex;
+    li.title = BOOKS[bookIndex];
+    li.textContent = BOOK_ABBR[bookIndex];
+    return li;
+  }
+
+  function makeWriterItem(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.book = bookIndex;
+    li.innerHTML = '<span class="handle">✍️</span><span class="name">'+WRITERS[bookIndex]+'</span>';
+    return li;
+  }
+
+  function makePeriodItem(bookIndex){
+    const li = document.createElement("li");
+    li.className = "book-item";
+    li.draggable = true;
+    li.dataset.book = bookIndex;
+    li.innerHTML = '<span class="handle">🕑</span><span class="name">'+WRITING_PERIOD[bookIndex]+'</span>';
+    return li;
+  }
+
+  function attachSortable(container){
+    let dragEl = null;
+
+    container.addEventListener("dragstart", (e)=>{
+      const li = e.target.closest(".book-item");
+      if(!li) return;
+      dragEl = li;
+      li.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try{ e.dataTransfer.setData("text/plain", li.dataset.idx); }catch(err){}
+    });
+
+    container.addEventListener("dragend", ()=>{
+      if(dragEl) dragEl.classList.remove("dragging");
+      dragEl = null;
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+    });
+
+    container.addEventListener("dragover", (e)=>{
+      e.preventDefault();
+      if(!dragEl) return;
+      const afterEl = getDragAfterElement(container, e.clientY);
+      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
+      if(afterEl == null){
+        container.appendChild(dragEl);
+      }else{
+        container.insertBefore(dragEl, afterEl);
+        afterEl.classList.add("drop-target");
+      }
+      // simple autoscroll near edges
+      const rect = container.getBoundingClientRect();
+      const margin = 40;
+      if(e.clientY - rect.top < margin){
+        container.scrollTop -= 12;
+      }else if(rect.bottom - e.clientY < margin){
+        container.scrollTop += 12;
+      }
+    });
+
+    container.addEventListener("drop", (e)=>{
+      e.preventDefault();
+    });
+  }
+
+  function getDragAfterElement(container, y){
+    const els = [...container.querySelectorAll(".book-item:not(.dragging)")];
+    let closest = {offset: Number.NEGATIVE_INFINITY, element: null};
+    for(const el of els){
+      const box = el.getBoundingClientRect();
+      const offset = y - box.top - box.height/2;
+      if(offset < 0 && offset > closest.offset){
+        closest = {offset, element: el};
+      }
+    }
+    return closest.element;
+  }
+
+  // Přetahování čtverečků v mřížce (režim 7) — na rozdíl od jednosloupcového
+  // seznamu se tu při hledání "kam vložit" musí brát v úvahu vodorovná i
+  // svislá pozice kurzoru (položky jsou zalomené vedle sebe do řádků).
+  // Sdílený stav ("dragEl") napříč všemi předanými kontejnery umožňuje
+  // přetáhnout čtvereček i mezi dvěma bloky (Hebrejsko-aramejská /
+  // Křesťanská řecká písma), ne jen v rámci jednoho z nich.
+  function attachSortableGrid(...containers){
+    let dragEl = null;
+
+    function clearDropTargets(){
+      containers.forEach(c=> c.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target")));
+    }
+
+    containers.forEach(container=>{
+      container.addEventListener("dragstart", (e)=>{
+        const tile = e.target.closest(".book-tile");
+        if(!tile) return;
+        dragEl = tile;
+        tile.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        try{ e.dataTransfer.setData("text/plain", tile.dataset.idx); }catch(err){}
+      });
+
+      container.addEventListener("dragend", ()=>{
+        if(dragEl) dragEl.classList.remove("dragging");
+        dragEl = null;
+        clearDropTargets();
+      });
+
+      container.addEventListener("dragover", (e)=>{
+        e.preventDefault();
+        if(!dragEl) return;
+        clearDropTargets();
+        placeTileAt(container, dragEl, e.clientX, e.clientY);
+      });
+
+      container.addEventListener("drop", (e)=>{
+        e.preventDefault();
+      });
+    });
+  }
+
+  function placeTileAt(container, dragEl, x, y){
+    const tiles = [...container.querySelectorAll(".book-tile:not(.dragging)")];
+    if(tiles.length === 0){
+      container.appendChild(dragEl);
+      return;
+    }
+    let closest = null;
+    let closestDist = Infinity;
+    tiles.forEach(el=>{
+      const box = el.getBoundingClientRect();
+      const cx = box.left + box.width/2;
+      const cy = box.top + box.height/2;
+      const dist = (x-cx)*(x-cx) + (y-cy)*(y-cy);
+      if(dist < closestDist){
+        closestDist = dist;
+        closest = {el, cx, cy, box};
+      }
+    });
+    const sameRow = Math.abs(y - closest.cy) < closest.box.height * 0.6;
+    const after = sameRow ? (x > closest.cx) : (y > closest.cy);
+    if(after){
+      if(closest.el.nextSibling) container.insertBefore(dragEl, closest.el.nextSibling);
+      else container.appendChild(dragEl);
+    }else{
+      container.insertBefore(dragEl, closest.el);
+    }
+    closest.el.classList.add("drop-target");
+  }
+
+  // Zarovnání výšky řádků mezi dvěma sloupci (režimy 4 a 5), aby si
+  // odpovídající řádek vlevo a vpravo měly stejnou výšku i po přetažení
+  // nebo když se text v některé buňce zalomí na víc řádků (mobil).
+  function syncColumnHeights(listA, listB){
+    const itemsA = [...listA.querySelectorAll(".book-item")];
+    const itemsB = [...listB.querySelectorAll(".book-item")];
+    itemsA.forEach(el=>{ el.style.height = ""; });
+    itemsB.forEach(el=>{ el.style.height = ""; });
+    const n = Math.min(itemsA.length, itemsB.length);
+    for(let i=0;i<n;i++){
+      const h = Math.max(itemsA[i].getBoundingClientRect().height, itemsB[i].getBoundingClientRect().height);
+      itemsA[i].style.height = h + "px";
+      itemsB[i].style.height = h + "px";
+    }
+  }
+
+  const FIREWORK_COLORS =["#ff5b5b","#ffd23d","#4fd67a","#4fa8f0","#e05fb8","#ffa941","#5fe0d0","#ffffff"];
+
+  function createFireworkBurst(x, y){
+    const flash = document.createElement("span");
+    flash.className = "firework-flash";
+    flash.style.left = x + "px";
+    flash.style.top = y + "px";
+    flash.style.animationDuration = "1.35s";
+    document.body.appendChild(flash);
+    setTimeout(()=>flash.remove(), 1650);
+
+    const particleCount = 28 + Math.floor(Math.random()*14);
+    const color = FIREWORK_COLORS[Math.floor(Math.random()*FIREWORK_COLORS.length)];
+    for(let i=0;i<particleCount;i++){
+      const angle = (Math.PI*2*i)/particleCount + (Math.random()*0.3 - 0.15);
+      const radius = 55 + Math.random()*95;
+      const dx = (Math.cos(angle)*radius).toFixed(0) + "px";
+      const dy = (Math.sin(angle)*radius + 25).toFixed(0) + "px";
+      const duration = (0.85 + Math.random()*0.5) * 3;
+      const p = document.createElement("span");
+      p.className = "firework-particle";
+      p.style.left = x + "px";
+      p.style.top = y + "px";
+      p.style.background = color;
+      p.style.color = color;
+      p.style.setProperty("--dx", dx);
+      p.style.setProperty("--dy", dy);
+      p.style.animationDuration = duration + "s";
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(), duration*1000 + 100);
+    }
+  }
+
+  function launchFireworks(){
+    const bursts = 5;
+    for(let i=0;i<bursts;i++){
+      setTimeout(()=>{
+        const x = window.innerWidth * (0.15 + Math.random()*0.7);
+        const y = window.innerHeight * (0.12 + Math.random()*0.35);
+        createFireworkBurst(x, y);
+      }, i*780);
+    }
+  }
+
+  function celebrateVerdict(el){
+    el.classList.remove("celebrate");
+    // force reflow so the animation can replay
+    void el.offsetWidth;
+    el.classList.add("celebrate");
+    launchFireworks();
+  }
+
+  const PERFECT_MESSAGES = [
+    "🎉 Paráda! Máš to úplně přesně!",
+    "🏆 Famózní! Ani jedna kniha na špatném místě!",
+    "✨ Bezchybně! Tohle je znalost k nezaplacení!",
+    "🙌 Skvělá práce! Sedí to do posledního puntíku!",
+    "🥳 Perfektní! Umíš to nazpaměť!"
+  ];
+
+  function randomPerfectMessage(){
+    return PERFECT_MESSAGES[Math.floor(Math.random()*PERFECT_MESSAGES.length)];
+  }
+
+  // ---------- BODOVÁNÍ + HISTORIE PO DNECH ----------
+  const POINTS_CORRECT = 2;
+  const POINTS_WRONG = 1;
+  const HISTORY_STORAGE_KEY = "bibleOrderGameHistory";
+  const OLD_SCORE_STORAGE_KEY = "bibleOrderGameScore"; // starší verze hry — použije se jen k jednorázové migraci
+
+  // Skóre se v prohlížeči pamatuje jen do konce aktuálního dne (do půlnoci) —
+  // další den (nebo na jiném zařízení/v jiném prohlížeči) se počítá znovu od nuly.
+  // Zároveň se ale (skrytě) ukládá i historie po dnech: dosažené skóre, kolik bodů
+  // šlo maximálně získat a kolik jich hráč nezískal — pro přehled v historii.
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+
+  function formatDateLabel(iso){
+    const parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    return parts[2] + ". " + parts[1] + ". " + parts[0];
+  }
+
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if(!raw) return {};
+      const data = JSON.parse(raw);
+      return (data && typeof data === "object") ? data : {};
+    }catch(e){ /* localStorage nedostupné (např. v náhledu) — v pořádku, začneme naprázdno */ }
+    return {};
+  }
+
+  function saveHistory(){
+    try{
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(gameHistory));
+    }catch(e){ /* localStorage nedostupné — historie zůstane jen v paměti */ }
+  }
+
+  let gameHistory = loadHistory();
+
+  // Jednorázová migrace ze starší verze hry (jen dnešní skóre, bez historie).
+  (function migrateOldScore(){
+    try{
+      const raw = localStorage.getItem(OLD_SCORE_STORAGE_KEY);
+      if(!raw) return;
+      const old = JSON.parse(raw);
+      if(old && old.date && typeof old.score === "number" && !gameHistory[old.date]){
+        gameHistory[old.date] = { score: old.score, maxPossible: old.score };
+        saveHistory();
+      }
+      localStorage.removeItem(OLD_SCORE_STORAGE_KEY);
+    }catch(e){ /* nic se neděje, migrace je jen bonus */ }
+  })();
+
+  const TODAY = todayKey();
+  if(!gameHistory[TODAY]) gameHistory[TODAY] = { score: 0, maxPossible: 0 };
+
+  let totalScore = gameHistory[TODAY].score;
+  const globalScoreValue = document.getElementById("globalScoreValue");
+  globalScoreValue.textContent = totalScore;
+
+  function addPoints(delta, maxPossibleForRound){
+    totalScore = Math.max(0, totalScore + delta);
+    globalScoreValue.textContent = totalScore;
+    globalScoreValue.classList.remove("score-pop");
+    void globalScoreValue.offsetWidth;
+    globalScoreValue.classList.add("score-pop");
+
+    gameHistory[TODAY].score = totalScore;
+    gameHistory[TODAY].maxPossible += (maxPossibleForRound || 0);
+    saveHistory();
+  }
+
+  // Spočítá a připíše body za jedno kolo kontroly; vrátí text k připojení do verdiktu.
+  function awardPoints(correctCount, totalCount, perfectBonus, pointsPerCorrect){
+    const perCorrect = pointsPerCorrect || POINTS_CORRECT;
+    const wrongCount = totalCount - correctCount;
+    const isPerfect = correctCount === totalCount;
+    let gained = correctCount * perCorrect - wrongCount * POINTS_WRONG;
+    if(isPerfect) gained += perfectBonus;
+    const maxPossible = totalCount * perCorrect + perfectBonus;
+    addPoints(gained, maxPossible);
+    return " Získáváš " + gained + " bodů z " + maxPossible + " možných.";
+  }
+
+  // Body za jedno kolo se připíšou jen jednou — opakované kliknutí na
+  // „Zkontrolovat“ na stejném (nezměněném) kole už body znovu nepřičítá.
+  // Nové kolo (zamíchání, další knihy, nový výběr) flag zase odemkne.
+  const roundScored = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
+
+  // Když si hráč nechá zobrazit řešení, body za to kolo se nepřičítají —
+  // i kdyby pak hned klikl na „Zkontrolovat“ na už správně srovnaném kole.
+  const roundRevealed = { 1:false, 2:false, 3:false, 4:false, 5:false, 6:false, 7:false };
+
+  function scoreRoundOnce(modeKey, correctCount, totalCount, perfectBonus, pointsPerCorrect){
+    if(roundRevealed[modeKey]){
+      return " Body se nepřičítají — bylo použito zobrazení řešení.";
+    }
+    if(roundScored[modeKey]){
+      return " Body za toto kolo už byly připsány.";
+    }
+    roundScored[modeKey] = true;
+    return awardPoints(correctCount, totalCount, perfectBonus, pointsPerCorrect);
+  }
+
+
+  // ---------- HISTORIE — modální okno ----------
+  const historyModal = document.getElementById("historyModal");
+  const historyContent = document.getElementById("historyContent");
+
+  function renderHistory(){
+    const dates = Object.keys(gameHistory).sort().reverse();
+    if(dates.length === 0){
+      historyContent.innerHTML = '<p class="hint">Zatím žádná historie — zahraj si aspoň jedno kolo a vrať se sem.</p>';
+      return;
+    }
+    const rows = dates.map(date=>{
+      const entry = gameHistory[date];
+      const score = entry.score || 0;
+      const maxPossible = entry.maxPossible || 0;
+      const missed = Math.max(0, maxPossible - score);
+      const hasData = maxPossible > 0;
+      const pct = hasData ? Math.round((score / maxPossible) * 100) : null;
+      const pctClass = pct === null ? "" : (pct >= 70 ? "pct-good" : (pct < 40 ? "pct-bad" : ""));
+      const pctText = pct === null ? "–" : pct + " %";
+      const isToday = date === TODAY;
+      const label = formatDateLabel(date) + (isToday ? " (dnes)" : "");
+      const dailyTextMark = entry.dailyTextRead ? '<span class="pct-good">✓</span>' : "–";
+      return "<tr" + (isToday ? ' class="today-row"' : "") + "><td>" + label + "</td><td>" + score + "</td><td>" + missed + "</td><td class=\"" + pctClass + "\">" + pctText + "</td><td>" + dailyTextMark + "</td></tr>";
+    }).join("");
+    historyContent.innerHTML =
+      '<table class="history-table"><thead><tr><th>Datum</th><th>Skóre</th><th>Nezískáno</th><th>Úspěšnost</th><th>Denní text</th></tr></thead><tbody>' +
+      rows +
+      "</tbody></table>";
+  }
+
+  function openHistory(){
+    renderHistory();
+    historyModal.classList.add("show");
+  }
+  function closeHistory(){
+    historyModal.classList.remove("show");
+  }
+
+  document.getElementById("historyBtn").addEventListener("click", openHistory);
+  document.getElementById("historyClose").addEventListener("click", closeHistory);
+  historyModal.addEventListener("click", (e)=>{
+    if(e.target === historyModal) closeHistory();
+  });
+
+  // ---------- DENNÍ TEXT — připomínka + živý náhled z wol.jw.org ----------
+  // Samotný text/komentář nekopírujeme (je to copyright Watch Tower) —
+  // místo toho se zkusí vložit skutečná stránka daného dne přímo do okna
+  // (iframe). Kdyby to wol.jw.org blokoval, je pod náhledem vždy i funkční
+  // odkaz na otevření v nové záložce.
+  const CZ_WEEKDAYS = ["Neděle","Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota"];
+  const CZ_MONTHS_GEN = ["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+
+  function formatDailyTitle(d){
+    return CZ_WEEKDAYS[d.getDay()] + " " + d.getDate() + ". " + CZ_MONTHS_GEN[d.getMonth()] + " " + d.getFullYear();
+  }
+  function dailyTextUrl(d){
+    return "https://wol.jw.org/cs/wol/dt/r29/lp-b/" + d.getFullYear() + "/" + (d.getMonth()+1) + "/" + d.getDate();
+  }
+
+  const dailyTextModal = document.getElementById("dailyTextModal");
+  const dailyTextTitle = document.getElementById("dailyTextTitle");
+  let remindBeforeNextRound = false;
+  let laterTimer = null;
+  const LATER_REMIND_MS = 15 * 60 * 1000; // 15 minut
+  const DAILY_SNOOZE_KEY = "bibleGameDailyTextSnoozeUntil";
+
+  // Čas odloženého připomenutí se ukládá i do localStorage, aby fungoval
+  // i po obnovení (refresh) stránky, ne jen v rámci aktuální relace.
+  function loadSnoozeUntil(){
+    try{
+      const raw = localStorage.getItem(DAILY_SNOOZE_KEY);
+      const ts = raw ? parseInt(raw, 10) : NaN;
+      return isNaN(ts) ? null : ts;
+    } catch(e){ return null; }
+  }
+  function saveSnoozeUntil(ts){
+    try{ localStorage.setItem(DAILY_SNOOZE_KEY, String(ts)); } catch(e){}
+  }
+  function clearSnoozeUntil(){
+    try{ localStorage.removeItem(DAILY_SNOOZE_KEY); } catch(e){}
+  }
+
+  function clearLaterTimer(){
+    if(laterTimer){
+      clearTimeout(laterTimer);
+      laterTimer = null;
+    }
+  }
+  // Naplánuje opětovné zobrazení za daný počet milisekund (výchozí 15 minut).
+  // Toto je jediný způsob, jak se dialog po „Později“ znovu objeví — nové
+  // kolo hry ho samo o sobě nespouští.
+  function scheduleLaterReminder(delayMs){
+    clearLaterTimer();
+    const delay = (typeof delayMs === "number") ? delayMs : LATER_REMIND_MS;
+    laterTimer = setTimeout(()=>{
+      laterTimer = null;
+      clearSnoozeUntil();
+      if(!isDailyTextReadToday()){
+        openDailyTextModal();
+      }
+    }, delay);
+  }
+
+  function isDailyTextReadToday(){
+    return !!(gameHistory[TODAY] && gameHistory[TODAY].dailyTextRead);
+  }
+  function markDailyTextRead(){
+    gameHistory[TODAY].dailyTextRead = true;
+    saveHistory();
+    remindBeforeNextRound = false;
+    clearLaterTimer();
+    clearSnoozeUntil();
+  }
+  function clearDailyTextRead(){
+    gameHistory[TODAY].dailyTextRead = false;
+    saveHistory();
+  }
+
+  // ---------- Myšlenka + ikona ke dni (vlastní shrnutí, ne citát/komentář) ----------
+  // 365 krátkých vlastních shrnutí (jedno na každý den roku) — nejde o citát
+  // ani komentář z knihy, jen o vlastní pomůcku k zapamatování hlavní myšlenky.
+  const DAILY_WORDS = ["Duchovní růst", "Přátelství s Jehovou", "Cadokova odvaha", "Následky neposlušnosti", "Radost z poslušnosti", "Uzdravení zraněného srdce", "Naděje na vzkříšení", "Trpělivost s nespravedlností", "Starostlivý Ježíš", "Dluh hříchu", "Čest kázat", "Chvála manželce", "Jehovovo vedení", "Boží sláva", "Úcta k organizaci", "Důvěra ve vedení", "Osobní víra", "Trpělivé školení", "Davidova moudrost", "Náprava vztahu", "Rozhodnutí pro křest", "Boží odpuštění", "Pravá pokora", "Radost ze služby", "Příprava na manželství", "Řešení neshod", "Pevnost ve víře", "Milosrdný Otec", "Zdravý úsudek", "Trpělivá láska", "Moudré rozlišování", "Duch pokoje", "Kristova péče o nás", "Boží odpuštění", "Naděje na vzkříšení", "Duchovní priority", "Duchovní zralost", "Přátelství s Bohem", "Odvaha k neutralitě", "Naděje navzdory hříchu", "Čas na Bibli", "Respekt k svědomí", "Útěcha v úzkosti", "Boží spravedlnost", "Zázrak nasycení", "Chvála za uzdravení", "Dar výkupného", "Odvaha ke křtu", "Vstřebat Boží slovo", "Důvěra ve starší", "Oddělení ovcí a koz", "Živý Bůh", "Důvěra v organizaci", "Pokání a odpuštění", "Prostý život", "Bdělost před pádem", "Dar v podobě bratrů", "Moudrost chrání", "Víra posílená důkazy", "Boží spravedlivý úsudek", "Živí v Boží paměti", "Odvaha z dobrého vzoru", "Vedeni k pokání", "Blízký vztah s Bohem", "Boj s nespravedlností", "Chvála Jehovovi", "Satanovy pomluvy", "Boží trpělivost", "Ověřuj, co slyšíš", "Vytrvalost v pronásledování", "Věrnost až do konce", "Úcta k manželce", "Horlivost ve službě", "Trpělivé poznávání", "Trpělivost s hříšníkem", "Radost z pokání", "Odstup od politiky", "Láska skrze poslušnost", "Úplné odpuštění", "Duchovní ráj", "Modlitba o trpělivost", "Rozvážné namlouvání", "Sebezkoumání provinilce", "Boží pohled na lidi", "Opatrnost s odpadlíky", "Otupělé srdce", "Pozvání na slavnost", "Boží rodina", "Vděčnost za výkupné", "Hlubší poznání", "Víra ve výkupné", "Nová smlouva", "Boží láska", "Vyvrácení pomluvy", "Radost ze vzkříšení", "Duchovní růst", "Boží milosrdenství", "Jehovova ochrana", "Předobraz výkupného", "Uplatňování Bible", "Radost z dávání", "Chvála Jehovy", "Satanovy lži", "Spravedlivý Soudce", "Odvaha pomoct bratrům", "Živý Bůh", "Ostražitost před klamem", "Naděje na odpuštění", "Radost z věrnosti", "Moudrost v namlouvání", "Boží načasování", "Ježíšův vzor", "Vděčnost za výkupné", "Zralost staršího", "Rýžování pravdy", "Odpuštění místo hněvu", "Důvěra místo majetku", "Cesta ke zralosti", "Moudré rozhodování", "Odpuštění po pokání", "Boží nestrannost", "Věrní pomocníci", "Odpuštění minulosti", "Postupná proměna", "Klidná reakce", "Radost z pokání", "Špatné pohnutky", "Dobrý učitel", "Oslava Jehovy", "Odhodlání ke křtu", "Odmítání lží", "Držet se pravdy", "Soucit s hříšníky", "Očištění Božího jména", "Užitek ze zkoušek", "Naléhavost kázání", "Stopy Stvořitele", "Poslední slova", "Služební pomocníci", "Síla od Boha", "Moudré rozhodování", "Smazané hříchy", "Péče o děti", "Duchovní ráj", "Výběr partnera", "Ohleduplnost k zamilovaným", "Věrnost v zármutku", "Boj s pokušením", "Varovné pokárání", "Vytrvat do konce", "Blízkost k Bohu", "Nezasloužené odpuštění", "Odpuštění křivd", "Duchovní zralost", "Boží milosrdenství", "Hledání ztracených", "Radost ze sdílení pravdy", "Radost ve službě", "Malé kroky vpřed", "Poučení a náprava", "Vymazané hříchy", "Klid při nespravedlnosti", "Víra v Ježíše", "Stopy Stvořitele", "Ochrana sboru", "Trvalá oběť", "Duchovní ostražitost", "Smíření s Bohem", "Upřímné odpuštění", "Vytrvalost v pronásledování", "Odvaha ke změně", "Prosba o moudrost", "Hojnost duchovního pokrmu", "Laskavá upřímnost", "Odvaha z víry", "Beze strachu s Jehovou", "Věrné srdce", "Láskyplná výchova", "Radost z dávání", "Trpělivý růst", "Vděčnost, ne nárok", "Nejsi zapomenutý", "Rozhodování podle svědomí", "Naděje na vzkříšení", "Síla z Božího slova", "Věrnost uprostřed odpadlictví", "Vytrvalost v dobrém", "Boží štědrost", "Touha sloužit", "Žít podle Bible", "Prosba o svatého ducha", "Láska k lidem", "Pomstu nechme na Bohu", "Vyvážený vztah k majetku", "Radost v manželství", "Příprava na zkoušky", "Hodnota výkupného", "Víra překoná překážky", "Důvěra z vlastní zkušenosti", "Poznej svoje slabé místo", "Odpuštění kajícímu", "Dar v podobě bratří", "Odpuštění bez trestu", "Království na prvním místě", "Síla uprostřed odporu", "Radost a jednota", "Citlivost k svobodným", "Jehova naše Skála", "Sloužit celým srdcem", "Úplné odpuštění", "Pomoc k pokání", "Nesrovnávej se s druhými", "Naléhavé varování", "Duchovní růst", "Naděje na vzkříšení", "Upřímné uctívání", "Pevnost v pravdě", "Boží trpělivost", "Pomoc v pravou chvíli", "Útěcha od bratrů", "Naděje na věčný život", "Úcta k manželce", "Kristovo smýšlení", "Vykoupení krví", "Východisko ze zkoušky", "Znát svá slabá místa", "Hodnota studia", "Radost z odpuštění", "Připravenost na konec", "Služba z lásky", "Jmenovaní bratři", "Duchovní klid", "Vážnost slibu", "Odvaha k víře", "Radost z kázání", "Bůh jako útočiště", "Nerozdělené srdce", "Láska k nepřátelům", "Trpělivost s hříšníky", "Štědrost k druhým", "Správné priority", "Blízkost v zármutku", "Bůh vidí naše slzy", "Duchovní zralost", "Bázeň před Bohem", "Důvěra v Soudce", "Upřímnost", "Příprava na službu", "Oslava Jehovy", "Jistota odměny", "Radost z pokání", "Bible pro všechny", "Vytrvalost ve zkoušce", "Útěcha po ztrátě", "Obhajoba víry", "Moudrost starších", "Obrazná řeč", "Úcta k manželce", "Starší jako pastýři", "Vděčnost za výkupné", "Na pozoru před pokušením", "Milosrdenství s měřítky", "Podpora bratří", "Zkoumání Písma", "Nesobecká láska", "Moudré rozhodování", "Radost v ráji", "Jehova – naše skála", "Poznání srdce", "Pokorné pokání", "Ochrana sboru", "Síla povzbuzení", "Touha po výsadě", "Ochotná poslušnost", "Naplňující se proroctví", "Bez pomluv", "Zdravá bázeň", "Naděje i pro hříšníka", "Odvaha ke změně", "Jednota v organizaci", "Útěcha v zármutku", "Vzpomínka na Boží skutky", "Chléb věčného života", "Věrnost v manželství", "Ospravedlnění vírou", "Boží smýšlení", "Blízko zlomeným srdcím", "Boží odměna", "Malé kroky k pádu", "Odvaha přes strach", "Posvěcení Božího jména", "Pohostinnost", "Připravenost a bdělost", "Horlivost v kázání", "Bůh si všímá", "Radost z dávání", "Odvaha svědčit", "Vykoupení skrze Krista", "Život vírou", "Proměna mysli", "Kristovo smýšlení", "Poznávání partnera", "Jehova jako skála", "Výlučná oddanost", "Soucitné odpuštění", "Štědrá moudrost", "Dobrá pověst", "Radost z dávání", "Modlitba v nemoci", "Naděje na vzkříšení", "Boží neomezená moc", "Víra jako Noe", "Věrnost slibům", "Pokora", "Boží organizace", "Boží trpělivost", "Vyber si život", "Pravé následování", "Mírnost jako Kristus", "Důvěra v nejistotě", "Boží nestrannost", "Duchovní zralost", "Blízkost k Bohu", "Útěcha v slzách", "Odvaha svědčit", "Vedení rodiny", "Vděčnost za výkupné", "Úleva od pochybností", "Čest být svědkem", "Ochota sloužit", "Útočiště ve sboru", "Boží láska ve výkupném", "Život vírou", "Přitažlivost sboru", "Pochopení Písma", "Důvěra v organizaci", "Důvěra ve vedení", "Vedení k pokání", "Otázky dospívajících", "Víra, která zachraňuje", "Školení druhých", "Nový svět", "Kázání po celém světě", "Manželská věrnost", "Velkorysé odpuštění", "Radost ze služby", "Horlivost do konce", "Pokora", "Když víra kolísá", "Vztah k penězům", "Odolávání pokušení", "Štědré předávání zkušeností", "Místo ve sboru", "Modlitba v zármutku", "Ježíšova láska k lidem", "Svoboda od hříchu", "Věrnost a pilnost", "Moudrá volba práce", "Duchovní ráj", "Království na prvním místě", "Mravní čistota", "Spolehlivost", "Vnitřní pokoj", "Návrat ztraceného", "Radost z dávání"];
+
+  const DAILY_ICONS = {
+    heart: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,150 C55,115 35,85 55,62 C68,47 90,55 100,73 C110,55 132,47 145,62 C165,85 145,115 100,150 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round"/>',
+    dove: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M42,104 C60,72 82,72 100,98 C118,72 140,72 158,104" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M100,98 C100,116 92,128 78,132" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,132 C68,132 60,126 58,116 C68,116 76,120 78,132 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    hourglass: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M68,50 L132,50 L100,100 L132,150 L68,150 L100,100 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round"/><line x1="60" y1="50" x2="140" y2="50" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="60" y1="150" x2="140" y2="150" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="96" r="2.5" fill="var(--c)"/>',
+    sprout: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="60" y1="145" x2="140" y2="145" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,145 C100,110 100,90 100,65" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,110 C80,110 66,96 66,78 C90,78 100,94 100,110 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,90 C120,90 134,76 134,58 C110,58 100,74 100,90 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    sunrise: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="45" y1="128" x2="155" y2="128" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,128 A40,40 0 0 1 140,128" fill="none" stroke="var(--c)" stroke-width="6"/><line x1="100" y1="60" x2="100" y2="76" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="66" y1="76" x2="78" y2="86" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="134" y1="76" x2="122" y2="86" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    anchor: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="56" r="10" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="100" y1="66" x2="100" y2="148" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="76" y1="88" x2="124" y2="88" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,110 C60,132 78,148 100,150 C122,148 140,132 140,110" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/>',
+    lamp: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,58 C112,58 120,68 118,80 C116,90 108,96 108,106 L92,106 C92,96 84,90 82,80 C80,68 88,58 100,58 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="88" y1="106" x2="112" y2="106" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,120 L122,120 L114,146 L86,146 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    wheat: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M70,150 C90,120 110,90 128,58" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><ellipse cx="118" cy="70" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 118 70)"/><ellipse cx="105" cy="88" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 105 88)"/><ellipse cx="128" cy="88" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(60 128 88)"/><ellipse cx="92" cy="106" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(35 92 106)"/><ellipse cx="115" cy="106" rx="7" ry="12" fill="none" stroke="var(--c)" stroke-width="4" transform="rotate(60 115 106)"/>',
+    sun: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="30" fill="none" stroke="var(--c)" stroke-width="6"/><g stroke="var(--c)" stroke-width="5" stroke-linecap="round"><line x1="100" y1="50" x2="100" y2="38"/><line x1="100" y1="150" x2="100" y2="162"/><line x1="50" y1="100" x2="38" y2="100"/><line x1="150" y1="100" x2="162" y2="100"/><line x1="65" y1="65" x2="56" y2="56"/><line x1="135" y1="65" x2="144" y2="56"/><line x1="65" y1="135" x2="56" y2="144"/><line x1="135" y1="135" x2="144" y2="144"/></g>',
+    gift: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M55,120 C55,140 75,152 100,152 C125,152 145,140 145,120" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><path d="M55,120 C75,132 125,132 145,120" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,120 C100,100 100,90 100,80" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M100,92 C86,92 76,82 76,70 C92,70 100,80 100,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M100,80 C114,80 124,70 124,58 C108,58 100,68 100,80 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    mountain: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M45,140 L85,72 L108,104 L122,84 L155,140 Z" fill="none" stroke="var(--c)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="128" cy="60" r="10" fill="none" stroke="var(--c)" stroke-width="5"/>',
+    ripple: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><ellipse cx="100" cy="112" rx="52" ry="10" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="34" ry="6.5" fill="none" stroke="var(--c)" stroke-width="4"/><ellipse cx="100" cy="112" rx="16" ry="3.5" fill="none" stroke="var(--c)" stroke-width="4"/><path d="M100,42 C111,57 118,68 118,78 A18,18 0 1 1 82,78 C82,68 89,57 100,42 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    unity: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="84" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/><circle cx="116" cy="100" r="34" fill="none" stroke="var(--c)" stroke-width="6"/>',
+    hands: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><rect x="66" y="108" width="68" height="48" rx="16" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="72" y="64" width="14" height="54" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="90" y="48" width="14" height="70" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="108" y="42" width="14" height="76" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="126" y="58" width="14" height="60" rx="7" fill="none" stroke="var(--c)" stroke-width="5"/><rect x="52" y="88" width="16" height="50" rx="8" fill="none" stroke="var(--c)" stroke-width="5" transform="rotate(-38 60 138)"/>',
+    book: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,66 C88,58 68,56 54,60 L54,132 C68,128 88,130 100,138 C112,130 132,128 146,132 L146,60 C132,56 112,58 100,66 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="100" y1="66" x2="100" y2="138" stroke="var(--c)" stroke-width="4"/><line x1="64" y1="78" x2="90" y2="74" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="64" y1="92" x2="90" y2="88" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="74" x2="136" y2="78" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="110" y1="88" x2="136" y2="92" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
+    scale: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="100" y1="55" x2="100" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="60" y1="70" x2="140" y2="70" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M60,70 L46,102 C46,112 74,112 74,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><path d="M140,70 L126,102 C126,112 154,112 154,102 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><line x1="78" y1="140" x2="122" y2="140" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    compass: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="100" cy="100" r="46" fill="none" stroke="var(--c)" stroke-width="5"/><path d="M118,80 L108,108 L82,120 L92,92 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/><circle cx="100" cy="100" r="4" fill="var(--c)"/>',
+    star: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,46 L112,86 L154,86 L120,110 L132,150 L100,126 L68,150 L80,110 L46,86 L88,86 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    storm: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M62,96 C48,96 40,86 40,76 C40,64 50,56 62,58 C64,46 76,38 90,40 C102,42 110,50 112,60 C126,58 138,68 138,80 C138,90 130,96 120,96 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,104 L86,132 L102,132 L90,160" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
+    blessing: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M68,50 A34,12 0 0 1 132,50" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="72" y1="54" x2="90" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="100" y1="55" x2="100" y2="134" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="128" y1="54" x2="110" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><path d="M78,140 A24,9 0 0 0 122,140" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    glow: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,38 L111.3,88.7 L162,100 L111.3,111.3 L100,162 L88.7,111.3 L38,100 L88.7,88.7 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><circle cx="100" cy="100" r="6" fill="var(--c)"/>',
+    shield: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,46 L140,60 L140,98 C140,128 122,146 100,156 C78,146 60,128 60,98 L60,60 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M82,100 L94,114 L120,82" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
+    crown: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M52,132 L52,96 L76,116 L100,80 L124,116 L148,96 L148,132 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="52" y1="132" x2="148" y2="132" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="80" r="4" fill="var(--c)"/><circle cx="52" cy="96" r="4" fill="var(--c)"/><circle cx="148" cy="96" r="4" fill="var(--c)"/>',
+    flame: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,48 C118,76 128,96 120,118 C115,132 106,140 100,150 C94,140 85,132 80,118 C72,96 82,76 100,48 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,90 C106,102 108,112 100,124 C92,112 94,102 100,90 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    embrace: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M55,68 C38,90 40,122 62,140 C74,150 88,152 100,150" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><path d="M145,68 C162,90 160,122 138,140 C126,150 112,152 100,150" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="104" r="16" fill="none" stroke="var(--c)" stroke-width="5"/>',
+    handshake: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M35,108 L74,92 L84,102 L100,88 L116,102 L126,92 L165,108" fill="none" stroke="var(--c)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>',
+    key: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="68" cy="100" r="22" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="90" y1="100" x2="148" y2="100" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="128" y1="100" x2="128" y2="116" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="142" y1="100" x2="142" y2="112" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    path: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M52,152 C68,124 56,100 78,84 C100,68 92,44 108,32" fill="none" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><circle cx="108" cy="32" r="7" fill="none" stroke="var(--c)" stroke-width="4"/>',
+    nest: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M48,122 C48,110 152,110 152,122 C152,136 48,136 48,122 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><circle cx="84" cy="112" r="8" fill="none" stroke="var(--c)" stroke-width="4"/><circle cx="104" cy="115" r="8" fill="none" stroke="var(--c)" stroke-width="4"/><circle cx="122" cy="110" r="8" fill="none" stroke="var(--c)" stroke-width="4"/>',
+    candle: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M89,152 L89,96 C89,92 111,92 111,96 L111,152 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M100,72 C108,84 112,92 106,102 C102,108 98,108 94,102 C88,92 92,84 100,72 Z" fill="none" stroke="var(--c)" stroke-width="4" stroke-linejoin="round"/>',
+    rainbow: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M38,142 A62,62 0 0 1 162,142" fill="none" stroke="var(--c)" stroke-width="5"/><path d="M58,142 A42,42 0 0 1 142,142" fill="none" stroke="var(--c)" stroke-width="4"/><line x1="30" y1="142" x2="170" y2="142" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/>',
+    bridge: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M46,124 A54,54 0 0 1 154,124" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="70" y1="124" x2="70" y2="144" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="100" y1="124" x2="100" y2="144" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="130" y1="124" x2="130" y2="144" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="38" y1="144" x2="162" y2="144" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    tree: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="100" y1="155" x2="100" y2="112" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><path d="M100,120 C60,120 54,92 70,72 C64,54 84,42 100,52 C116,42 136,54 130,72 C146,92 140,120 100,120 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/>',
+    bell: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M100,56 C76,56 70,80 70,100 L58,124 L142,124 L130,100 C130,80 124,56 100,56 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="58" y1="124" x2="142" y2="124" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><circle cx="100" cy="50" r="5" fill="none" stroke="var(--c)" stroke-width="4"/><path d="M92,124 C92,134 108,134 108,124" fill="none" stroke="var(--c)" stroke-width="4"/>',
+    ladder: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="76" y1="48" x2="76" y2="152" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="124" y1="48" x2="124" y2="152" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="76" y1="66" x2="124" y2="66" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="76" y1="92" x2="124" y2="92" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="76" y1="118" x2="124" y2="118" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/><line x1="76" y1="144" x2="124" y2="144" stroke="var(--c)" stroke-width="5" stroke-linecap="round"/>',
+    gate: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><line x1="62" y1="150" x2="62" y2="66" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="138" y1="150" x2="138" y2="66" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="62" y1="66" x2="138" y2="66" stroke="var(--c)" stroke-width="6" stroke-linecap="round"/><line x1="85" y1="150" x2="85" y2="80" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="115" y1="150" x2="115" y2="80" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="70" y1="140" x2="130" y2="96" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
+    lighthouse: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M84,152 L92,75 L108,75 L116,152 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M89,75 L111,75 L106,58 L94,58 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M94,58 L106,58 L100,46 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="86" y1="100" x2="114" y2="100" stroke="var(--c)" stroke-width="4"/><line x1="88" y1="126" x2="112" y2="126" stroke="var(--c)" stroke-width="4"/><line x1="112" y1="62" x2="140" y2="50" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/><line x1="112" y1="70" x2="144" y2="72" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/>',
+    basket: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M56,108 L68,150 L132,150 L144,108 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><path d="M76,108 A24,28 0 0 1 124,108" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="66" y1="122" x2="134" y2="122" stroke="var(--c)" stroke-width="3"/><line x1="70" y1="136" x2="130" y2="136" stroke="var(--c)" stroke-width="3"/>',
+    feather: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M118,46 C130,74 128,108 100,146 C96,132 70,118 62,100 C90,100 96,72 118,46 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><line x1="112" y1="60" x2="76" y2="96" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/><line x1="118" y1="78" x2="82" y2="114" stroke="var(--c)" stroke-width="3" stroke-linecap="round"/>',
+    flock: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><circle cx="68" cy="118" r="20" fill="none" stroke="var(--c)" stroke-width="5"/><circle cx="100" cy="108" r="24" fill="none" stroke="var(--c)" stroke-width="5"/><circle cx="132" cy="118" r="20" fill="none" stroke="var(--c)" stroke-width="5"/><line x1="52" y1="134" x2="148" y2="134" stroke="var(--c)" stroke-width="4" stroke-linecap="round"/>',
+    eye: '<circle cx="100" cy="100" r="82" fill="none" stroke="var(--c)" stroke-width="2" opacity="0.25"/><path d="M48,100 C68,72 132,72 152,100 C132,128 68,128 48,100 Z" fill="none" stroke="var(--c)" stroke-width="5" stroke-linejoin="round"/><circle cx="100" cy="100" r="15" fill="none" stroke="var(--c)" stroke-width="5"/><circle cx="100" cy="100" r="4" fill="var(--c)"/>'
+  };
+  const DAILY_ICON_PALETTE = ["var(--gold-dark)", "var(--maroon-dark)", "var(--green)", "var(--gold)", "var(--maroon)"];
+  const DAILY_ICON_DESCRIPTIONS = {
+    heart: "Srdce – láska, výkupné a obětavost.",
+    dove: "Holubice – odpuštění, milosrdenství a smíření.",
+    hourglass: "Přesýpací hodiny – trpělivost a správný čas.",
+    sprout: "Rostlinka – duchovní růst a zrání.",
+    sunrise: "Východ slunce – naděje a vzkříšení.",
+    anchor: "Kotva – pevná víra a věrnost.",
+    lamp: "Lampa – moudrost a poznávání pravdy.",
+    wheat: "Klas obilí – pokora a prostota.",
+    sun: "Slunce – radost a chvála.",
+    gift: "Dárek – vděčnost a štědrost.",
+    mountain: "Hora – odvaha a síla.",
+    ripple: "Kapka na hladině – klid a pokoj.",
+    unity: "Dva propojené kruhy – přátelství a vztahy.",
+    hands: "Pomáhající ruka – služba a péče o druhé.",
+    book: "Otevřená kniha – Bible a Boží slovo.",
+    scale: "Váhy – spravedlnost a rozlišování.",
+    compass: "Kompas – směřování a priority v životě.",
+    star: "Hvězda – Boží sláva a velikost.",
+    storm: "Bouřka s bleskem – zkoušky a nebezpečí.",
+    shield: "Štít – ochrana a bezpečí.",
+    crown: "Koruna – Boží království a úcta.",
+    flame: "Plamen – horlivost a zápal.",
+    embrace: "Objetí – soucit a útěcha.",
+    handshake: "Podání rukou – důvěra a spolehlivost.",
+    key: "Klíč – pochopení a porozumění.",
+    path: "Cesta se značkou – směřování a rozhodnutí.",
+    nest: "Hnízdo s vejci – péče o rodinu a děti.",
+    candle: "Svíčka – modlitba.",
+    rainbow: "Duha – Boží smlouva a milost.",
+    bridge: "Most – smíření a odpuštění.",
+    tree: "Strom – domov a duchovní ráj.",
+    bell: "Zvon – pozvání a kázání.",
+    ladder: "Žebřík – postup a kroky vpřed.",
+    gate: "Brána – křest a rozhodnutí.",
+    lighthouse: "Maják – varování před nebezpečím.",
+    basket: "Košík – štědrost a sdílení.",
+    feather: "Pírko – mírnost a jemnost.",
+    flock: "Stádo – sbor a bratrství.",
+    eye: "Oko – bdělost a sebezkoumání.",
+    blessing: "Paprsky shůry – Boží požehnání.",
+    glow: "Jiskřička – něco dobrého a duchovního."
+  };
+
+  function dayOfYearIdx(d){
+    const start = new Date(d.getFullYear(), 0, 1);
+    return Math.floor((d - start) / 86400000);
+  }
+  // Předpočítané přiřazení ikon ke dnům (jedna položka na DAILY_WORDS) — zajišťuje,
+  // že se žádná ikona za rok neobjeví víc než 10x, a přitom co nejlíp odpovídá tématu slova.
+  const DAILY_MOTIFS = ["sprout","handshake","mountain","lighthouse","sun","heart","sunrise","hourglass","hands","lighthouse","bell","handshake","compass","star","compass","handshake","anchor","hourglass","lamp","handshake","gate","dove","wheat","sun","handshake","handshake","anchor","dove","scale","heart","lamp","ripple","hands","dove","sunrise","compass","sprout","handshake","mountain","sunrise","key","scale","embrace","scale","wheat","sun","heart","mountain","star","handshake","scale","star","handshake","dove","wheat","eye","basket","lamp","anchor","scale","sunrise","lamp","bridge","handshake","scale","sun","lighthouse","hourglass","scale","mountain","anchor","unity","flame","hourglass","hourglass","bridge","compass","heart","dove","tree","hourglass","unity","eye","eye","lighthouse","heart","bell","nest","heart","lamp","heart","rainbow","heart","lighthouse","sunrise","sprout","dove","star","heart","key","sun","sun","lighthouse","scale","mountain","star","eye","dove","anchor","lamp","hourglass","lamp","heart","sprout","lamp","dove","blessing","sprout","lamp","dove","scale","anchor","dove","sprout","ripple","bridge","scale","lamp","sun","gate","lighthouse","key","embrace","star","lighthouse","bell","star","blessing","mountain","mountain","key","lighthouse","nest","tree","unity","unity","anchor","lighthouse","storm","mountain","unity","bridge","bridge","sprout","bridge","path","sun","sun","path","key","storm","ripple","anchor","star","flock","blessing","eye","bridge","bridge","mountain","mountain","key","wheat","blessing","anchor","star","anchor","nest","sun","hourglass","basket","sunrise","blessing","sunrise","flame","wheat","flame","basket","hands","key","star","embrace","blessing","unity","unity","storm","gift","bell","blessing","blessing","bridge","basket","bridge","compass","wheat","unity","unity","shield","embrace","rainbow","hands","unity","bell","sprout","sunrise","crown","flame","hourglass","hands","embrace","sunrise","crown","path","gift","storm","blessing","key","rainbow","eye","hands","hands","ripple","rainbow","flame","bell","shield","embrace","blessing","hourglass","basket","compass","glow","embrace","sprout","glow","glow","glow","hands","glow","gift","glow","key","flame","embrace","path","key","glow","crown","hands","gift","eye","rainbow","hands","glow","embrace","glow","tree","shield","embrace","wheat","flock","flame","gift","glow","book","storm","book","sunrise","flame","compass","book","book","wheat","book","path","path","book","gift","path","flame","book","basket","eye","flame","eye","gift","book","gift","path","sprout","path","book","shield","crown","rainbow","basket","crown","gift","candle","book","feather","path","rainbow","wheat","compass","ladder","feather","ladder","feather","candle","gate","flock","ladder","candle","tree","nest","gift","feather","gate","flock","flock","ladder","candle","flock","tree","compass","compass","feather","ripple","gate","nest","ladder","bell","candle","rainbow","flock","shield","wheat","tree","feather","storm","basket","flock","candle","ripple","storm","gate","nest","tree","crown","ladder","shield","ripple","feather","basket"];
+  function renderDailyWordAndIcon(d){
+    const idx = dayOfYearIdx(d) % DAILY_WORDS.length;
+    const word = DAILY_WORDS[idx];
+    const motif = DAILY_MOTIFS[idx];
+    const color = DAILY_ICON_PALETTE[idx % DAILY_ICON_PALETTE.length];
+    document.getElementById("dailyTextWord").textContent = word;
+    document.getElementById("dailyTextIcon").innerHTML =
+      '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="--c:' + color + '">' + DAILY_ICONS[motif] + '</svg>';
+    const descEl = document.getElementById("dailyTextIconDesc");
+    descEl.textContent = DAILY_ICON_DESCRIPTIONS[motif] || "";
+    descEl.classList.remove("show");
+  }
+
+  // Datum aktuálně zobrazené v náhledu nahoře (může se lišit od "dnes", když
+  // si uživatel prochází jiné dny šipkami). Při zavření okna se vždy vrátí
+  // zpět na dnešek.
+  let dailyPreviewDate = new Date();
+
+  function updateDailyPreview(d){
+    dailyTextTitle.textContent = formatDailyTitle(d);
+    renderDailyWordAndIcon(d);
+  }
+
+  function openDailyTextModal(){
+    dailyPreviewDate = new Date();
+    updateDailyPreview(dailyPreviewDate);
+    dailyTextModal.classList.add("show");
+  }
+  function closeDailyTextModal(){
+    dailyTextModal.classList.remove("show");
+    dailyPreviewDate = new Date();
+  }
+  // Zavření křížkem/mimo okno/Escape = žádná odpověď, takže se dialog má
+  // ještě před dalším kolem znovu připomenout (pokud dnes není přečteno).
+  function closeDailyTextModalUnanswered(){
+    remindBeforeNextRound = true;
+    closeDailyTextModal();
+  }
+  // Wol.jw.org nedovoluje vlastní stránku zobrazit v iframe (blokuje to),
+  // takže se otevírá jako menší samostatné okno vedle hry.
+  function openDailyTextWindow(){
+    window.open(
+      dailyTextUrl(dailyPreviewDate),
+      "bibleGameDailyText",
+      "width=480,height=760,noopener"
+    );
+  }
+
+  document.getElementById("dailyTextYes").addEventListener("click", ()=>{
+    markDailyTextRead();
+    closeDailyTextModal();
+  });
+  document.getElementById("dailyTextReadBtn").addEventListener("click", ()=>{
+    openDailyTextWindow();
+  });
+  document.getElementById("dailyTextLater").addEventListener("click", ()=>{
+    clearDailyTextRead();
+    closeDailyTextModal();
+    saveSnoozeUntil(Date.now() + LATER_REMIND_MS);
+    scheduleLaterReminder();
+  });
+  document.getElementById("dailyTextClose").addEventListener("click", closeDailyTextModalUnanswered);
+  dailyTextModal.addEventListener("click", (e)=>{
+    if(e.target === dailyTextModal) closeDailyTextModalUnanswered();
+  });
+  document.getElementById("dailyTextBtn").addEventListener("click", openDailyTextModal);
+  document.getElementById("dailyTextPrev").addEventListener("click", ()=>{
+    dailyPreviewDate = new Date(dailyPreviewDate);
+    dailyPreviewDate.setDate(dailyPreviewDate.getDate() - 1);
+    updateDailyPreview(dailyPreviewDate);
+  });
+  document.getElementById("dailyTextNext").addEventListener("click", ()=>{
+    dailyPreviewDate = new Date(dailyPreviewDate);
+    dailyPreviewDate.setDate(dailyPreviewDate.getDate() + 1);
+    updateDailyPreview(dailyPreviewDate);
+  });
+  document.getElementById("dailyTextIcon").addEventListener("click", ()=>{
+    document.getElementById("dailyTextIconDesc").classList.toggle("show");
+  });
+  document.getElementById("dailyTextIcon").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" || e.key === " "){
+      e.preventDefault();
+      document.getElementById("dailyTextIconDesc").classList.toggle("show");
+    }
+  });
+
+  // Automaticky při načtení stránky, pokud dnes ještě nebyla odpověď zaznamenaná.
+  // Pokud je aktivní odložení z „Později“ (i z doby před obnovením stránky),
+  // dialog se hned nezobrazí — jen se přeplánuje na zbývající čas.
+  if(!isDailyTextReadToday()){
+    const pendingSnooze = loadSnoozeUntil();
+    const now = Date.now();
+    if(pendingSnooze && pendingSnooze > now){
+      scheduleLaterReminder(pendingSnooze - now);
+    } else {
+      if(pendingSnooze) clearSnoozeUntil();
+      openDailyTextModal();
+    }
+  }
+
+  // Zavření křížkem/mimo okno/Escapem (bez odpovědi) — připomínka se vrátí
+  // před dalším kolem. Odpověď „Později“ má vlastní, nezávislé 15minutové
+  // odložení (scheduleLaterReminder) a nové kolo ho nijak neurychluje.
+  function maybeShowDailyTextReminder(){
+    if(remindBeforeNextRound && !isDailyTextReadToday()){
+      remindBeforeNextRound = false;
+      clearLaterTimer();
+      clearSnoozeUntil();
+      openDailyTextModal();
+    }
+  }
+
+  // ---------- PŘEHLED VŠECH KNIH — modální okno ----------
+  const overviewModal = document.getElementById("overviewModal");
+  const overviewContent = document.getElementById("overviewContent");
+  let overviewBuilt = false;
+
+  function buildOverviewTable(){
+    const rows = BOOKS.map((name, idx)=>
+      (idx === 39 ? '<tr class="testament-gap"><td colspan="4"></td></tr>' : "") +
+      "<tr><td>" + name + "</td><td>" + WRITING_PERIOD[idx] + "</td><td>" + WRITERS[idx] + "</td><td>" + COVERED_PERIOD[idx] + "</td></tr>"
+    ).join("");
+    overviewContent.innerHTML =
+      '<div class="table-scroll"><table class="overview-table"><thead><tr><th>Název</th><th>Dokončeno</th><th>Pisatel</th><th>Zahrnutá doba</th></tr></thead><tbody>' +
+      rows +
+      "</tbody></table></div>";
+  }
+
+  function openOverview(){
+    if(!overviewBuilt){ buildOverviewTable(); overviewBuilt = true; }
+    overviewModal.classList.add("show");
+  }
+  function closeOverview(){
+    overviewModal.classList.remove("show");
+  }
+
+  [1,2,3,4,5,6,7].forEach(k=>{
+    const btn = document.getElementById("overview" + k);
+    if(btn) btn.addEventListener("click", openOverview);
+  });
+  document.getElementById("overviewClose").addEventListener("click", closeOverview);
+  overviewModal.addEventListener("click", (e)=>{
+    if(e.target === overviewModal) closeOverview();
+  });
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.key !== "Escape") return;
+    if(historyModal.classList.contains("show")) closeHistory();
+    if(overviewModal.classList.contains("show")) closeOverview();
+    if(dailyTextModal.classList.contains("show")) closeDailyTextModalUnanswered();
+  });
+
+  function clearVerdictStyles(container){
+    container.querySelectorAll(".book-item").forEach(li=>{
+      li.classList.remove("correct","incorrect");
+    });
+  }
+
+  function isListFullyCorrect(container, targetIndices){
+    const items = [...container.querySelectorAll(".book-item")];
+    if(items.length !== targetIndices.length) return false;
+    return items.every((li, pos)=> parseInt(li.dataset.idx,10) === targetIndices[pos]);
+  }
+
+  function clearTileStyles(container){
+    container.querySelectorAll(".book-tile").forEach(li=>{
+      li.classList.remove("correct","incorrect");
+    });
+  }
+
+  function isTileGridFullyCorrect(container, targetIndices){
+    const tiles = [...container.querySelectorAll(".book-tile")];
+    if(tiles.length !== targetIndices.length) return false;
+    return tiles.every((li, pos)=> parseInt(li.dataset.idx,10) === targetIndices[pos]);
+  }
+
+  function hideSolutionColumn(modeKey){
+    const wrap = document.getElementById("wrap"+modeKey);
+    if(wrap) wrap.classList.remove("revealed");
+    const sol = document.getElementById("list"+modeKey+"Solution");
+    if(sol) sol.innerHTML = "";
+  }
+
+  function showSolutionColumn(modeKey, orderedIndices){
+    const wrap = document.getElementById("wrap"+modeKey);
+    const sol = document.getElementById("list"+modeKey+"Solution");
+    if(!wrap || !sol) return;
+    sol.innerHTML = "";
+    orderedIndices.forEach((idx, pos)=>{
+      sol.appendChild(makeSolutionItem(idx, pos));
+    });
+    wrap.classList.add("revealed");
+  }
+
+  // ---------- SBALENÍ NÁVODU PO PRVNÍ ÚSPĚŠNÉ HŘE ----------
+  // Jakmile hráč v daném režimu poprvé dokončí kolo na 100 %, dlouhý návod
+  // se schová a nahradí ho jen ikonka „?“ vedle nadpisu (nápověda zůstává
+  // dostupná v tooltipu). Stav se pamatuje i po zavření/obnovení stránky.
+  const SOLVED_MODES_KEY = "bibleOrderGameSolvedModes";
+
+  function loadSolvedModes(){
+    try{
+      const raw = localStorage.getItem(SOLVED_MODES_KEY);
+      if(!raw) return {};
+      const data = JSON.parse(raw);
+      return (data && typeof data === "object") ? data : {};
+    }catch(e){ return {}; }
+  }
+
+  function saveSolvedModes(solved){
+    try{ localStorage.setItem(SOLVED_MODES_KEY, JSON.stringify(solved)); }catch(e){}
+  }
+
+  const solvedModes = loadSolvedModes();
+
+  function collapseHint(modeKey){
+    const hintEl = document.getElementById("hint" + modeKey);
+    const iconEl = document.getElementById("hint" + modeKey + "Icon");
+    if(hintEl) hintEl.style.display = "none";
+    if(iconEl) iconEl.style.display = "inline-flex";
+  }
+
+  function markModeSolved(modeKey){
+    if(!solvedModes[modeKey]){
+      solvedModes[modeKey] = true;
+      saveSolvedModes(solvedModes);
+    }
+    collapseHint(modeKey);
+  }
+
+  [1,2,3,4,5,6,7].forEach(k=>{ if(solvedModes[k]) collapseHint(k); });
+
+  // ---------- MODE 1 ----------
+  const list1 = document.getElementById("list1");
+  const verdict1 = document.getElementById("verdict1");
+
+  function buildMode1(){
+    roundScored[1] = false;
+    roundRevealed[1] = false;
+    verdict1.className = "verdict";
+    verdict1.textContent = "";
+    list1.innerHTML = "";
+    hideSolutionColumn(1);
+    list1.classList.remove("hide-arrows");
+    const order = shuffle(BOOKS.map((_,i)=>i));
+    order.forEach(idx=>{
+      list1.appendChild(makeItemWithArrows(idx));
+    });
+  }
+
+  function checkMode1(){
+    clearVerdictStyles(list1);
+    const items = [...list1.querySelectorAll(".book-item")];
+    let correct = 0;
+    items.forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === pos){
+        li.classList.add("correct");
+        correct++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+    const pointsMsg = scoreRoundOnce(1, correct, 66, 30);
+    verdict1.classList.add("show");
+    if(correct === 66){
+      verdict1.className = "verdict show perfect";
+      verdict1.textContent = randomPerfectMessage() + " Všech 66 knih je ve správném pořadí!" + pointsMsg;
+      markModeSolved(1);
+      celebrateVerdict(verdict1);
+    }else{
+      verdict1.className = "verdict show partial";
+      verdict1.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode1(){
+    roundRevealed[1] = true;
+    list1.classList.add("hide-arrows");
+    const target = BOOKS.map((_, idx)=>idx);
+    const allCorrect = isListFullyCorrect(list1, target);
+    showSolutionColumn(1, target);
+    verdict1.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict1.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+  }
+
+  document.getElementById("check1").addEventListener("click", checkMode1);
+  document.getElementById("shuffle1").addEventListener("click", buildMode1);
+  document.getElementById("shuffle1").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal1").addEventListener("click", revealMode1);
+  attachSortable(list1);
+  buildMode1();
+
+  // ---------- MODE 2 ----------
+  const list2 = document.getElementById("list2");
+  const verdict2 = document.getElementById("verdict2");
+
+  let mode2Pool = [];
+
+  function buildMode2(){
+    roundScored[2] = false;
+    roundRevealed[2] = false;
+    verdict2.className = "verdict";
+    verdict2.textContent = "";
+    list2.innerHTML = "";
+    hideSolutionColumn(2);
+    mode2Pool = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
+    const shuffled = shuffle(mode2Pool);
+    shuffled.forEach(idx=>{
+      list2.appendChild(makeItem(idx));
+    });
+  }
+
+  function checkMode2(){
+    clearVerdictStyles(list2);
+    const items = [...list2.querySelectorAll(".book-item")];
+    const indices = items.map(li=>parseInt(li.dataset.idx,10));
+    const sortedCopy = indices.slice().sort((a,b)=>a-b);
+    let allCorrect = true;
+    let correctCount = 0;
+    items.forEach((li, pos)=>{
+      const idx = indices[pos];
+      if(idx === sortedCopy[pos]){
+        li.classList.add("correct");
+        correctCount++;
+      }else{
+        li.classList.add("incorrect");
+        allCorrect = false;
+      }
+    });
+    const pointsMsg = scoreRoundOnce(2, correctCount, 5, 6);
+    verdict2.classList.add("show");
+    if(allCorrect){
+      verdict2.className = "verdict show perfect";
+      verdict2.textContent = randomPerfectMessage() + pointsMsg;
+      markModeSolved(2);
+      celebrateVerdict(verdict2);
+    }else{
+      verdict2.className = "verdict show partial";
+      verdict2.textContent = "❌ Ještě to není ono." + pointsMsg;
+    }
+  }
+
+  function revealMode2(){
+    roundRevealed[2] = true;
+    const target = mode2Pool.slice().sort((a,b)=>a-b);
+    const allCorrect = isListFullyCorrect(list2, target);
+    showSolutionColumn(2, target);
+    verdict2.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict2.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+  }
+
+  document.getElementById("check2").addEventListener("click", checkMode2);
+  document.getElementById("next2").addEventListener("click", buildMode2);
+  document.getElementById("next2").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal2").addEventListener("click", revealMode2);
+  attachSortable(list2);
+  buildMode2();
+
+  // ---------- MODE 3 : malí proroci ----------
+  const MINOR_PROPHETS = BOOKS.reduce((acc, name, idx)=>{
+    if(idx >= 27 && idx <= 38) acc.push(idx);
+    return acc;
+  }, []);
+
+  const list3 = document.getElementById("list3");
+  const verdict3 = document.getElementById("verdict3");
+  function buildMode3(){
+    roundScored[3] = false;
+    roundRevealed[3] = false;
+    verdict3.className = "verdict";
+    verdict3.textContent = "";
+    list3.innerHTML = "";
+    hideSolutionColumn(3);
+    const order = shuffle(MINOR_PROPHETS);
+    order.forEach(idx=>{
+      list3.appendChild(makeItem(idx));
+    });
+  }
+
+  function checkMode3(){
+    clearVerdictStyles(list3);
+    const items = [...list3.querySelectorAll(".book-item")];
+    let correct = 0;
+    items.forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === MINOR_PROPHETS[pos]){
+        li.classList.add("correct");
+        correct++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+    const pointsMsg = scoreRoundOnce(3, correct, 12, 15);
+    verdict3.classList.add("show");
+    if(correct === 12){
+      verdict3.className = "verdict show perfect";
+      verdict3.textContent = randomPerfectMessage() + " Všech 12 malých proroků je ve správném pořadí!" + pointsMsg;
+      markModeSolved(3);
+      celebrateVerdict(verdict3);
+    }else{
+      verdict3.className = "verdict show partial";
+      verdict3.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode3(){
+    roundRevealed[3] = true;
+    const allCorrect = isListFullyCorrect(list3, MINOR_PROPHETS);
+    showSolutionColumn(3, MINOR_PROPHETS);
+    verdict3.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict3.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+  }
+
+  document.getElementById("check3").addEventListener("click", checkMode3);
+  document.getElementById("shuffle3").addEventListener("click", buildMode3);
+  document.getElementById("shuffle3").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal3").addEventListener("click", revealMode3);
+  attachSortable(list3);
+  buildMode3();
+
+  // ---------- MODE 6 : Křesťanská řecká písma ----------
+  const CHRISTIAN_GREEK_SCRIPTURES = BOOKS.reduce((acc, name, idx)=>{
+    if(idx >= 39 && idx <= 65) acc.push(idx);
+    return acc;
+  }, []);
+
+  const list6 = document.getElementById("list6");
+  const verdict6 = document.getElementById("verdict6");
+  function buildMode6(){
+    roundScored[6] = false;
+    roundRevealed[6] = false;
+    verdict6.className = "verdict";
+    verdict6.textContent = "";
+    list6.innerHTML = "";
+    hideSolutionColumn(6);
+    const order = shuffle(CHRISTIAN_GREEK_SCRIPTURES);
+    order.forEach(idx=>{
+      list6.appendChild(makeItem(idx));
+    });
+  }
+
+  function checkMode6(){
+    clearVerdictStyles(list6);
+    const items = [...list6.querySelectorAll(".book-item")];
+    let correct = 0;
+    items.forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === CHRISTIAN_GREEK_SCRIPTURES[pos]){
+        li.classList.add("correct");
+        correct++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+    const pointsMsg = scoreRoundOnce(6, correct, 27, 20);
+    verdict6.classList.add("show");
+    if(correct === 27){
+      verdict6.className = "verdict show perfect";
+      verdict6.textContent = randomPerfectMessage() + " Všech 27 knih Křesťanských řeckých písem je ve správném pořadí!" + pointsMsg;
+      markModeSolved(6);
+      celebrateVerdict(verdict6);
+    }else{
+      verdict6.className = "verdict show partial";
+      verdict6.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode6(){
+    roundRevealed[6] = true;
+    const allCorrect = isListFullyCorrect(list6, CHRISTIAN_GREEK_SCRIPTURES);
+    showSolutionColumn(6, CHRISTIAN_GREEK_SCRIPTURES);
+    verdict6.className = allCorrect ? "verdict show perfect" : "verdict show partial";
+    verdict6.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí souhlasí se správným řešením vpravo."
+      : "Vpravo je správné pořadí — porovnej si ho se svým a najdi své chyby.";
+  }
+
+  document.getElementById("check6").addEventListener("click", checkMode6);
+  document.getElementById("shuffle6").addEventListener("click", buildMode6);
+  document.getElementById("shuffle6").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal6").addEventListener("click", revealMode6);
+  attachSortable(list6);
+  buildMode6();
+
+  // ---------- MODE 7 : Všech 66 knih (mřížka čtverečků) ----------
+  const grid7ot = document.getElementById("grid7ot");
+  const grid7nt = document.getElementById("grid7nt");
+  const verdict7 = document.getElementById("verdict7");
+
+  function buildMode7(){
+    roundScored[7] = false;
+    roundRevealed[7] = false;
+    verdict7.className = "verdict";
+    verdict7.textContent = "";
+    grid7ot.innerHTML = "";
+    grid7nt.innerHTML = "";
+    // Zamíchá se úplně všech 66 knih dohromady, teprve pak se rozdělí na
+    // prvních 39 a zbylých 27 čtverečků — takže se knihy promíchají i mezi
+    // oběma skupinami a hráč je musí přetáhnout i mezi bloky, ne jen v rámci
+    // jednoho z nich.
+    const allShuffled = shuffle(BOOKS.map((_,i)=>i));
+    const otOrder = allShuffled.slice(0,39);
+    const ntOrder = allShuffled.slice(39,66);
+    otOrder.forEach(idx=>{ grid7ot.appendChild(makeTile(idx)); });
+    ntOrder.forEach(idx=>{ grid7nt.appendChild(makeTile(idx)); });
+  }
+
+  function checkMode7(){
+    clearTileStyles(grid7ot);
+    clearTileStyles(grid7nt);
+    let correct = 0;
+    [...grid7ot.querySelectorAll(".book-tile")].forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === pos){ li.classList.add("correct"); correct++; }
+      else{ li.classList.add("incorrect"); }
+    });
+    [...grid7nt.querySelectorAll(".book-tile")].forEach((li, pos)=>{
+      const idx = parseInt(li.dataset.idx,10);
+      if(idx === 39+pos){ li.classList.add("correct"); correct++; }
+      else{ li.classList.add("incorrect"); }
+    });
+    const pointsMsg = scoreRoundOnce(7, correct, 66, 30);
+    verdict7.classList.add("show");
+    if(correct === 66){
+      verdict7.className = "verdict show perfect";
+      verdict7.textContent = randomPerfectMessage() + " Všech 66 knih je ve správném pořadí!" + pointsMsg;
+      markModeSolved(7);
+      celebrateVerdict(verdict7);
+    }else{
+      verdict7.className = "verdict show partial";
+      verdict7.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode7(){
+    roundRevealed[7] = true;
+    const otTarget = BOOKS.map((_,i)=>i).slice(0,39);
+    const ntTarget = BOOKS.map((_,i)=>i).slice(39,66);
+    const allCorrect = isTileGridFullyCorrect(grid7ot, otTarget) && isTileGridFullyCorrect(grid7nt, ntTarget);
+    if(!allCorrect){
+      grid7ot.innerHTML = "";
+      otTarget.forEach(idx=>{ grid7ot.appendChild(makeTile(idx)); });
+      grid7nt.innerHTML = "";
+      ntTarget.forEach(idx=>{ grid7nt.appendChild(makeTile(idx)); });
+    }
+    clearTileStyles(grid7ot);
+    clearTileStyles(grid7nt);
+    verdict7.className = "verdict show perfect";
+    verdict7.textContent = allCorrect
+      ? "Přesně tak! Tvé pořadí je úplně správně."
+      : "Toto je správné pořadí. Zkus si to teď zapamatovat a zamíchat znovu.";
+  }
+
+  document.getElementById("check7").addEventListener("click", checkMode7);
+  document.getElementById("shuffle7").addEventListener("click", buildMode7);
+  document.getElementById("shuffle7").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal7").addEventListener("click", revealMode7);
+  attachSortableGrid(grid7ot, grid7nt);
+  buildMode7();
+
+  // ---------- MODE 4 : knihy a pisatelé ----------
+  const list4books = document.getElementById("list4books");
+  const list4writers = document.getElementById("list4writers");
+  const verdict4 = document.getElementById("verdict4");
+  let mode4Selected = [];
+
+  function buildMode4(){
+    roundScored[4] = false;
+    roundRevealed[4] = false;
+    verdict4.className = "verdict";
+    verdict4.textContent = "";
+    list4books.innerHTML = "";
+    list4writers.innerHTML = "";
+    mode4Selected = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
+    shuffle(mode4Selected).forEach(idx=>{
+      list4books.appendChild(makeItem(idx));
+    });
+    shuffle(mode4Selected).forEach(idx=>{
+      list4writers.appendChild(makeWriterItem(idx));
+    });
+    syncColumnHeights(list4books, list4writers);
+  }
+
+  function checkMode4(){
+    clearVerdictStyles(list4books);
+    clearVerdictStyles(list4writers);
+
+    const bookItems = [...list4books.querySelectorAll(".book-item")];
+    const bookIndices = bookItems.map(li=>parseInt(li.dataset.idx,10));
+    const sortedIndices = bookIndices.slice().sort((a,b)=>a-b);
+
+    let orderCorrect = 0;
+    bookItems.forEach((li, pos)=>{
+      if(bookIndices[pos] === sortedIndices[pos]){
+        li.classList.add("correct");
+        orderCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const writerItems = [...list4writers.querySelectorAll(".book-item")];
+    let matchCorrect = 0;
+    writerItems.forEach((li, pos)=>{
+      const forBook = bookIndices[pos];
+      const correctWriter = WRITERS[forBook];
+      const shownWriter = WRITERS[parseInt(li.dataset.book,10)];
+      if(forBook !== undefined && shownWriter === correctWriter){
+        li.classList.add("correct");
+        matchCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const pointsMsg = scoreRoundOnce(4, orderCorrect + matchCorrect, 10, 15);
+    verdict4.classList.add("show");
+    if(orderCorrect === 5 && matchCorrect === 5){
+      verdict4.className = "verdict show perfect";
+      verdict4.textContent = randomPerfectMessage() + " Knihy sedí a pisatelé jsou správně přiřazení!" + pointsMsg;
+      markModeSolved(4);
+      celebrateVerdict(verdict4);
+    }else{
+      verdict4.className = "verdict show partial";
+      verdict4.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode4(){
+    roundRevealed[4] = true;
+    list4books.innerHTML = "";
+    list4writers.innerHTML = "";
+    mode4Selected.slice().sort((a,b)=>a-b).forEach(idx=>{
+      list4books.appendChild(makeItem(idx));
+      list4writers.appendChild(makeWriterItem(idx));
+    });
+    syncColumnHeights(list4books, list4writers);
+    clearVerdictStyles(list4books);
+    clearVerdictStyles(list4writers);
+    verdict4.className = "verdict show perfect";
+    verdict4.textContent = "Toto je správné řešení. Zkus si ho teď zapamatovat a zamíchat znovu.";
+  }
+
+  document.getElementById("check4").addEventListener("click", checkMode4);
+  document.getElementById("shuffle4").addEventListener("click", buildMode4);
+  document.getElementById("shuffle4").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal4").addEventListener("click", revealMode4);
+  attachSortable(list4books);
+  attachSortable(list4writers);
+  list4books.addEventListener("dragend", ()=>syncColumnHeights(list4books, list4writers));
+  list4writers.addEventListener("dragend", ()=>syncColumnHeights(list4books, list4writers));
+  buildMode4();
+
+  // ---------- MODE 5 : knihy a doba dokončení psaní ----------
+  const list5books = document.getElementById("list5books");
+  const list5periods = document.getElementById("list5periods");
+  const verdict5 = document.getElementById("verdict5");
+  let mode5Selected = [];
+
+  function buildMode5(){
+    roundScored[5] = false;
+    roundRevealed[5] = false;
+    verdict5.className = "verdict";
+    verdict5.textContent = "";
+    list5books.innerHTML = "";
+    list5periods.innerHTML = "";
+    mode5Selected = shuffle(BOOKS.map((_,i)=>i)).slice(0,5);
+    shuffle(mode5Selected).forEach(idx=>{
+      list5books.appendChild(makeItem(idx));
+    });
+    shuffle(mode5Selected).forEach(idx=>{
+      list5periods.appendChild(makePeriodItem(idx));
+    });
+    syncColumnHeights(list5books, list5periods);
+  }
+
+  function checkMode5(){
+    clearVerdictStyles(list5books);
+    clearVerdictStyles(list5periods);
+
+    const bookItems = [...list5books.querySelectorAll(".book-item")];
+    const bookIndices = bookItems.map(li=>parseInt(li.dataset.idx,10));
+    const sortedIndices = bookIndices.slice().sort((a,b)=>a-b);
+
+    let orderCorrect = 0;
+    bookItems.forEach((li, pos)=>{
+      if(bookIndices[pos] === sortedIndices[pos]){
+        li.classList.add("correct");
+        orderCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const periodItems = [...list5periods.querySelectorAll(".book-item")];
+    let matchCorrect = 0;
+    periodItems.forEach((li, pos)=>{
+      const forBook = bookIndices[pos];
+      const correctPeriod = WRITING_PERIOD[forBook];
+      const shownPeriod = WRITING_PERIOD[parseInt(li.dataset.book,10)];
+      if(forBook !== undefined && shownPeriod === correctPeriod){
+        li.classList.add("correct");
+        matchCorrect++;
+      }else{
+        li.classList.add("incorrect");
+      }
+    });
+
+    const pointsMsg = scoreRoundOnce(5, orderCorrect + matchCorrect, 10, 15, 5);
+    verdict5.classList.add("show");
+    if(orderCorrect === 5 && matchCorrect === 5){
+      verdict5.className = "verdict show perfect";
+      verdict5.textContent = randomPerfectMessage() + " Knihy sedí a doba dokončení psaní je správně přiřazená!" + pointsMsg;
+      markModeSolved(5);
+      celebrateVerdict(verdict5);
+    }else{
+      verdict5.className = "verdict show partial";
+      verdict5.textContent = "Zatím to není přesné." + pointsMsg;
+    }
+  }
+
+  function revealMode5(){
+    roundRevealed[5] = true;
+    list5books.innerHTML = "";
+    list5periods.innerHTML = "";
+    mode5Selected.slice().sort((a,b)=>a-b).forEach(idx=>{
+      list5books.appendChild(makeItem(idx));
+      list5periods.appendChild(makePeriodItem(idx));
+    });
+    syncColumnHeights(list5books, list5periods);
+    clearVerdictStyles(list5books);
+    clearVerdictStyles(list5periods);
+    verdict5.className = "verdict show perfect";
+    verdict5.textContent = "Toto je správné řešení. Zkus si ho teď zapamatovat a zamíchat znovu.";
+  }
+
+  document.getElementById("check5").addEventListener("click", checkMode5);
+  document.getElementById("shuffle5").addEventListener("click", buildMode5);
+  document.getElementById("shuffle5").addEventListener("click", maybeShowDailyTextReminder);
+  document.getElementById("reveal5").addEventListener("click", revealMode5);
+  attachSortable(list5books);
+  attachSortable(list5periods);
+  list5books.addEventListener("dragend", ()=>syncColumnHeights(list5books, list5periods));
+  list5periods.addEventListener("dragend", ()=>syncColumnHeights(list5books, list5periods));
+  buildMode5();
+
+  let colHeightResizeTimer;
+  window.addEventListener("resize", ()=>{
+    clearTimeout(colHeightResizeTimer);
+    colHeightResizeTimer = setTimeout(()=>{
+      syncColumnHeights(list4books, list4writers);
+      syncColumnHeights(list5books, list5periods);
+    }, 150);
+  });
+
+  // ---------- NÁPOVĚDNÉ IKONKY (dotyk / klik) ----------
+  const allHelpIcons = document.querySelectorAll(".help-icon");
+  allHelpIcons.forEach(icon=>{
+    icon.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const wasOpen = icon.classList.contains("tooltip-open");
+      allHelpIcons.forEach(i=>i.classList.remove("tooltip-open"));
+      if(!wasOpen) icon.classList.add("tooltip-open");
+    });
+  });
+  document.addEventListener("click", ()=>{
+    allHelpIcons.forEach(i=>i.classList.remove("tooltip-open"));
+  });
+
+  // ---------- VÝBĚR REŽIMU ----------
+  const modeSelect = document.getElementById("modeSelect");
+  const panels = { "1": document.getElementById("panel1"), "2": document.getElementById("panel2"), "3": document.getElementById("panel3"), "4": document.getElementById("panel4"), "5": document.getElementById("panel5"), "6": document.getElementById("panel6"), "7": document.getElementById("panel7") };
+  modeSelect.addEventListener("change", ()=>{
+    Object.values(panels).forEach(p=>p.classList.remove("active"));
+    panels[modeSelect.value].classList.add("active");
+  });
+
+})();
+</script>
+</body>
+</html>
