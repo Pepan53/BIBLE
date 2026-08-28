@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Biblické hry — rozcestník</title>
+<link rel="stylesheet" href="assets/common.css">
 <style>
   :root{
     --bg: #f6f1e6;
@@ -97,11 +98,56 @@
 </style>
 </head>
 <body>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay" id="historyModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>📈 Historie skóre po dnech</h3>
+      <button class="modal-close" id="historyClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div id="historyContent"></div>
+  </div>
+</div>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <h1>Biblické hry</h1>
     <div class="subtitle">Vyber si, co si chceš dnes procvičit</div>
   </header>
+
+  <div class="global-score-bar">
+    <span class="value-pill">🏅 Skóre: <span class="num" id="globalScoreValue">0</span> bodů</span>
+    <button class="history-btn" id="historyBtn" title="Historie skóre" aria-label="Historie skóre">📈</button>
+  </div>
 
   <div class="cards">
     <a class="card-link" href="casova-osa.html">
@@ -121,5 +167,6 @@
 
   <footer>Zdroj dat: mapa „Slíbené potomstvo“</footer>
 </div>
+<script src="assets/common.js"></script>
 </body>
 </html>

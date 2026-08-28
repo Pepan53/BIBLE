@@ -140,7 +140,7 @@
     padding: 0;
   }
 
-  .theme-toggle-btn, .daily-text-btn{
+  .theme-toggle-btn, .daily-text-btn, .home-btn{
     position: fixed;
     top: 16px;
     right: 16px;
@@ -158,14 +158,17 @@
     padding: 0;
     box-shadow: var(--shadow);
     z-index: 5000;
+    text-decoration: none;
     transition: background .25s ease, border-color .2s ease, transform .1s ease;
   }
   .daily-text-btn{ right: 64px; }
-  .theme-toggle-btn:hover, .daily-text-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
-  .theme-toggle-btn:active, .daily-text-btn:active{ transform: scale(0.96); }
+  .home-btn{ left: 16px; right: auto; }
+  .theme-toggle-btn:hover, .daily-text-btn:hover, .home-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
+  .theme-toggle-btn:active, .daily-text-btn:active, .home-btn:active{ transform: scale(0.96); }
   @media (max-width: 480px){
-    .theme-toggle-btn, .daily-text-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
+    .theme-toggle-btn, .daily-text-btn, .home-btn{ top: 10px; right: 10px; width: 36px; height: 36px; font-size: 1em; }
     .daily-text-btn{ right: 54px; }
+    .home-btn{ left: 10px; right: auto; }
   }
   .history-btn:hover{ border-color: var(--gold); background: #f1e6ce; }
 
@@ -813,6 +816,7 @@
 </style>
 </head>
 <body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
 <button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">☀️</button>
 <button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
 <div class="wrap">
