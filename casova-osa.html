@@ -140,6 +140,7 @@
   .btn.wide{ width:100%; text-align:center; }
   .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 8px; }
   .btn-row .btn{ flex:1; min-width: 120px; }
+  .btn.gear-inline{ flex: 0 0 auto; min-width: 0; width: 44px; font-size: 1.1em; padding: 10px 12px; }
 
   .score-bar{
     text-align:center;
@@ -227,32 +228,6 @@
     margin-top: 6px;
   }
 
-  .gear-btn{
-    position: fixed;
-    top: 16px;
-    right: 112px;
-    background: var(--bg-panel);
-    border: 1.5px solid var(--border);
-    color: var(--gold-dark);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 1.2em;
-    cursor: pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding: 0;
-    box-shadow: var(--shadow);
-    z-index: 5000;
-    transition: transform .1s ease, border-color .2s ease;
-  }
-  .gear-btn:hover{ border-color: var(--gold); transform: scale(1.06); }
-  .gear-btn:active{ transform: scale(0.96); }
-  @media (max-width: 480px){
-    .gear-btn{ top: 10px; right: 100px; width: 36px; height: 36px; font-size: 1.05em; }
-  }
-
   .modal-overlay{
     position: fixed;
     inset: 0;
@@ -306,7 +281,6 @@
 <a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
 <button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
 <button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
-<button class="gear-btn" id="gearBtn" title="Nastavení" aria-label="Nastavení">⚙</button>
 
 <div class="modal-overlay" id="historyModal">
   <div class="modal-box">
@@ -381,6 +355,7 @@
     <button class="btn" id="checkBtn">Zkontrolovat</button>
     <button class="btn secondary" id="revealBtn">Zobrazit řešení</button>
     <button class="btn secondary" id="shuffleBtn">Zamíchat znovu</button>
+    <button class="btn secondary gear-inline" id="gearBtn" title="Nastavení" aria-label="Nastavení">⚙</button>
   </div>
 
   <div class="global-score-bar">
@@ -396,10 +371,9 @@
   <div id="gameArea">
     <div class="verdict" id="verdict"></div>
     <ol class="card-list" id="cardList"></ol>
-    <div class="legend-note">Karty přetahuj za úchyt ☰ na správné místo. Řazení: od nejstaršího nahoře po nejnovější dole. U některých soudců a proroků jde jen o přibližné/pořadové zařazení (~), protože mapa u nich neuvádí přesný letopočet.</div>
   </div>
 
-  <footer>Zdroj dat: mapa „Slíbené potomstvo“</footer>
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
 
 
@@ -841,6 +815,7 @@
     currentRound = shuffle(correctOrder);
     roundChecked = false;
     pointsAwarded = false;
+    revealUsed = false;
     renderCards(currentRound);
     verdict.className = "verdict";
     verdict.textContent = "";
