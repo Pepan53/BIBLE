@@ -142,12 +142,6 @@
   .btn-row .btn{ flex:1; min-width: 120px; }
   .btn.gear-inline{ flex: 0 0 auto; min-width: 0; width: 44px; font-size: 1.1em; padding: 10px 12px; }
 
-  .score-bar{
-    text-align:center;
-    margin-bottom: 14px;
-    font-weight:700;
-    color: var(--maroon-dark);
-  }
   .score-pop{ animation: score-pop .45s ease; }
   @keyframes score-pop{
     0%{ transform: scale(1); }
@@ -366,7 +360,7 @@
     </span>
   </div>
 
-  <div class="score-bar" id="scoreBar">Skóre: 0 správně z 0 kol</div>
+
 
   <div id="gameArea">
     <div class="verdict" id="verdict"></div>
@@ -570,8 +564,6 @@
   // ---------- STATE ----------
   let currentRound = [];   // aktuální pořadí karet (jak je uživatel seřadil)
   let correctOrder = [];   // správné chronologické pořadí (stejné položky)
-  let roundsPlayed = 0;
-  let roundsCorrect = 0;
   let roundChecked = false;
   let pointsAwarded = false;
   let revealUsed = false;
@@ -630,16 +622,6 @@
   const cardList = document.getElementById("cardList");
   const verdict = document.getElementById("verdict");
   const setupHint = document.getElementById("setupHint");
-  const scoreBar = document.getElementById("scoreBar");
-
-  function updateScoreBar(pop){
-    scoreBar.textContent = `Skóre: ${roundsCorrect} správně z ${roundsPlayed} kol`;
-    if(pop){
-      scoreBar.classList.remove("score-pop");
-      void scoreBar.offsetWidth;
-      scoreBar.classList.add("score-pop");
-    }
-  }
 
   function startRound(){
     const cats = getSelectedCats();
@@ -778,10 +760,7 @@
       li.classList.add(isRight ? "correct" : "incorrect");
       if(isRight){ correctCount++; } else { allCorrect = false; }
     });
-    roundsPlayed++;
-    if(allCorrect) roundsCorrect++;
     roundChecked = true;
-    updateScoreBar(true);
     verdict.classList.add("show");
     let pointsMsg = "";
     if(!revealUsed && !pointsAwarded && window.BibleGameCommon){
@@ -821,7 +800,6 @@
     verdict.textContent = "";
   });
 
-  updateScoreBar(false);
   startRound();
 
 })();
