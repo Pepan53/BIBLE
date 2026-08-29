@@ -130,6 +130,7 @@
     font-size: 0.95em;
     cursor: pointer;
     box-shadow: var(--shadow);
+    white-space: nowrap;
   }
   .btn:active{ transform: scale(0.97); }
   .btn.secondary{
@@ -138,9 +139,14 @@
     font-weight: 600;
   }
   .btn.wide{ width:100%; text-align:center; }
-  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 8px; }
-  .btn-row .btn{ flex:1; min-width: 120px; }
-  .btn.gear-inline{ flex: 0 0 auto; min-width: 0; width: 44px; font-size: 1.1em; padding: 10px 12px; }
+  .btn-row{ display:flex; gap:8px; flex-wrap:nowrap; margin-top: 8px; }
+  .btn-row .btn{ flex: 1 1 0; min-width: 0; padding: 10px 6px; text-align:center; }
+  .btn.gear-inline{ flex: 0 0 auto; min-width: 0; width: 40px; font-size: 1.05em; padding: 10px 8px; }
+  @media (max-width: 380px){
+    .btn-row{ gap: 5px; }
+    .btn-row .btn{ padding: 9px 3px; font-size: 0.85em; }
+    .btn.gear-inline{ width: 34px; padding: 9px 4px; font-size: 0.95em; }
+  }
 
   .score-pop{ animation: score-pop .45s ease; }
   @keyframes score-pop{
@@ -356,7 +362,7 @@
     <span class="value-pill">🏅 Skóre: <span class="num" id="globalScoreValue">0</span> bodů</span>
     <button class="history-btn" id="historyBtn" title="Historie skóre" aria-label="Historie skóre">📈</button>
     <span class="help-icon" tabindex="0">?
-      <span class="tooltip">Za každou správně umístěnou kartu +2 body, za každou špatně umístěnou −1 bod, za bezchybné kolo bonus +5 navrch. Skóre je společné pro celý web (obě hry) a v tomto prohlížeči vydrží do půlnoci.</span>
+      <span class="tooltip">Za každou správně umístěnou kartu +2 body, za každou špatně umístěnou −1 bod, za bezchybné kolo bonus +5 navrch. Pokud je v kole zapnutá skupina Soudci, body se za celé kolo zdvojnásobují. Skóre je společné pro celý web (obě hry) a v tomto prohlížeči vydrží do půlnoci.</span>
     </span>
   </div>
 
@@ -567,6 +573,7 @@
   let roundChecked = false;
   let pointsAwarded = false;
   let revealUsed = false;
+  let roundHasSoudci = false;
 
   // ---------- SETUP UI ----------
   const catGrid = document.getElementById("catGrid");
@@ -574,8 +581,9 @@
     const count = DATA.filter(d=>d.cat===key).length;
     const label = document.createElement("label");
     label.className = "cat-check";
+    const isCheckedByDefault = key !== "soudci";
     label.innerHTML = `
-      <input type="checkbox" value="${key}" checked>
+      <input type="checkbox" value="${key}" ${isCheckedByDefault ? "checked" : ""}>
       <span class="cat-dot" style="background:${CATS[key].color}"></span>
       <span>${CATS[key].label}</span>
       <span class="cat-count">${count}</span>
@@ -643,6 +651,7 @@
     roundChecked = false;
     pointsAwarded = false;
     revealUsed = false;
+    roundHasSoudci = cats.includes("soudci");
     renderCards(currentRound);
     verdict.className = "verdict";
     verdict.textContent = "";
@@ -764,7 +773,15 @@
     verdict.classList.add("show");
     let pointsMsg = "";
     if(!revealUsed && !pointsAwarded && window.BibleGameCommon){
-      pointsMsg = window.BibleGameCommon.awardPoints(correctCount, cards.length, 5, 2);
+      const perCorrect = 2;
+      const perfectBonus = 5;
+      const multiplier = roundHasSoudci ? 2 : 1;
+      const wrongCount = Math.max(0, cards.length - correctCount);
+      let gained = (correctCount * perCorrect - wrongCount) * multiplier;
+      if(allCorrect) gained += perfectBonus * multiplier;
+      const maxPossible = (cards.length * perCorrect + perfectBonus) * multiplier;
+      window.BibleGameCommon.addPoints(gained, maxPossible);
+      pointsMsg = " Získáváš " + gained + " bodů z " + maxPossible + " možných." + (roundHasSoudci ? " (body zdvojnásobeny za soudce)" : "");
       pointsAwarded = true;
     }
     if(allCorrect){
