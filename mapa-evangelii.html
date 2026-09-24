@@ -93,7 +93,7 @@
   .gm-mapbox{ position:relative; }
   .gm-scroll{ overflow:auto; -webkit-overflow-scrolling:touch; }
   .gm-zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; z-index:5; }
-  .gm-scroll{ max-height:calc(100vh - 24px); }
+  .gm-scroll{ width:100%; aspect-ratio:404 / 519; }
   .gm-zoom button:hover{ border-color:var(--gold); }
   .gm-zoom button:disabled{ opacity:.4; cursor:default; }
   .gm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
@@ -117,7 +117,6 @@
   @media (max-width: 860px){
     .gm-detail{ display:none; }
     .gm-zoom{ display:flex; }
-    .gm-scroll{ max-height:78vh; }
     .gm-modal{ align-items:flex-end; padding:0; }
     .gm-modal .modal-box{ max-width:none; border-radius:16px 16px 0 0; max-height:72vh; padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)); }
     .wrap{ padding-left:10px; padding-right:10px; }
@@ -1572,6 +1571,7 @@
 
     // zoom mapy (mobil)
     const scroller = document.getElementById("gmScroll");
+    try{ const vb = svg.viewBox.baseVal; if(vb && vb.width) scroller.style.aspectRatio = vb.width + " / " + vb.height; }catch(e){}
     let zoom = 1;
     function setZoom(z){
       const old = zoom; zoom = Math.max(1, Math.min(3, z));
