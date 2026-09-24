@@ -1421,10 +1421,22 @@
     const svg = document.getElementById("gospelMap");
     if(!svg) return;
     const NS = "http://www.w3.org/2000/svg";
-    const WOL_BOOK = {Mt:40, Mr:41, Lk:42, Jan:43};
-    function wolLink(ev){
-      const m = ev.r.match(/^(Mt|Mr|Lk|Jan) (\d+):/);
-      return m ? "https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/" + WOL_BOOK[m[1]] + "/" + m[2] : null;
+    // odkazy na verše: vyhledávání wol.jw.org, např. ?q=Lukáš+1%3A5
+    const BOOK_NAME = {Mt:"Matouš", Mr:"Marek", Lk:"Lukáš", Jan:"Jan"};
+    function wolUrl(book, verses){
+      const q = BOOK_NAME[book] + " " + verses.replace(/–/g, "-");
+      return "https://wol.jw.org/cs/wol/l/r29/lp-b?q=" + encodeURIComponent(q).replace(/%20/g, "+");
+    }
+    // "Mt 4:1–3; Mr 1:12, 13; Lk 4:1–4" -> každý odkaz zvlášť klikací
+    function refsHtml(r){
+      let book = null;
+      return r.split("; ").map(part=>{
+        const m = part.match(/^(Mt|Mr|Lk|Jan) (.+)$/);
+        let verses = part;
+        if(m){ book = m[1]; verses = m[2]; }
+        if(!book || !/^\d+:/.test(verses)) return esc(part);
+        return '<a href="'+wolUrl(book, verses)+'" target="_blank" rel="noopener">'+esc(part)+'</a>';
+      }).join("; ");
     }
     function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
     function chip(ev){
@@ -1518,8 +1530,7 @@
       const ev = modalEvs[i];
       tabs.querySelectorAll(".gm-tab").forEach((t, k)=>{ t.setAttribute("aria-selected", k === i ? "true" : "false"); t.tabIndex = k === i ? 0 : -1; });
       const cur = tabs.children[i]; if(cur) cur.scrollIntoView({block:"nearest", inline:"nearest"});
-      const url = wolLink(ev);
-      const refs = url ? '<a href="'+url+'" target="_blank" rel="noopener">'+esc(ev.r)+'</a>' : esc(ev.r);
+      const refs = refsHtml(ev.r);
       tabPanel.innerHTML =
         '<p class="gm-big">'+esc(ev.x)+'</p>' +
         '<p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+' · '+ev.o+'. událost v pořadí</p>' +
@@ -1586,8 +1597,7 @@
         '<p class="gm-eyebrow">Místo č. '+n+' · '+evs.length+' '+plural(evs.length)+'</p>' +
         '<h2><span class="gm-stack">'+stack+'</span>'+gos.map(g=>DATA.names[g]).join(", ")+'</h2>' +
         evs.map(ev=>{
-          const url = wolLink(ev);
-          const refs = url ? '<a href="'+url+'" target="_blank" rel="noopener">'+esc(ev.r)+'</a>' : esc(ev.r);
+          const refs = refsHtml(ev.r);
           return '<div class="gm-ev">'+chip(ev)+'<p>'+esc(ev.x)+'</p><p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+' · '+ev.o+'. v pořadí</p></div>';
         }).join("");
       drawRing();

@@ -1,6 +1,6 @@
 # Biblické hry
 
-Jednoduchý statický web bez závislostí — dvě samostatné HTML hry a rozcestník mezi nimi.
+Jednoduchý statický web bez závislostí — samostatné HTML hry, mapa a rozcestník mezi nimi.
 
 ## Struktura
 
@@ -8,6 +8,7 @@ Jednoduchý statický web bez závislostí — dvě samostatné HTML hry a rozce
 index.html          — rozcestník (výběr hry)
 casova-osa.html      — hra Časová osa (řazení postav a událostí chronologicky)
 biblicke-knihy.html  — hra Biblické knihy (pořadí knih, pisatelé, doba vzniku...)
+mapa-evangelii.html  — interaktivní mapa míst z evangelií (klik na číslo = události)
 ```
 
 Žádné buildy, žádné závislosti — stačí otevřít `index.html` v prohlížeči.
