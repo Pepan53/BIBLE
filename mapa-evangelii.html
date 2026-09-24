@@ -92,7 +92,10 @@
   /* ---------- zoom mapy ---------- */
   .gm-mapbox{ position:relative; }
   .gm-scroll{ overflow:auto; -webkit-overflow-scrolling:touch; }
-  .gm-zoom{ position:absolute; right:8px; bottom:8px; display:none; flex-direction:column; gap:6px; z-index:5; }
+  .gm-zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; z-index:5; }
+  .gm-scroll{ max-height:calc(100vh - 24px); }
+  .gm-zoom button:hover{ border-color:var(--gold); }
+  .gm-zoom button:disabled{ opacity:.4; cursor:default; }
   .gm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
   .gm-hit{ fill:transparent; }
   /* ---------- modální okno s událostmi (mobil) ---------- */
