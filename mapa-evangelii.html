@@ -85,6 +85,37 @@
   .gm-row .ord{ color:var(--ink-soft); font-size:.75em; padding-top:5px; text-align:right; font-variant-numeric:tabular-nums; }
   .gm-row .t{ font-size:.88em; line-height:1.4; }
   .gm-row .t small{ color:var(--ink-soft); font-size:.9em; }
+
+  /* ---------- zoom mapy ---------- */
+  .gm-mapbox{ position:relative; }
+  .gm-scroll{ overflow:auto; -webkit-overflow-scrolling:touch; }
+  .gm-zoom{ position:absolute; right:8px; bottom:8px; display:none; flex-direction:column; gap:6px; z-index:5; }
+  .gm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
+  .gm-hit{ fill:transparent; }
+  /* ---------- modální okno s událostmi (mobil) ---------- */
+  .gm-modal .modal-box{ max-width:520px; padding:16px 18px 18px; }
+  .gm-modal .modal-header{ margin-bottom:10px; }
+  .gm-modal .modal-header h3{ margin:0; display:flex; align-items:center; gap:10px; font-family:var(--heading-font); color:var(--maroon-dark); font-size:1.1em; }
+  .gm-tabs{ display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; border-bottom:1px solid var(--border); }
+  .gm-tab{ flex:none; display:inline-flex; align-items:center; gap:6px; font:inherit; font-size:.85em; padding:5px 10px 5px 6px; border-radius:999px; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--ink); cursor:pointer; }
+  .gm-tab .gm-chip{ width:22px; height:22px; font-size:.72em; }
+  .gm-tab[aria-selected="true"]{ border-color:var(--gold); background:var(--hover-tint); font-weight:700; }
+  .gm-tabpanel p{ margin:0 0 10px; line-height:1.45; }
+  .gm-tabpanel .gm-big{ font-size:1.05em; }
+  .gm-tabpanel .gm-meta{ font-size:.88em; color:var(--ink-soft); }
+  .gm-tabpanel .gm-meta b{ color:var(--ink); }
+  .gm-tabpanel .gm-meta a{ color:var(--maroon); }
+  .gm-pager{ display:flex; justify-content:space-between; gap:10px; margin-top:6px; }
+  .gm-pager button{ font:inherit; font-size:.88em; padding:7px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; }
+  .gm-pager button:disabled{ opacity:.35; cursor:default; }
+  @media (max-width: 860px){
+    .gm-detail{ display:none; }
+    .gm-zoom{ display:flex; }
+    .gm-scroll{ max-height:78vh; }
+    .gm-modal{ align-items:flex-end; padding:0; }
+    .gm-modal .modal-box{ max-width:none; border-radius:16px 16px 0 0; max-height:72vh; padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)); }
+    .wrap{ padding-left:10px; padding-right:10px; }
+  }
 </style>
 </head>
 <body>
@@ -129,6 +160,17 @@
   </div>
 </div>
 
+<div class="modal-overlay gm-modal" id="gmModal" role="dialog" aria-modal="true" aria-labelledby="gmModalTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="gmModalTitle"></h3>
+      <button class="modal-close" id="gmModalClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="gm-tabs" id="gmTabs" role="tablist"></div>
+    <div class="gm-tabpanel" id="gmTabPanel" role="tabpanel"></div>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <h1>Mapa čtyř evangelií</h1>
@@ -141,7 +183,7 @@
   </div>
 
   <div class="gm-layout">
-    <div class="gm-mapbox"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" id="gospelMap" role="img" aria-label="Mapa míst událostí ze čtyř evangelií" viewBox="0 0 504 648">
+    <div class="gm-mapbox"><div class="gm-scroll" id="gmScroll"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" id="gospelMap" role="img" aria-label="Mapa míst událostí ze čtyř evangelií" viewBox="0 0 504 648">
 <defs>
 <clipPath id="clip_1">
 <path transform="matrix(.1,0,0,-.1,0,648)" d="M2539.4 534.2 3087.9 1383.2V1467.2L2539.4 2516.9"/>
@@ -1077,7 +1119,7 @@
 <path transform="matrix(.1,0,0,-.1,0,648)" d="M1317.2 2185.7C1317.2 2219.2 1289.9 2246.4 1256.4 2246.4 1222.9 2246.4 1195.7 2219.2 1195.7 2185.7 1195.7 2152.2 1222.9 2124.9 1256.4 2124.9 1289.9 2124.9 1317.2 2152.2 1317.2 2185.7L1320.5 2185.7C1320.5 2220.9 1292 2249.4 1256.8 2249.4 1221.6 2249.4 1193 2220.9 1193 2185.7 1193 2150.5 1221.6 2121.9 1256.8 2121.9 1292 2121.9 1320.5 2150.5 1320.5 2185.7" fill="#7b3fa0" fill-rule="evenodd"/>
 </g><path d="M118.8 438.2H121.1V437.6H120.3V433.8H119.8C119.6 434 119.3 434.1 119 434.2V434.7H119.7V437.6H118.8ZM123 436.1C123.4 436.1 123.6 436.3 123.6 436.9C123.6 437.4 123.4 437.7 123 437.7C122.7 437.7 122.4 437.4 122.3 436.6C122.6 436.2 122.8 436.1 123 436.1ZM123.1 438.3C123.7 438.3 124.2 437.7 124.2 436.9C124.2 435.9 123.8 435.5 123.1 435.5C122.9 435.5 122.5 435.7 122.3 436C122.3 434.8 122.7 434.4 123.2 434.4C123.4 434.4 123.7 434.5 123.8 434.7L124.2 434.2C124 434 123.6 433.7 123.2 433.7C122.4 433.7 121.7 434.4 121.7 436.1C121.7 437.6 122.3 438.3 123.1 438.3Z" fill="#ffffff"/></g><g class="marker-33"><g transform="translate(-5.291,-7.582)"><path transform="matrix(.1,0,0,-.1,0,648)" d="M1410.1 956.9C1410.1 992.1 1381.6 1020.6 1346.4 1020.6 1311.2 1020.6 1282.7 992.1 1282.7 956.9 1282.7 921.7 1311.2 893.2 1346.4 893.2 1381.6 893.2 1410.1 921.7 1410.1 956.9" fill="#7b3fa0"/>
 <path transform="matrix(.1,0,0,-.1,0,648)" d="M1407.2 956.9C1407.2 990.4 1379.9 1017.6 1346.4 1017.6 1312.9 1017.6 1285.7 990.4 1285.7 956.9 1285.7 923.4 1312.9 896.1 1346.4 896.1 1379.9 896.1 1407.2 923.4 1407.2 956.9L1410.1 956.8C1410.1 992 1381.6 1020.5 1346.4 1020.5 1311.2 1020.5 1282.7 992 1282.7 956.8 1282.7 921.6 1311.2 893.1 1346.4 893.1 1381.6 893.1 1410.1 921.6 1410.1 956.8" fill="#7b3fa0" fill-rule="evenodd"/>
-</g><path d="M127.7 547.2C128.5 547.2 129.1 546.8 129.1 546C129.1 545.4 128.7 545 128.3 544.9V544.8C128.7 544.7 128.9 544.3 128.9 543.8C128.9 543.1 128.4 542.7 127.7 542.7C127.3 542.7 126.9 542.9 126.6 543.2L126.9 543.7C127.2 543.5 127.4 543.3 127.7 543.3C128 543.3 128.2 543.5 128.2 543.9C128.2 544.3 128 544.6 127.3 544.6V545.2C128.1 545.2 128.4 545.5 128.4 545.9C128.4 546.3 128.1 546.6 127.7 546.6C127.3 546.6 127 546.4 126.8 546.1L126.4 546.6C126.7 546.9 127.1 547.2 127.7 547.2ZM130.8 547.2C131.5 547.2 132.1 546.8 132.1 546C132.1 545.4 131.8 545 131.3 544.9V544.8C131.7 544.7 132 544.3 132 543.8C132 543.1 131.5 542.7 130.7 542.7C130.3 542.7 129.9 542.9 129.6 543.2L130 543.7C130.2 543.5 130.4 543.3 130.7 543.3C131.1 543.3 131.3 543.5 131.3 543.9C131.3 544.3 131 544.6 130.3 544.6V545.2C131.2 545.2 131.4 545.5 131.4 545.9C131.4 546.3 131.1 546.6 130.7 546.6C130.3 546.6 130 546.4 129.8 546.1L129.5 546.6C129.8 546.9 130.2 547.2 130.8 547.2Z" fill="#ffffff"/></g></g><g id="legend_gospels"><circle cx="35.5" cy="56.0" r="3.9" fill="#2563b0"/><circle cx="45" cy="56.0" r="3.9" fill="#87a9d4"/><path d="M51 58.2Q56 53 62 54.8" stroke="#2563b0" stroke-width="1.1" fill="none"/><path d="M63.6 55.3L60.2 52.9L59.9 56.3Z" fill="#2563b0"/><path d="M68.7 58.8H69.5V56.1C69.5 55.6 69.4 54.9 69.3 54.4H69.4L69.8 55.7L70.7 58.3H71.3L72.2 55.7L72.7 54.4H72.7C72.6 54.9 72.6 55.6 72.6 56.1V58.8H73.3V53.4H72.3L71.4 56.2C71.2 56.5 71.2 56.9 71 57.3H71C70.9 56.9 70.8 56.5 70.7 56.2L69.7 53.4H68.7ZM75.6 58.9C76.1 58.9 76.5 58.7 76.9 58.3H76.9L77 58.8H77.7V56.4C77.7 55.3 77.2 54.7 76.2 54.7C75.6 54.7 75 54.9 74.6 55.2L74.9 55.8C75.2 55.6 75.6 55.4 76.1 55.4C76.7 55.4 76.8 55.8 76.8 56.2C75.2 56.4 74.4 56.8 74.4 57.7C74.4 58.5 74.9 58.9 75.6 58.9ZM75.9 58.2C75.5 58.2 75.2 58.1 75.2 57.7C75.2 57.2 75.6 57 76.8 56.8V57.8C76.5 58.1 76.2 58.2 75.9 58.2ZM80.2 58.9C80.5 58.9 80.8 58.8 81 58.7L80.8 58.1C80.7 58.2 80.5 58.2 80.4 58.2C80 58.2 79.8 58 79.8 57.5V55.4H80.8V54.8H79.8V53.5H79.1L79 54.8L78.4 54.8V55.4H79V57.5C79 58.3 79.3 58.9 80.2 58.9ZM83.3 58.9C84.3 58.9 85.2 58.1 85.2 56.8C85.2 55.5 84.3 54.7 83.3 54.7C82.3 54.7 81.4 55.5 81.4 56.8C81.4 58.1 82.3 58.9 83.3 58.9ZM83.3 58.2C82.7 58.2 82.3 57.7 82.3 56.8C82.3 55.9 82.7 55.4 83.3 55.4C84 55.4 84.4 55.9 84.4 56.8C84.4 57.7 84 58.2 83.3 58.2ZM87.4 58.9C87.9 58.9 88.3 58.6 88.7 58.2H88.7L88.8 58.8H89.4V54.8H88.6V57.6C88.3 58 88 58.2 87.6 58.2C87.2 58.2 87 57.9 87 57.2V54.8H86.1V57.3C86.1 58.3 86.5 58.9 87.4 58.9ZM91.8 58.9C92.8 58.9 93.3 58.3 93.3 57.7C93.3 57 92.7 56.7 92.1 56.5C91.6 56.3 91.3 56.2 91.3 55.8C91.3 55.6 91.5 55.3 91.9 55.3C92.3 55.3 92.6 55.4 92.9 55.6L93.2 55.2C92.9 54.9 92.5 54.7 91.9 54.7C91.1 54.7 90.5 55.2 90.5 55.9C90.5 56.5 91.1 56.8 91.7 57C92.1 57.2 92.5 57.4 92.5 57.7C92.5 58 92.3 58.3 91.8 58.3C91.4 58.3 91 58.1 90.6 57.8L90.3 58.3C90.7 58.7 91.2 58.9 91.8 58.9ZM91.5 54.1H92.2L93.3 52.7H92.7L91.9 53.5H91.9L91 52.7H90.4Z" fill="#000000"/><circle cx="35.5" cy="67.5" r="3.9" fill="#c62828"/><circle cx="45" cy="67.5" r="3.9" fill="#e08989"/><path d="M51 69.7Q56 64.5 62 66.3" stroke="#c62828" stroke-width="1.1" fill="none"/><path d="M63.6 66.8L60.2 64.4L59.9 67.8Z" fill="#c62828"/><path d="M68.7 70.3H69.5V67.6C69.5 67.1 69.4 66.4 69.3 65.9H69.4L69.8 67.2L70.7 69.8H71.3L72.2 67.2L72.7 65.9H72.7C72.6 66.4 72.6 67.1 72.6 67.6V70.3H73.3V64.9H72.3L71.4 67.7C71.2 68 71.2 68.4 71 68.8H71C70.9 68.4 70.8 68 70.7 67.7L69.7 64.9H68.7ZM75.6 70.4C76.1 70.4 76.5 70.2 76.9 69.8H76.9L77 70.3H77.7V67.9C77.7 66.8 77.2 66.2 76.2 66.2C75.6 66.2 75 66.4 74.6 66.7L74.9 67.3C75.2 67.1 75.6 66.9 76.1 66.9C76.7 66.9 76.8 67.3 76.8 67.7C75.2 67.9 74.4 68.3 74.4 69.2C74.4 70 74.9 70.4 75.6 70.4ZM75.9 69.7C75.5 69.7 75.2 69.6 75.2 69.2C75.2 68.7 75.6 68.5 76.8 68.3V69.3C76.5 69.6 76.2 69.7 75.9 69.7ZM78.9 70.3H79.7V67.8C79.9 67.2 80.3 66.9 80.6 66.9C80.8 66.9 80.9 66.9 81 67L81.2 66.3C81.1 66.2 80.9 66.2 80.8 66.2C80.3 66.2 79.9 66.5 79.6 67H79.6L79.5 66.3H78.9ZM83.4 66.8C83.9 66.8 84.3 67.2 84.3 67.9H82.4C82.5 67.1 82.9 66.8 83.4 66.8ZM83.5 70.4C84 70.4 84.5 70.2 84.8 70L84.5 69.5C84.3 69.6 83.9 69.7 83.6 69.7C83 69.7 82.4 69.4 82.3 68.5H84.9C85 68.4 85 68.2 85 68.1C85 67 84.4 66.2 83.4 66.2C82.4 66.2 81.5 67 81.5 68.3C81.5 69.6 82.4 70.4 83.5 70.4ZM85.9 70.3H86.7V69.3L87.4 68.5L88.5 70.3H89.4L87.9 67.9L89.2 66.3H88.3L86.7 68.3H86.7V64.5H85.9Z" fill="#000000"/><circle cx="35.5" cy="79.0" r="3.9" fill="#2e8540"/><circle cx="45" cy="79.0" r="3.9" fill="#8cbc96"/><path d="M51 81.2Q56 76 62 77.8" stroke="#2e8540" stroke-width="1.1" fill="none"/><path d="M63.6 78.3L60.2 75.9L59.9 79.3Z" fill="#2e8540"/><path d="M68.7 81.8H71.8V81.1H69.5V76.4H68.7ZM73.9 81.9C74.4 81.9 74.8 81.6 75.2 81.2H75.2L75.3 81.8H75.9V77.8H75.1V80.6C74.8 81 74.5 81.2 74.1 81.2C73.7 81.2 73.4 80.9 73.4 80.2V77.8H72.6V80.3C72.6 81.3 73 81.9 73.9 81.9ZM77.2 81.8H78V80.8L78.7 80L79.8 81.8H80.7L79.2 79.4L80.5 77.8H79.6L78 79.8H78V76H77.2ZM82.3 81.9C82.8 81.9 83.2 81.7 83.6 81.3H83.6L83.7 81.8H84.4V79.4C84.4 78.3 83.9 77.7 82.9 77.7C82.3 77.7 81.7 77.9 81.3 78.2L81.6 78.8C81.9 78.6 82.3 78.4 82.8 78.4C83.4 78.4 83.5 78.8 83.5 79.2C81.9 79.4 81.1 79.8 81.1 80.7C81.1 81.5 81.6 81.9 82.3 81.9ZM82.6 81.2C82.2 81.2 81.9 81.1 81.9 80.7C81.9 80.2 82.3 80 83.5 79.8V80.8C83.2 81.1 82.9 81.2 82.6 81.2ZM82.3 77.1H82.9L84.2 75.8L84.2 75.7H83.3ZM86.6 81.9C87.6 81.9 88.1 81.3 88.1 80.7C88.1 80 87.6 79.7 86.9 79.5C86.4 79.3 86.1 79.2 86.1 78.8C86.1 78.6 86.3 78.3 86.8 78.3C87.1 78.3 87.4 78.4 87.7 78.6L88.1 78.2C87.7 77.9 87.3 77.7 86.8 77.7C85.9 77.7 85.3 78.2 85.3 78.9C85.3 79.5 85.9 79.8 86.5 80C86.9 80.2 87.4 80.4 87.4 80.7C87.4 81 87.1 81.3 86.7 81.3C86.2 81.3 85.8 81.1 85.5 80.8L85.1 81.3C85.5 81.7 86.1 81.9 86.6 81.9ZM86.3 77.1H87.1L88.2 75.7H87.5L86.7 76.5H86.7L85.9 75.7H85.2Z" fill="#000000"/><circle cx="35.5" cy="90.5" r="3.9" fill="#7b3fa0"/><circle cx="45" cy="90.5" r="3.9" fill="#b695cb"/><path d="M51 92.7Q56 87.5 62 89.3" stroke="#7b3fa0" stroke-width="1.1" fill="none"/><path d="M63.6 89.8L60.2 87.4L59.9 90.8Z" fill="#7b3fa0"/><path d="M69.7 93.4C70.8 93.4 71.3 92.6 71.3 91.6V87.9H70.5V91.6C70.5 92.4 70.2 92.7 69.7 92.7C69.3 92.7 69 92.5 68.8 92.1L68.2 92.5C68.5 93.1 69 93.4 69.7 93.4ZM73.6 93.4C74.1 93.4 74.5 93.2 74.9 92.8H74.9L74.9 93.3H75.6V90.9C75.6 89.8 75.2 89.2 74.2 89.2C73.5 89.2 73 89.4 72.6 89.7L72.9 90.3C73.2 90.1 73.6 89.9 74 89.9C74.6 89.9 74.8 90.3 74.8 90.7C73.1 90.9 72.4 91.3 72.4 92.2C72.4 93 72.9 93.4 73.6 93.4ZM73.8 92.7C73.5 92.7 73.2 92.6 73.2 92.2C73.2 91.7 73.6 91.5 74.8 91.3V92.3C74.5 92.6 74.2 92.7 73.8 92.7ZM76.8 93.3H77.6V90.4C78 90.1 78.2 89.9 78.6 89.9C79.1 89.9 79.3 90.2 79.3 90.9V93.3H80.1V90.8C80.1 89.8 79.8 89.2 78.9 89.2C78.3 89.2 77.9 89.5 77.6 89.9H77.5L77.5 89.3H76.8Z" fill="#000000"/></g></svg></div>
+</g><path d="M127.7 547.2C128.5 547.2 129.1 546.8 129.1 546C129.1 545.4 128.7 545 128.3 544.9V544.8C128.7 544.7 128.9 544.3 128.9 543.8C128.9 543.1 128.4 542.7 127.7 542.7C127.3 542.7 126.9 542.9 126.6 543.2L126.9 543.7C127.2 543.5 127.4 543.3 127.7 543.3C128 543.3 128.2 543.5 128.2 543.9C128.2 544.3 128 544.6 127.3 544.6V545.2C128.1 545.2 128.4 545.5 128.4 545.9C128.4 546.3 128.1 546.6 127.7 546.6C127.3 546.6 127 546.4 126.8 546.1L126.4 546.6C126.7 546.9 127.1 547.2 127.7 547.2ZM130.8 547.2C131.5 547.2 132.1 546.8 132.1 546C132.1 545.4 131.8 545 131.3 544.9V544.8C131.7 544.7 132 544.3 132 543.8C132 543.1 131.5 542.7 130.7 542.7C130.3 542.7 129.9 542.9 129.6 543.2L130 543.7C130.2 543.5 130.4 543.3 130.7 543.3C131.1 543.3 131.3 543.5 131.3 543.9C131.3 544.3 131 544.6 130.3 544.6V545.2C131.2 545.2 131.4 545.5 131.4 545.9C131.4 546.3 131.1 546.6 130.7 546.6C130.3 546.6 130 546.4 129.8 546.1L129.5 546.6C129.8 546.9 130.2 547.2 130.8 547.2Z" fill="#ffffff"/></g></g><g id="legend_gospels"><circle cx="35.5" cy="56.0" r="3.9" fill="#2563b0"/><circle cx="45" cy="56.0" r="3.9" fill="#87a9d4"/><path d="M51 58.2Q56 53 62 54.8" stroke="#2563b0" stroke-width="1.1" fill="none"/><path d="M63.6 55.3L60.2 52.9L59.9 56.3Z" fill="#2563b0"/><path d="M68.7 58.8H69.5V56.1C69.5 55.6 69.4 54.9 69.3 54.4H69.4L69.8 55.7L70.7 58.3H71.3L72.2 55.7L72.7 54.4H72.7C72.6 54.9 72.6 55.6 72.6 56.1V58.8H73.3V53.4H72.3L71.4 56.2C71.2 56.5 71.2 56.9 71 57.3H71C70.9 56.9 70.8 56.5 70.7 56.2L69.7 53.4H68.7ZM75.6 58.9C76.1 58.9 76.5 58.7 76.9 58.3H76.9L77 58.8H77.7V56.4C77.7 55.3 77.2 54.7 76.2 54.7C75.6 54.7 75 54.9 74.6 55.2L74.9 55.8C75.2 55.6 75.6 55.4 76.1 55.4C76.7 55.4 76.8 55.8 76.8 56.2C75.2 56.4 74.4 56.8 74.4 57.7C74.4 58.5 74.9 58.9 75.6 58.9ZM75.9 58.2C75.5 58.2 75.2 58.1 75.2 57.7C75.2 57.2 75.6 57 76.8 56.8V57.8C76.5 58.1 76.2 58.2 75.9 58.2ZM80.2 58.9C80.5 58.9 80.8 58.8 81 58.7L80.8 58.1C80.7 58.2 80.5 58.2 80.4 58.2C80 58.2 79.8 58 79.8 57.5V55.4H80.8V54.8H79.8V53.5H79.1L79 54.8L78.4 54.8V55.4H79V57.5C79 58.3 79.3 58.9 80.2 58.9ZM83.3 58.9C84.3 58.9 85.2 58.1 85.2 56.8C85.2 55.5 84.3 54.7 83.3 54.7C82.3 54.7 81.4 55.5 81.4 56.8C81.4 58.1 82.3 58.9 83.3 58.9ZM83.3 58.2C82.7 58.2 82.3 57.7 82.3 56.8C82.3 55.9 82.7 55.4 83.3 55.4C84 55.4 84.4 55.9 84.4 56.8C84.4 57.7 84 58.2 83.3 58.2ZM87.4 58.9C87.9 58.9 88.3 58.6 88.7 58.2H88.7L88.8 58.8H89.4V54.8H88.6V57.6C88.3 58 88 58.2 87.6 58.2C87.2 58.2 87 57.9 87 57.2V54.8H86.1V57.3C86.1 58.3 86.5 58.9 87.4 58.9ZM91.8 58.9C92.8 58.9 93.3 58.3 93.3 57.7C93.3 57 92.7 56.7 92.1 56.5C91.6 56.3 91.3 56.2 91.3 55.8C91.3 55.6 91.5 55.3 91.9 55.3C92.3 55.3 92.6 55.4 92.9 55.6L93.2 55.2C92.9 54.9 92.5 54.7 91.9 54.7C91.1 54.7 90.5 55.2 90.5 55.9C90.5 56.5 91.1 56.8 91.7 57C92.1 57.2 92.5 57.4 92.5 57.7C92.5 58 92.3 58.3 91.8 58.3C91.4 58.3 91 58.1 90.6 57.8L90.3 58.3C90.7 58.7 91.2 58.9 91.8 58.9ZM91.5 54.1H92.2L93.3 52.7H92.7L91.9 53.5H91.9L91 52.7H90.4Z" fill="#000000"/><circle cx="35.5" cy="67.5" r="3.9" fill="#c62828"/><circle cx="45" cy="67.5" r="3.9" fill="#e08989"/><path d="M51 69.7Q56 64.5 62 66.3" stroke="#c62828" stroke-width="1.1" fill="none"/><path d="M63.6 66.8L60.2 64.4L59.9 67.8Z" fill="#c62828"/><path d="M68.7 70.3H69.5V67.6C69.5 67.1 69.4 66.4 69.3 65.9H69.4L69.8 67.2L70.7 69.8H71.3L72.2 67.2L72.7 65.9H72.7C72.6 66.4 72.6 67.1 72.6 67.6V70.3H73.3V64.9H72.3L71.4 67.7C71.2 68 71.2 68.4 71 68.8H71C70.9 68.4 70.8 68 70.7 67.7L69.7 64.9H68.7ZM75.6 70.4C76.1 70.4 76.5 70.2 76.9 69.8H76.9L77 70.3H77.7V67.9C77.7 66.8 77.2 66.2 76.2 66.2C75.6 66.2 75 66.4 74.6 66.7L74.9 67.3C75.2 67.1 75.6 66.9 76.1 66.9C76.7 66.9 76.8 67.3 76.8 67.7C75.2 67.9 74.4 68.3 74.4 69.2C74.4 70 74.9 70.4 75.6 70.4ZM75.9 69.7C75.5 69.7 75.2 69.6 75.2 69.2C75.2 68.7 75.6 68.5 76.8 68.3V69.3C76.5 69.6 76.2 69.7 75.9 69.7ZM78.9 70.3H79.7V67.8C79.9 67.2 80.3 66.9 80.6 66.9C80.8 66.9 80.9 66.9 81 67L81.2 66.3C81.1 66.2 80.9 66.2 80.8 66.2C80.3 66.2 79.9 66.5 79.6 67H79.6L79.5 66.3H78.9ZM83.4 66.8C83.9 66.8 84.3 67.2 84.3 67.9H82.4C82.5 67.1 82.9 66.8 83.4 66.8ZM83.5 70.4C84 70.4 84.5 70.2 84.8 70L84.5 69.5C84.3 69.6 83.9 69.7 83.6 69.7C83 69.7 82.4 69.4 82.3 68.5H84.9C85 68.4 85 68.2 85 68.1C85 67 84.4 66.2 83.4 66.2C82.4 66.2 81.5 67 81.5 68.3C81.5 69.6 82.4 70.4 83.5 70.4ZM85.9 70.3H86.7V69.3L87.4 68.5L88.5 70.3H89.4L87.9 67.9L89.2 66.3H88.3L86.7 68.3H86.7V64.5H85.9Z" fill="#000000"/><circle cx="35.5" cy="79.0" r="3.9" fill="#2e8540"/><circle cx="45" cy="79.0" r="3.9" fill="#8cbc96"/><path d="M51 81.2Q56 76 62 77.8" stroke="#2e8540" stroke-width="1.1" fill="none"/><path d="M63.6 78.3L60.2 75.9L59.9 79.3Z" fill="#2e8540"/><path d="M68.7 81.8H71.8V81.1H69.5V76.4H68.7ZM73.9 81.9C74.4 81.9 74.8 81.6 75.2 81.2H75.2L75.3 81.8H75.9V77.8H75.1V80.6C74.8 81 74.5 81.2 74.1 81.2C73.7 81.2 73.4 80.9 73.4 80.2V77.8H72.6V80.3C72.6 81.3 73 81.9 73.9 81.9ZM77.2 81.8H78V80.8L78.7 80L79.8 81.8H80.7L79.2 79.4L80.5 77.8H79.6L78 79.8H78V76H77.2ZM82.3 81.9C82.8 81.9 83.2 81.7 83.6 81.3H83.6L83.7 81.8H84.4V79.4C84.4 78.3 83.9 77.7 82.9 77.7C82.3 77.7 81.7 77.9 81.3 78.2L81.6 78.8C81.9 78.6 82.3 78.4 82.8 78.4C83.4 78.4 83.5 78.8 83.5 79.2C81.9 79.4 81.1 79.8 81.1 80.7C81.1 81.5 81.6 81.9 82.3 81.9ZM82.6 81.2C82.2 81.2 81.9 81.1 81.9 80.7C81.9 80.2 82.3 80 83.5 79.8V80.8C83.2 81.1 82.9 81.2 82.6 81.2ZM82.3 77.1H82.9L84.2 75.8L84.2 75.7H83.3ZM86.6 81.9C87.6 81.9 88.1 81.3 88.1 80.7C88.1 80 87.6 79.7 86.9 79.5C86.4 79.3 86.1 79.2 86.1 78.8C86.1 78.6 86.3 78.3 86.8 78.3C87.1 78.3 87.4 78.4 87.7 78.6L88.1 78.2C87.7 77.9 87.3 77.7 86.8 77.7C85.9 77.7 85.3 78.2 85.3 78.9C85.3 79.5 85.9 79.8 86.5 80C86.9 80.2 87.4 80.4 87.4 80.7C87.4 81 87.1 81.3 86.7 81.3C86.2 81.3 85.8 81.1 85.5 80.8L85.1 81.3C85.5 81.7 86.1 81.9 86.6 81.9ZM86.3 77.1H87.1L88.2 75.7H87.5L86.7 76.5H86.7L85.9 75.7H85.2Z" fill="#000000"/><circle cx="35.5" cy="90.5" r="3.9" fill="#7b3fa0"/><circle cx="45" cy="90.5" r="3.9" fill="#b695cb"/><path d="M51 92.7Q56 87.5 62 89.3" stroke="#7b3fa0" stroke-width="1.1" fill="none"/><path d="M63.6 89.8L60.2 87.4L59.9 90.8Z" fill="#7b3fa0"/><path d="M69.7 93.4C70.8 93.4 71.3 92.6 71.3 91.6V87.9H70.5V91.6C70.5 92.4 70.2 92.7 69.7 92.7C69.3 92.7 69 92.5 68.8 92.1L68.2 92.5C68.5 93.1 69 93.4 69.7 93.4ZM73.6 93.4C74.1 93.4 74.5 93.2 74.9 92.8H74.9L74.9 93.3H75.6V90.9C75.6 89.8 75.2 89.2 74.2 89.2C73.5 89.2 73 89.4 72.6 89.7L72.9 90.3C73.2 90.1 73.6 89.9 74 89.9C74.6 89.9 74.8 90.3 74.8 90.7C73.1 90.9 72.4 91.3 72.4 92.2C72.4 93 72.9 93.4 73.6 93.4ZM73.8 92.7C73.5 92.7 73.2 92.6 73.2 92.2C73.2 91.7 73.6 91.5 74.8 91.3V92.3C74.5 92.6 74.2 92.7 73.8 92.7ZM76.8 93.3H77.6V90.4C78 90.1 78.2 89.9 78.6 89.9C79.1 89.9 79.3 90.2 79.3 90.9V93.3H80.1V90.8C80.1 89.8 79.8 89.2 78.9 89.2C78.3 89.2 77.9 89.5 77.6 89.9H77.5L77.5 89.3H76.8Z" fill="#000000"/></g></svg></div><div class="gm-zoom"><button type="button" id="gmZoomIn" aria-label="Přiblížit mapu">+</button><button type="button" id="gmZoomOut" aria-label="Oddálit mapu">−</button></div></div>
     <div class="gm-side">
       <div class="card gm-detail" id="gmDetail" aria-live="polite"></div>
       <div class="card gm-listcard">
@@ -1146,8 +1188,93 @@
       });
     }
 
-    function select(n, fromMap){
+    const isMobile = ()=> !!(window.matchMedia && matchMedia("(max-width: 860px)").matches);
+    const modal = document.getElementById("gmModal");
+    const tabs = document.getElementById("gmTabs");
+    const tabPanel = document.getElementById("gmTabPanel");
+    let modalEvs = [], modalIdx = 0;
+    function stackHtml(n, evs){
+      const gos = [...new Set(evs.map(e=>e.g))];
+      return gos.map((g, j)=>{
+        const ev = evs.find(e=>e.g === g);
+        const bg = (ev.s === "full" || ev.s === "tour") ? DATA.col[g] : DATA.muted[g];
+        const off = gos.length - 1 - j;
+        return '<span class="gm-chip'+(ev.s === "square" ? " sq" : "")+'" style="background:'+bg+';left:'+(off*5)+'px;top:'+(off*2)+'px;z-index:'+(10-j)+'">'+(j === 0 ? n : "")+'</span>';
+      }).join("");
+    }
+    function showTab(i){
+      modalIdx = i;
+      const ev = modalEvs[i];
+      tabs.querySelectorAll(".gm-tab").forEach((t, k)=>{ t.setAttribute("aria-selected", k === i ? "true" : "false"); t.tabIndex = k === i ? 0 : -1; });
+      const cur = tabs.children[i]; if(cur) cur.scrollIntoView({block:"nearest", inline:"nearest"});
+      const url = wolLink(ev);
+      const refs = url ? '<a href="'+url+'" target="_blank" rel="noopener">'+esc(ev.r)+'</a>' : esc(ev.r);
+      tabPanel.innerHTML =
+        '<p class="gm-big">'+esc(ev.x)+'</p>' +
+        '<p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+' · '+ev.o+'. událost v pořadí</p>' +
+        (modalEvs.length > 1 ? '<div class="gm-pager"><button type="button" id="gmPrev"'+(i === 0 ? " disabled" : "")+'>‹ Předchozí</button><button type="button" id="gmNext"'+(i === modalEvs.length-1 ? " disabled" : "")+'>Další ›</button></div>' : '');
+      const p = document.getElementById("gmPrev"), nx = document.getElementById("gmNext");
+      if(p) p.addEventListener("click", ()=>showTab(Math.max(0, modalIdx-1)));
+      if(nx) nx.addEventListener("click", ()=>showTab(Math.min(modalEvs.length-1, modalIdx+1)));
+    }
+    function openModal(n, startOrder){
+      modalEvs = E.filter(e=>e.n === n);
+      document.getElementById("gmModalTitle").innerHTML = '<span class="gm-stack">'+stackHtml(n, modalEvs)+'</span>Místo č. '+n+(modalEvs.length > 1 ? ' · '+modalEvs.length+' '+plural(modalEvs.length) : '');
+      tabs.hidden = modalEvs.length < 2;
+      tabs.innerHTML = modalEvs.map((ev, k)=>'<button type="button" class="gm-tab" role="tab" data-k="'+k+'">'+chip(ev)+DATA.names[ev.g]+' · '+ev.o+'.</button>').join("");
+      let start = 0;
+      if(startOrder){ const k = modalEvs.findIndex(e=>e.o === startOrder); if(k >= 0) start = k; }
+      showTab(start);
+      modal.classList.add("show");
+      document.getElementById("gmModalClose").focus({preventScroll:true});
+    }
+    function closeModal(){ modal.classList.remove("show"); }
+    tabs.addEventListener("click", e=>{ const t = e.target.closest(".gm-tab"); if(t) showTab(+t.dataset.k); });
+    tabs.addEventListener("keydown", e=>{
+      if(e.key === "ArrowRight"){ e.preventDefault(); showTab(Math.min(modalEvs.length-1, modalIdx+1)); tabs.children[modalIdx].focus(); }
+      if(e.key === "ArrowLeft"){ e.preventDefault(); showTab(Math.max(0, modalIdx-1)); tabs.children[modalIdx].focus(); }
+    });
+    document.getElementById("gmModalClose").addEventListener("click", closeModal);
+    modal.addEventListener("click", e=>{ if(e.target === modal) closeModal(); });
+    document.addEventListener("keydown", e=>{ if(e.key === "Escape" && modal.classList.contains("show")) closeModal(); });
+    // přejetí prstem v okně = další / předchozí událost
+    let tx = null;
+    tabPanel.addEventListener("touchstart", e=>{ tx = e.touches[0].clientX; }, {passive:true});
+    tabPanel.addEventListener("touchend", e=>{
+      if(tx === null) return;
+      const dx = e.changedTouches[0].clientX - tx; tx = null;
+      if(Math.abs(dx) > 50) showTab(dx < 0 ? Math.min(modalEvs.length-1, modalIdx+1) : Math.max(0, modalIdx-1));
+    });
+
+    // větší plocha pro klepnutí na čísla (hlavně na mobilu)
+    Object.values(markers).forEach(gs=>gs.forEach(g=>{
+      try{
+        const b = g.getBBox();
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", b.x + b.width/2); c.setAttribute("cy", b.y + b.height/2);
+        c.setAttribute("r", Math.max(9, Math.max(b.width, b.height)/2 + 2));
+        c.setAttribute("class", "gm-hit");
+        g.insertBefore(c, g.firstChild);
+      }catch(e){}
+    }));
+
+    // zoom mapy (mobil)
+    const scroller = document.getElementById("gmScroll");
+    let zoom = 1;
+    function setZoom(z){
+      const old = zoom; zoom = Math.max(1, Math.min(3, z));
+      const cx = (scroller.scrollLeft + scroller.clientWidth/2) / old, cy = (scroller.scrollTop + scroller.clientHeight/2) / old;
+      svg.style.width = (zoom*100) + "%";
+      scroller.scrollLeft = cx*zoom - scroller.clientWidth/2; scroller.scrollTop = cy*zoom - scroller.clientHeight/2;
+      document.getElementById("gmZoomOut").disabled = zoom <= 1;
+    }
+    document.getElementById("gmZoomIn").addEventListener("click", ()=>setZoom(zoom + 0.75));
+    document.getElementById("gmZoomOut").addEventListener("click", ()=>setZoom(zoom - 0.75));
+    setZoom(1);
+
+    function select(n, fromMap, startOrder){
       current = n;
+      if((fromMap || startOrder) && isMobile()) openModal(n, startOrder);
       const evs = E.filter(e=>e.n === n);
       const gos = [...new Set(evs.map(e=>e.g))];
       const stack = gos.map((g, j)=>{
@@ -1166,7 +1293,7 @@
         }).join("");
       drawRing();
       list.querySelectorAll(".gm-row").forEach(r=>r.setAttribute("aria-current", +r.dataset.n === n ? "true" : "false"));
-      if(fromMap){
+      if(fromMap && !isMobile()){
         const first = list.querySelector('.gm-row[data-n="'+n+'"]:not([hidden])');
         if(first && list.scrollHeight > list.clientHeight) list.scrollTo({top: first.offsetTop - list.offsetTop - 8, behavior:"smooth"});
       }
@@ -1175,8 +1302,8 @@
     list.innerHTML = E.map(ev=>'<button class="gm-row" type="button" data-n="'+ev.n+'" data-g="'+ev.g+'"><span class="ord">'+ev.o+'.</span>'+chip(ev)+'<span class="t">'+esc(ev.x)+' <small>('+esc(ev.r)+')</small></span></button>').join("");
     list.addEventListener("click", e=>{
       const b = e.target.closest(".gm-row"); if(!b) return;
-      select(+b.dataset.n, false);
-      if(window.matchMedia && matchMedia("(max-width: 860px)").matches) document.querySelector(".gm-mapbox").scrollIntoView({behavior:"smooth", block:"start"});
+      const ord = +b.querySelector(".ord").textContent;
+      select(+b.dataset.n, false, ord);
     });
     const active = new Set(Object.keys(DATA.names));
     const fl = document.getElementById("gmFilters");
