@@ -94,6 +94,8 @@
   .gm-scroll{ overflow:auto; -webkit-overflow-scrolling:touch; }
   .gm-zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; z-index:5; }
   .gm-scroll{ width:100%; aspect-ratio:404 / 519; }
+  .gm-scroll.gm-zoomed{ cursor:grab; user-select:none; -webkit-user-select:none; }
+  .gm-scroll.gm-dragging, .gm-scroll.gm-dragging .gm-hit{ cursor:grabbing; }
   .gm-zoom button:hover{ border-color:var(--gold); }
   .gm-zoom button:disabled{ opacity:.4; cursor:default; }
   .gm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
@@ -1579,7 +1581,28 @@
       svg.style.width = (zoom*100) + "%";
       scroller.scrollLeft = cx*zoom - scroller.clientWidth/2; scroller.scrollTop = cy*zoom - scroller.clientHeight/2;
       document.getElementById("gmZoomOut").disabled = zoom <= 1;
+      scroller.classList.toggle("gm-zoomed", zoom > 1);
     }
+    // popotahování přiblížené mapy myší (dotykem funguje posun prstem přirozeně)
+    let drag = null, dragMoved = false;
+    scroller.addEventListener("pointerdown", e=>{
+      if(e.pointerType !== "mouse" || e.button !== 0 || zoom <= 1) return;
+      drag = {x:e.clientX, y:e.clientY, l:scroller.scrollLeft, t:scroller.scrollTop};
+      dragMoved = false;
+    });
+    window.addEventListener("pointermove", e=>{
+      if(!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if(!dragMoved && Math.hypot(dx, dy) > 4){ dragMoved = true; scroller.classList.add("gm-dragging"); }
+      if(dragMoved){ scroller.scrollLeft = drag.l - dx; scroller.scrollTop = drag.t - dy; e.preventDefault(); }
+    });
+    window.addEventListener("pointerup", ()=>{
+      if(!drag) return;
+      drag = null; scroller.classList.remove("gm-dragging");
+    });
+    // po popotažení nevybírat značku, na které se tah skončil
+    scroller.addEventListener("click", e=>{ if(dragMoved){ e.stopPropagation(); e.preventDefault(); dragMoved = false; } }, true);
+    scroller.addEventListener("dragstart", e=>e.preventDefault());
     document.getElementById("gmZoomIn").addEventListener("click", ()=>setZoom(zoom + 0.75));
     document.getElementById("gmZoomOut").addEventListener("click", ()=>setZoom(zoom - 0.75));
     setZoom(1);
