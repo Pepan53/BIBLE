@@ -192,8 +192,8 @@
 
 <div class="wrap">
   <header>
-    <h1>Ježíšův rodokmen<span class="help-icon hint-icon" id="rdHintIcon" tabindex="0" hidden>?<span class="tooltip">Od Adama k Ježíši: jak Bůh krok za krokem ukazoval, z které rodiny přijde slíbené potomstvo z <a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/1/3" target="_blank" rel="noopener">1. Mojžíšovy 3:15</a>. Klepni na jméno pro podrobnosti.</span></span></h1>
-    <p class="lead" id="rdHint">Od Adama k Ježíši: jak Bůh krok za krokem ukazoval, z které rodiny přijde slíbené potomstvo z <a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/1/3" target="_blank" rel="noopener">1. Mojžíšovy 3:15</a>. Klepni na jméno pro podrobnosti.</p>
+    <h1>Ježíšův rodokmen<span class="help-icon hint-icon" id="rdHintIcon" tabindex="0" hidden>?<span class="tooltip">Od Adama k Ježíši: jak Bůh krok za krokem ukazoval, z které rodiny přijde slíbené potomstvo z <a href="https://wol.jw.org/cs/wol/l/r29/lp-b?q=1.+Moj%C5%BE%C3%AD%C5%A1ova+3%3A15" target="_blank" rel="noopener">1. Mojžíšovy 3:15</a>. Klepni na jméno pro podrobnosti.</span></span></h1>
+    <p class="lead" id="rdHint">Od Adama k Ježíši: jak Bůh krok za krokem ukazoval, z které rodiny přijde slíbené potomstvo z <a href="https://wol.jw.org/cs/wol/l/r29/lp-b?q=1.+Moj%C5%BE%C3%AD%C5%A1ova+3%3A15" target="_blank" rel="noopener">1. Mojžíšovy 3:15</a>. Klepni na jméno pro podrobnosti.</p>
   </header>
 
   <div class="controls">
@@ -223,7 +223,7 @@
 
   <div class="tree-wrap" id="treeWrap"><main id="tree"></main><aside class="timecol" id="timeCol" aria-label="Kdy působili soudci a proroci"><div class="tc-head">Soudci<br>a proroci</div></aside></div>
 
-  <p class="finale">Sliby dané Abrahamovi a jeho potomstvu se naplnily hlavně v Kristovi (<a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/48/3" target="_blank" rel="noopener">Galaťanům 3:16, 29</a>). Rodokmen podle mapy „Slíbené potomstvo“ a chronologie z publikací svědků Jehovových.</p>
+  <p class="finale">Sliby dané Abrahamovi a jeho potomstvu se naplnily hlavně v Kristovi (<a href="https://wol.jw.org/cs/wol/l/r29/lp-b?q=Gala%C5%A5an%C5%AFm+3%3A16%2C+29" target="_blank" rel="noopener">Galaťanům 3:16, 29</a>). Rodokmen podle mapy „Slíbené potomstvo“ a chronologie z publikací svědků Jehovových.</p>
   <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
 
@@ -867,7 +867,9 @@ pribuzni:`Ježíšovi příbuzní
   /* ---------- detail ---------- */
   const bg=document.getElementById("sheetBg"), sheet=document.getElementById("sheet");
   let lastFocus=null;
-  function refsHtml(refs){ return (refs&&refs.length)?`<div class="refs">${refs.map(r=>`<a href="${bibleUrl(r[0],r[1])}" target="_blank" rel="noopener">📖 ${refLabelClean(r)}</a>`).join("")}</div>`:""; }
+  // odkaz přímo na verše (vyhledávání wol.jw.org), u celé kapitoly na kapitolu
+  function verseUrl(r){ const lab=refLabelClean(r); return /:\d/.test(lab) ? "https://wol.jw.org/cs/wol/l/r29/lp-b?q="+encodeURIComponent(lab.replace(/–/g,"-")).replace(/%20/g,"+") : bibleUrl(r[0],r[1]); }
+  function refsHtml(refs){ return (refs&&refs.length)?`<div class="refs">${refs.map(r=>`<a href="${verseUrl(r)}" target="_blank" rel="noopener">📖 ${refLabelClean(r)}</a>`).join("")}</div>`:""; }
   function show(html){
     lastFocus=document.activeElement;
     sheet.innerHTML=html; bg.classList.add("show");
