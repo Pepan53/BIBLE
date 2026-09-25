@@ -254,10 +254,9 @@
             <g clip-path="url(#jClip)">
               <circle cx="0" cy="-12" r="6.3" fill="#f7eedb"/>
               <path d="M-5.6 -5 C-5.2 -9.2 -3 -10.6 0 -10.6 C3 -10.6 5.2 -9.2 5.6 -5 Z" fill="#fbf7ee" stroke="#d9c9a4" stroke-width=".3"/>
-              <path d="M-2.6 -10.4 L-1.1 -10.6 L2.2 -5 L0.6 -5 Z" fill="#b0433a"/>
               <path d="M-2.7 -13.9 C-2.9 -17.2 2.9 -17.2 2.7 -13.9 L2.8 -10.9 C2.2 -10.5 1.7 -11 1.8 -11.8 L-1.8 -11.8 C-1.7 -11 -2.2 -10.5 -2.8 -10.9 Z" fill="#5a3a22"/>
               <ellipse cx="0" cy="-13.7" rx="1.75" ry="2.1" fill="#e5bf94"/>
-              <path d="M-1.75 -13.3 C-1.6 -10.9 1.6 -10.9 1.75 -13.3 C1 -12.4 -1 -12.4 -1.75 -13.3 Z" fill="#5a3a22"/>
+              <path d="M-1.9 -14.1 C-2 -11.5 -1.1 -9.9 0 -9.8 C1.1 -9.9 2 -11.5 1.9 -14.1 C1.4 -13 0.8 -12.6 0 -12.6 C-0.8 -12.6 -1.4 -13 -1.9 -14.1 Z" fill="#5a3a22"/><path d="M-1 -12.95 C-0.5 -13.35 0.5 -13.35 1 -12.95 C0.5 -12.7 -0.5 -12.7 -1 -12.95 Z" fill="#4a2e1a"/><path d="M-0.45 -12.3 C-0.15 -12.15 0.15 -12.15 0.45 -12.3" fill="none" stroke="#b0735a" stroke-width=".22" stroke-linecap="round"/>
             </g>
           </symbol>
         </defs>
@@ -531,7 +530,7 @@
       el.setAttribute("tabindex", "0"); el.setAttribute("role", "link");
       el.setAttribute("aria-label", "Vyhledat „" + q + "“ na wol.jw.org");
       const tt = document.createElementNS(NS, "title"); tt.textContent = "Vyhledat „" + q + "“ na wol.jw.org"; el.appendChild(tt);
-      const go = ()=>{ if(dragMovedMap) return; window.open(wolSearch(q), "_blank", "noopener"); };
+      const go = ()=>{ if(dragMovedMap) return; const a = document.createElement("a"); a.href = wolSearch(q); a.target = "_blank"; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove(); };
       el.addEventListener("click", go);
       el.addEventListener("keydown", e=>{ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); e.stopPropagation(); go(); } });
       return el;
