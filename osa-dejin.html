@@ -233,6 +233,10 @@
   const verseUrl = v => "https://wol.jw.org/cs/wol/l/r29/lp-b?q="+encodeURIComponent(v.replace(/–/g,"-")).replace(/%20/g,"+");
   const splitList = s => String(s||"").split(/\s*[;\n]\s*/).map(x=>x.trim()).filter(Boolean);
   const splitUrls = s => String(s||"").split(/[\s;,]+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
+  // obrázky: celý odkaz, nebo jen název souboru ze složky assets/osa/ (např. „noe-archa.jpg“)
+  const IMG_DIR = "assets/osa/";
+  const splitImgs = s => String(s||"").split(/\s*[;\n]\s*|\s+(?=https?:)/).map(x=>x.trim()).filter(Boolean)
+    .map(x=> /^https?:\/\//i.test(x) ? x : (/\.(jpe?g|png|webp|gif|svg)$/i.test(x) ? (x.includes("/") ? x : IMG_DIR+x) : null)).filter(Boolean);
 
   // náhledy obrázků a videí
   function imageThumb(u){
@@ -266,7 +270,7 @@
         from: parseYear(r["od"]), to: parseYear(r["do"]),
         after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
         cat: r["kategorie"]||"", verses: splitList(r["vers"]),
-        images: splitUrls(r["obrazek"]), videos: splitUrls(r["video"]), links: splitUrls(r["odkaz"]),
+        images: splitImgs(r["obrazek"]), videos: splitUrls(r["video"]), links: splitUrls(r["odkaz"]),
         note: r["poznamka"]||"", row: i+2
       };
       items.push(it); byId[norm(it.id)]=it;
@@ -450,7 +454,7 @@
       const a=Math.max(conv(t),domain.a), b=Math.min(conv(t+bStep),domain.b);
       const y1=yOf(a), y2=yOf(b), h=y2-y1; if(h<=0) continue;
       const txt = t+bStep<=0 ? `${-t}–${-(t+bStep)}` : t>=0 ? `${t}–${t+bStep}` : `${-t} př.–${t+bStep} n. l.`;
-      const lab = h>70 ? `<span>${txt}</span>` : "";
+      const lab = h>58 ? `<span>${txt}</span>` : "";
       out.push(`<div class="band" style="left:${g.axisL}px;width:14px;top:${y1}px;height:${h}px;--h:${hue(Math.round(t/bStep))}">${lab}</div>`);
     }
     // období
