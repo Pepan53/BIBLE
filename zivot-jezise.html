@@ -117,6 +117,8 @@
   .ev-when{ font-family:var(--heading-font); color:var(--maroon-dark); font-weight:700; font-size:.98em; margin:0 0 2px; }
   .ev-where{ font-size:.8em; color:var(--ink-soft); margin:0 0 8px; }
   .ev-where::before{ content:"📍 "; }
+  .ev-trip{ font-size:.8em; color:var(--ink-soft); background:var(--item-bg); border:1px dashed var(--border); border-radius:8px; padding:5px 9px; margin:-2px 0 8px; line-height:1.4; }
+  .ev-trip b{ color:var(--maroon-dark); }
   .ev-text{ font-size:.95em; line-height:1.42; margin:0 0 8px; }
   .ev-refs{ display:flex; flex-wrap:wrap; gap:4px 6px; margin:0 0 8px; }
   .ev-refs a{ font-size:.76em; text-decoration:none; color:var(--maroon); border:1px solid var(--border); border-radius:999px; padding:2px 8px; background:var(--item-bg); white-space:nowrap; }
@@ -260,7 +262,7 @@
 
 <div class="wrap">
   <header>
-    <h1>Ježíšův život<span class="help-icon hint-icon" id="tmHintIcon" tabindex="0">?<span class="tooltip">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.<br><br>Události a pořadí podle tabulky „Hlavní události Ježíšova života na zemi“ (Překlad nového světa, dodatek A7). Šipky a trasy neukazují přesné cesty, jen směr. Poloha oblastí (Galilea, Judea, Perea…) je orientační.</span></span></h1>
+    <h1>Ježíšův život<span class="help-icon hint-icon" id="tmHintIcon" tabindex="0">?<span class="tooltip">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.<br><br>Události a pořadí podle tabulky „Hlavní události Ježíšova života na zemi“ (Překlad nového světa, dodatek A7). Šipky a trasy neukazují přesné cesty, jen směr. Poloha oblastí (Galilea, Judea, Perea…) je orientační.<br><br>Vzdálenosti cest jsou jen odhad změřený z mapy: pěší cesta ≈ 1,3× vzdušná čára, denně asi 30 km. Cesta do Egypta leží mimo mapu a je odhadnutá zvlášť.</span></span></h1>
     <div class="subtitle" id="tmHint">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.</div>
   </header>
 
@@ -313,6 +315,7 @@
         <p class="ev-when" id="evWhen"></p>
         <p class="ev-where" id="evWhere"></p>
         <p class="ev-text" id="evText"></p>
+        <p class="ev-trip" id="evTrip" hidden></p>
         <p class="ev-flag" id="evFlag" hidden></p>
         <div class="ev-refs" id="evRefs"></div>
         <div class="ev-pager">
@@ -778,8 +781,49 @@
           evList.scrollTo({top: top - h4 - evList.clientHeight/3, behavior: reduceMotion ? "auto" : "smooth"});
       }
     }
+    // ---------- odhad délky cesty ----------
+    const KM_PER_PT = 0.54;        // měřítko mapy (Nazaret–Jeruzalém ≈ 102 km vzdušnou čarou)
+    const EGYPT_KM = {betlem:350, nazaret:450};   // Egypt leží mimo mapu – hrubý odhad do delty Nilu
+    // vrací {air: vzdušnou čarou z mapy, egypt: odhad pěší cesty do/z Egypta}
+    function tripKm(ev){
+      const r = {air:0, egypt:0};
+      if(!ev.route.length) return r;
+      let prev = ev.from || ev.route[0];
+      ev.route.forEach(id=>{
+        if(id === prev) return;
+        if(id === "egypt") r.egypt += EGYPT_KM[prev] || 400;
+        else if(prev === "egypt") r.egypt += EGYPT_KM[id] || 400;
+        else r.air += Math.hypot(PL[id][0]-PL[prev][0], PL[id][1]-PL[prev][1]) * KM_PER_PT;
+        prev = id;
+      });
+      return r;
+    }
+    const BOAT = ["jezero","jezeroNE"];
+    const roundKm = k=>k < 20 ? Math.max(1, Math.round(k)) : Math.round(k/5)*5;
+    function tripHtml(ev){
+      const k = tripKm(ev);
+      if(k.air + k.egypt < 3) return "";
+      const fuzzy = ev.route.concat(ev.from || []).some(id=>PL[id] && PL[id][3] === "area") || k.egypt > 0;
+      const pre = fuzzy ? "přibližně " : "asi ";
+      // plavba po Galilejském moři
+      if(ev.route.concat(ev.from || []).some(id=>BOAT.includes(id)))
+        return "⛵ Cesta částečně lodí: <b>" + pre + roundKm(k.air) + " km</b> · pár hodin";
+      const walk = k.air * 1.3 + k.egypt;
+      let dur;
+      if(walk < 20) dur = "asi " + Math.max(1, Math.round(walk/5)) + " h chůze";
+      else if(walk < 36) dur = "zhruba den chůze";
+      else {
+        const d = walk/30, a = Math.max(1, Math.floor(d)), b = Math.max(a, Math.ceil(d));
+        const n = a === b ? String(a) : a + "–" + b;
+        dur = "zhruba " + n + (b <= 4 ? " dny" : " dní") + " chůze";
+      }
+      const air = k.egypt ? "" : " (vzdušnou čarou ~" + roundKm(k.air) + " km)";
+      return "🚶 Cesta: <b>" + pre + roundKm(walk) + " km</b> pěšky" + air + " · " + dur;
+    }
     function renderCard(i){
       markList(i);
+      const trip = tripHtml(E[i]); const tripEl = $("evTrip");
+      tripEl.hidden = !trip; tripEl.innerHTML = trip;
       const ev = E[i];
       $("evSec").textContent = SECTIONS[ev.sec];
       $("evWhen").textContent = ev.d;
