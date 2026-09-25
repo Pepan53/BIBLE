@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ježíšův rodokmen — slíbené potomstvo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌳</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  :root{ --list-bg:#fbf7ee; --line-shared:#a9812f; --line-mt:#a9812f; --line-lk:#7a2e2e; --star-bg:#fbf1d8; }
+  :root[data-theme="dark"]{ --list-bg:#211c14; --line-shared:#d9a441; --line-mt:#d9a441; --line-lk:#d9695a; --star-bg:#3a2f1a; --gold-dark:#e0b35a; }
+  *{box-sizing:border-box}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px);scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 14px 60px}
+
+  /* sdílená tlačítka z common.css necháme odjet se stránkou, aby nepřekrývala lepicí lištu */
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+
+  header{text-align:center;padding:44px 0 0}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
+  .lead a{color:var(--maroon)}
+
+  /* sticky ovládání */
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:10px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
+  .eras{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .eras::-webkit-scrollbar{display:none}
+  .era-btn{flex:1 0 auto;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;
+    padding:6px 12px;font-size:.85em;cursor:pointer;white-space:nowrap}
+  .era-btn.active{background:var(--maroon);border-color:var(--maroon);color:#fff}
+  .tools{display:flex;gap:6px;margin-top:8px;align-items:center}
+  .search{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;padding:7px 12px;font-size:.9em}
+  .search.miss{border-color:var(--red)}
+  .chip{border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink-soft);border-radius:18px;padding:6px 10px;font-size:.82em;cursor:pointer;white-space:nowrap}
+  .chip[aria-pressed="true"]{color:var(--ink);border-color:var(--gold)}
+  button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+  details.legend{margin:12px 0 0;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:.85em;color:var(--ink-soft)}
+  details.legend summary{cursor:pointer;color:var(--ink);font-weight:600}
+  .legend ul{margin:8px 0 2px;padding-left:0;list-style:none;display:grid;gap:6px}
+  .sw{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+  /* sekce a linie */
+  section.era{padding-top:18px}
+  section.era > h2{font-family:var(--heading-font);color:var(--maroon-dark);text-align:center;font-size:1.25em;margin:8px 0 2px}
+  section.era > .sub{text-align:center;color:var(--ink-soft);font-size:.85em;margin:0 0 6px}
+  .track,.lane{position:relative;display:flex;flex-direction:column;align-items:center;padding:6px 0}
+  .track::before,.lane::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:4px;transform:translateX(-50%);border-radius:2px;background:var(--lc,var(--line-shared))}
+  .lanes{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .lane.mt{--lc:var(--line-mt)} .lane.lk{--lc:var(--line-lk)}
+  .lane-head{position:relative;z-index:1;background:var(--bg);text-align:center;padding:4px 4px 8px;font-size:.78em;color:var(--ink-soft);line-height:1.35}
+  .lane-head b{display:block;font-family:var(--heading-font);font-size:1.25em;color:var(--lc)}
+  .lane-foot{margin-top:auto;position:relative;z-index:1;background:var(--bg);font-size:.75em;color:var(--ink-soft);padding:4px 6px;text-align:center}
+  svg.fork{display:block;width:100%;height:46px}
+  svg.fork path{fill:none;stroke-width:4;vector-effect:non-scaling-stroke;stroke-linecap:round}
+
+  .node{position:relative;z-index:1;margin:6px 4px;border:2px solid var(--lc,var(--line-shared));background:var(--bg-panel);color:var(--ink);
+    border-radius:999px;padding:6px 16px;cursor:pointer;text-align:center;font:inherit;max-width:calc(100% - 8px);box-shadow:var(--shadow);
+    transition:transform .12s ease}
+  .node:hover{transform:scale(1.04)}
+  .node .nm{font-family:var(--heading-font);font-weight:700;font-size:1.02em;display:block}
+  .node .mt{display:block;font-size:.72em;color:var(--ink-soft);margin-top:1px}
+  .node .sp{display:block;font-size:.72em;color:var(--maroon);margin-top:1px}
+  .node.key{padding:10px 24px;border-width:3px}
+  .node.key .nm{font-size:1.3em}
+  .node.faithful{background:var(--star-bg)}
+  .node.omit{border-style:dashed;opacity:.72;box-shadow:none}
+  .node.omit .nm{font-weight:400;font-size:.9em}
+  .node.woman .nm{color:var(--maroon-dark)}
+  .node.jesus{border-color:var(--gold);background:var(--star-bg);box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 22%,transparent),var(--shadow)}
+  .node.flash{animation:flash 1.4s ease 2}
+  @keyframes flash{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--maroon) 40%,transparent)}}
+  @media (prefers-reduced-motion:reduce){.node{transition:none}.node.flash{animation:none;outline:3px solid var(--maroon)}}
+
+  .ev{position:relative;z-index:1;margin:5px 4px;background:var(--list-bg);border:1px dashed var(--border);border-radius:8px;padding:4px 10px;
+    font-size:.78em;color:var(--ink-soft);text-align:center;max-width:calc(100% - 8px);line-height:1.35}
+  .ev b{color:var(--ink);white-space:nowrap}
+  .card{position:relative;z-index:1;margin:7px 4px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:8px 11px;
+    font-size:.82em;line-height:1.45;max-width:min(30em,calc(100% - 8px));text-align:left;cursor:pointer;color:var(--ink);font-family:inherit;box-shadow:var(--shadow)}
+  .card .t{font-weight:700;display:block;margin-bottom:2px}
+  .card.promise{border-left:5px solid var(--gold);background:var(--star-bg)}
+  .card.promise .t{color:var(--gold-dark)}
+  .card.threat{border-left:5px solid var(--red);background:var(--red-bg)}
+  .card.threat .t{color:var(--red)}
+  body.hide-promise .card.promise{display:none}
+  body.hide-threat .card.threat{display:none}
+
+  .finale{text-align:center;margin:18px auto 0;max-width:34em;color:var(--ink-soft);line-height:1.55;font-size:.92em}
+  footer{text-align:center;color:var(--ink-soft);font-size:.82em;margin-top:30px}
+
+  /* detail */
+  .sheet-bg{position:fixed;inset:0;background:rgba(30,22,10,.5);display:none;align-items:flex-end;justify-content:center;z-index:10000}
+  .sheet-bg.show{display:flex}
+  .sheet{background:var(--bg-panel);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:18px 20px calc(22px + env(safe-area-inset-bottom,0px));
+    max-height:80vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(30,22,10,.35)}
+  @media (min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:16px}}
+  .sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .sheet h3{margin:0;font-family:var(--heading-font);color:var(--maroon-dark);font-size:1.35em}
+  .sheet .alt{color:var(--ink-soft);font-size:.9em;margin-top:2px}
+  .x{background:none;border:none;font-size:1.2em;color:var(--ink-soft);cursor:pointer;padding:4px 8px;border-radius:6px}
+  .x:hover{background:var(--hover-tint)}
+  dl.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0;font-size:.9em}
+  dl.facts dt{color:var(--ink-soft)} dl.facts dd{margin:0}
+  .sheet p{line-height:1.55;margin:10px 0}
+  .refs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .refs a{font-size:.85em;color:var(--maroon);border:1px solid var(--border);border-radius:14px;padding:4px 10px;text-decoration:none;background:var(--list-bg)}
+  .refs a:hover{border-color:var(--maroon)}
+
+  @media (max-width:480px){
+    h1{font-size:1.5em}
+    .node{padding:5px 10px}
+    .node .nm{font-size:.92em}
+    .node.key .nm{font-size:1.12em}
+    .card{font-size:.76em;padding:7px 8px}
+    .lanes .card,.lanes .ev{margin-left:3px;margin-right:3px}
+  }
+</style>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Ježíšův rodokmen</h1>
+    <p class="lead">Od Adama k Ježíši: jak Bůh krok za krokem ukazoval, z které rodiny přijde slíbené potomstvo z <a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/1/3" target="_blank" rel="noopener">1. Mojžíšovy 3:15</a>. Klepni na jméno pro podrobnosti.</p>
+  </header>
+
+  <div class="controls">
+    <nav class="eras" id="eras" aria-label="Období"></nav>
+    <div class="tools">
+      <input id="search" class="search" type="search" placeholder="Najdi jméno…" autocomplete="off" aria-label="Najdi jméno v rodokmenu">
+      <button class="chip" id="tgPromise" aria-pressed="true" type="button">⭐ Sliby</button>
+      <button class="chip" id="tgThreat" aria-pressed="true" type="button">⚠️ Ohrožení</button>
+    </div>
+  </div>
+
+  <details class="legend">
+    <summary>Co znamenají barvy a značky</summary>
+    <ul>
+      <li><span class="sw" style="background:var(--line-mt)"></span>Společná linie a Matoušův rodokmen – přes Šalomouna k Josefovi (právní nárok na Davidův trůn)</li>
+      <li><span class="sw" style="background:var(--line-lk)"></span>Lukášův rodokmen – přes Natana k Marii (přirozený původ)</li>
+      <li>👑 král · zlaté pozadí = věrný judský král po Šalomounovi</li>
+      <li>Přerušovaný okraj = král, kterého Matouš ve výčtu vynechává</li>
+      <li>⭐ Informace od Jehovy o slíbeném potomstvu · ⚠️ Možné ohrožení linie</li>
+      <li>~ přibližné datum</li>
+    </ul>
+  </details>
+
+  <main id="tree"></main>
+
+  <p class="finale">Sliby dané Abrahamovi a jeho potomstvu se naplnily hlavně v Kristovi (<a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/48/3" target="_blank" rel="noopener">Galaťanům 3:16, 29</a>). Rodokmen podle mapy „Slíbené potomstvo“ a chronologie z publikací svědků Jehovových.</p>
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
+</div>
+
+<div class="sheet-bg" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+(function(){
+  /* ---------- pomocné ---------- */
+  const BOOK={1:"1. Mojžíšova",2:"2. Mojžíšova",4:"4. Mojžíšova",15:"Ezdráš",43:"Jan",6:"Jozue",8:"Rut",9:"1. Samuelova",10:"2. Samuelova",11:"1. Královská",12:"2. Královská",13:"1. Paralipomenon",14:"2. Paralipomenon",16:"Nehemiáš",17:"Ester",23:"Izajáš",24:"Jeremjáš",26:"Ezekiel",27:"Daniel",40:"Matouš",42:"Lukáš",48:"Galaťanům",58:"Hebrejcům"};
+  const bibleUrl=(b,c)=>`https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/${b}/${c}`;
+  const yr=v=>{ if(v==null) return ""; const s=String(v); const approx=s.startsWith("~"); const n=parseInt(s.replace("~",""),10);
+    return (approx?"~":"")+(n>0?`${n} př. n. l.`:`${-n} n. l.`); };
+  // r = [kniha, kapitola, "verše"]
+  const P=(n,o={})=>Object.assign({k:"p",n},o);
+  const E=(y,t)=>({k:"e",y,t});
+  const S=(t,x,refs)=>({k:"s",t,x,refs});
+  const O=(t,x,refs)=>({k:"o",t,x,refs});
+
+  /* ---------- data ---------- */
+  const G5=[[1,5,"5"]], G11=[[1,11,"11:10–26"]], L3=[[42,3,"3:23–38"]], M1=[[40,1,"1:1–17"]];
+  const ERAS=[
+    {id:"adam",short:"Adam",title:"Od Adama k potopě",sub:"10 generací · 1. Mojžíšova 5",items:[
+      S("Slib v Edenu","Bůh oznámil, že přijde „potomstvo“ ženy, které rozdrtí hlavu hada – Satana, a samo bude zraněno na patě.",[[1,3,"3:15"]]),
+      P("Adam",{key:1,b:4026,born:"stvořen",life:930,note:"První člověk. Jeho neposlušnost způsobila, že lidstvo potřebuje výkupné – a tedy slíbené potomstvo.",refs:[[1,2,"2:7"],[1,5,"5:1–5"]]}),
+      O("Kain zabíjí Ábela","Vypadalo to, že bohabojná linie skončí. Bůh však dal Evě „jiné potomstvo“ – Šeta.",[[1,4,"4:8, 25"]]),
+      P("Šet",{b:3896,life:912,note:"Narodil se, když bylo Adamovi 130 let.",refs:G5}),
+      P("Enoš",{b:3791,life:905,note:"Za jeho dnů se začalo zneužívat Jehovovo jméno.",refs:[[1,4,"4:26"],[1,5,"5"]]}),
+      P("Kenan",{b:3701,life:910,refs:G5}),
+      P("Mahalalel",{b:3631,life:895,refs:G5}),
+      P("Jared",{b:3566,life:962,refs:G5}),
+      P("Henoch",{b:3404,life:365,note:"Chodil s pravým Bohem a prorokoval o Božím soudu. Bůh ho vzal dřív, než ho mohli zabít.",refs:[[1,5,"5:21–24"],[58,11,"Heb 11:5"]]}),
+      P("Metuzalém",{b:3339,life:969,note:"Nejdéle žijící člověk v Bibli. Zemřel v roce potopy.",refs:G5}),
+      P("Lamech",{b:3152,life:777,note:"Dal synovi jméno Noe s nadějí, že přinese úlevu.",refs:[[1,5,"5:28–31"]]}),
+      P("Noe",{key:1,b:2970,life:950,note:"Byl bezúhonný mezi svými současníky. Postavil archu a přežil potopu s rodinou – linie potomstva byla zachována.",refs:[[1,6,"6:9"],[1,9,"9:28, 29"]]}),
+      O("Celosvětová potopa","Svět plný násilí a nefilů. Přežilo jen 8 lidí v arše – i Noe a jeho syn Šem.",[[1,7,"7:23"]]),
+      E(2370,"Potopa · smlouva s Noemem, duha jako znamení")
+    ]},
+    {id:"sem",short:"Potopa",title:"Od potopy k Abrahamovi",sub:"10 generací · 1. Mojžíšova 11",items:[
+      S("Požehnání pro Šema","Noe předpověděl, že Šemův Bůh, Jehova, bude požehnán – linie půjde přes Šema.",[[1,9,"9:26"]]),
+      P("Šem",{b:2468,life:600,note:"Syn Noeho, přežil potopu.",refs:G11}),
+      P("Arpakšad",{b:2368,life:438,note:"Narodil se 2 roky po potopě. (Lukáš 3:36 uvádí po něm ještě Kainana.)",refs:G11}),
+      P("Šelach",{b:2333,life:433,refs:G11}),
+      P("Eber",{b:2303,life:464,note:"Od jeho jména je zřejmě odvozeno označení „Hebrejci“.",refs:G11}),
+      P("Peleg",{b:2269,life:239,note:"Za jeho dnů „byla země rozdělena“ – zřejmě zmatení jazyků v Babelu.",refs:[[1,10,"10:25"],[1,11,"11:16–19"]]}),
+      E(null,"Věž v Babelu · založení Babylónu · rozptýlení národů"),
+      P("Reu",{b:2239,life:239,refs:G11}),
+      P("Serug",{b:2207,life:230,refs:G11}),
+      P("Nachor",{b:2177,life:148,refs:G11}),
+      P("Terach",{b:2148,life:205,note:"Odešel s Abramem z Ur do Charanu.",refs:[[1,11,"11:24–32"]]})
+    ]},
+    {id:"abraham",short:"Abraham",title:"Od Abrahama k Davidovi",sub:"14 generací · Matouš 1:2–6",items:[
+      P("Abraham",{alt:"Abram",key:1,b:2018,life:175,note:"Přítel Jehovy. Uvěřil Božímu slibu, že z jeho potomstva přijde požehnání pro všechny národy.",refs:[[1,12,"12:1–3"],[1,25,"25:7"]]}),
+      E(1943,"Abraham překračuje Eufrat · začíná smlouva s Abrahamem (430 let)"),
+      S("Smlouva s Abrahamem","„Prostřednictvím tvého potomstva získají požehnání všechny národy na zemi.“",[[1,22,"22:18"],[1,15,"15:18"]]),
+      O("Sára u faraóna a u Abimeleka","Dvakrát hrozilo, že Sára – budoucí matka potomstva – skončí v cizím harému. Bůh zasáhl.",[[1,12,"12:14–20"],[1,20,"20:1–7"]]),
+      P("Izák",{key:1,b:1918,life:180,note:"Syn slibu, narozený Abrahamovi ve 100 letech a Sáře v 90 letech. Byl ochoten nechat se obětovat.",refs:[[1,21,"21:1–5"],[1,22,"22:1–18"],[1,35,"35:28"]]}),
+      O("Išmael se Izákovi vysmívá","Rok 1913 př. n. l., když byl Izák odstaven. Tady začíná předpovězených 400 let trápení.",[[1,21,"21:8–12"],[48,4,"Gal 4:29"]]),
+      S("Slib pro Izáka","Bůh zopakoval Izákovi slib o požehnání skrze jeho potomstvo.",[[1,26,"26:3, 4"]]),
+      P("Jákob",{alt:"Izrael",key:1,b:1858,life:147,note:"Získal právo prvorozeného a otcovo požehnání. Z jeho 12 synů vzešlo 12 kmenů Izraele.",refs:[[1,25,"25:26"],[1,47,"47:28"]]}),
+      O("Ezau chce Jákoba zabít","Jákob musel utéct do Charanu.",[[1,27,"27:41–45"]]),
+      S("Slib pro Jákoba","„Prostřednictvím tebe a tvého potomstva budou požehnány všechny rodiny země.“",[[1,28,"28:13–15"]]),
+      P("Juda",{key:1,b:"~1770",note:"Čtvrtý syn Jákoba a Ley. Z jeho kmene měla vzejít královská linie.",sp:"⚭ Tamar",refs:[[1,29,"29:35"],[1,38,"38"]]}),
+      S("Žezlo se od Judy nevzdálí","Juda bude mít vládu, „dokud nepřijde Šilo, kterého budou poslouchat národy“.",[[1,49,"49:10"]]),
+      O("Sedmiletý hladomor","Jákobova rodina mohla vyhladovět. Bůh ji zachránil skrze Josefa v Egyptě.",[[1,45,"45:5–7"]]),
+      E(1728,"Izrael vchází do Egypta"),
+      P("Perec",{note:"Syn Judy a Tamar. Po něm se jmenuje rod Perecovců.",refs:[[1,38,"38:27–30"],[8,4,"Rut 4:18"]]}),
+      P("Checron",{refs:[[8,4,"Rut 4:18, 19"]]}),
+      P("Ram",{note:"Lukáš na tomto místě uvádí jména Admin a Arni.",refs:[[8,4,"Rut 4:19"],[42,3,"Lk 3:33"]]}),
+      P("Amminadab",{note:"Jeho dcera Elišeba se vdala za Árona.",refs:[[8,4,"Rut 4:19, 20"],[2,6,"2M 6:23"]]}),
+      O("Faraón zabíjí izraelské chlapce","Faraón nařídil házet novorozené chlapce do Nilu.",[[2,1,"1:15–22"]]),
+      P("Nachšon",{note:"Předák kmene Juda na cestě pouští.",refs:[[4,1,"4M 1:7"],[8,4,"Rut 4:20"]]}),
+      E(1513,"Mojžíš vyvádí Izraelity z Egypta · smlouva Zákona"),
+      P("Salmon",{sp:"⚭ Rachab",note:"Jeho manželkou byla Rachab z Jericha, která ukryla izraelské zvědy.",refs:[[8,4,"Rut 4:20, 21"],[6,2,"Jozue 2"]]}),
+      E(1473,"Vstup do Zaslíbené země · Jericho zničeno, Rachab zachráněna"),
+      P("Boaz",{sp:"⚭ Rut",note:"Ujal se Moábky Rut jako výkupce a oženil se s ní.",refs:[[8,4,"Rut 4:9–13"]]}),
+      P("Obed",{refs:[[8,4,"Rut 4:17"]]}),
+      P("Jišai",{alt:"Isaj",note:"Betlémec, otec osmi synů; nejmladší byl David.",refs:[[9,16,"1S 16:1–13"]]}),
+      S("Výhonek z Jišaiova pařezu","Izajáš předpověděl, že z Jišaiova rodu vyroste ten, na kterého se budou obracet národy.",[[23,11,"11:1, 10"]]),
+      P("David",{key:1,king:1,b:1107,life:70,reign:"1077–1037 př. n. l. (nad celým Izraelem od 1070)",sp:"⚭ Bat-šeba",note:"Muž podle Jehovova srdce. Bůh s ním uzavřel smlouvu o věčném království.",refs:[[9,16,"1S 16:13"],[10,5,"2S 5:4, 5"]]}),
+      O("Saul pronásleduje Davida","Král Saul se Davida opakovaně snažil zabít.",[[9,19,"1S 19:10"]]),
+      S("Smlouva s Davidem","„Tvůj dům a tvé kralování potrvají věčně a tvůj trůn bude navždy pevně stát.“",[[10,7,"7:12–16"]])
+    ]},
+    {id:"kralove",short:"David",title:"Od Davida k babylónskému zajetí",sub:"Tady se linie rozdělí na dva Davidovy syny",fork:1,
+      heads:[["Matouš 1","přes Šalomouna → Josef","mt"],["Lukáš 3","přes Natana → Marie","lk"]],
+      mt:[
+        P("Šalomoun",{king:1,alt:"Jedidiáš",reign:"1037–998 př. n. l.",note:"Syn Davida a Bat-šeby. Postavil Jehovův chrám.",refs:[[11,1,"1K 1:39"],[11,6,"1K 6:1"]]}),
+        E(1034,"Začíná stavba chrámu"),
+        P("Rechoboam",{king:1,reign:"997–980",note:"Za jeho vlády se království rozdělilo.",refs:[[11,12,"1K 12"]]}),
+        E(997,"Rozdělení na Judu a Izrael"),
+        P("Abija",{king:1,alt:"Abijam",reign:"980–978",refs:[[11,15,"1K 15:1–8"]]}),
+        P("Asa",{king:1,faithful:1,reign:"977–937",refs:[[11,15,"1K 15:9–24"]]}),
+        P("Jehošafat",{king:1,faithful:1,reign:"936–~912",refs:[[14,17,"2Pa 17"]]}),
+        P("Jehoram",{king:1,reign:"~913–~907",note:"Oženil se s Ataljou, dcerou Achaba a Jezábel.",refs:[[12,8,"2K 8:16–24"]]}),
+        P("Achazjáš",{king:1,omit:1,reign:"~906",refs:[[12,8,"2K 8:25–27"]]}),
+        O("Atalja vraždí královské potomstvo","905–899 př. n. l. Z Davidovy linie přežil jen malý Jehoaš, kterého ukryla Jehošeba.",[[12,11,"2K 11:1–3"]]),
+        P("Jehoaš",{king:1,omit:1,faithful:1,reign:"898–859",refs:[[12,11,"2K 11:21"],[12,12,"12"]]}),
+        P("Amacjáš",{king:1,omit:1,reign:"858–830",refs:[[12,14,"2K 14:1–20"]]}),
+        P("Uzziáš",{king:1,faithful:1,alt:"Azarjáš",reign:"829–778",refs:[[14,26,"2Pa 26"]]}),
+        P("Jotam",{king:1,faithful:1,reign:"777–762",refs:[[14,27,"2Pa 27"]]}),
+        P("Achaz",{king:1,reign:"761–746",refs:[[12,16,"2K 16"]]}),
+        O("Spiknutí proti Davidovu domu","Sýrie a Izrael chtěly na trůn dosadit „Tabeelova syna“. Achaz navíc spálil svého syna v ohni.",[[23,7,"Iz 7:6"],[12,16,"2K 16:3"]]),
+        P("Ezekjáš",{king:1,faithful:1,reign:"745–717",refs:[[12,18,"2K 18–20"]]}),
+        O("Ezekjášova nemoc","Měl zemřít a ještě neměl syna. Jehova mu přidal 15 let – pak se narodil Manasse. Jehova také zničil 185 000 asyrských vojáků.",[[12,20,"2K 20:1–6"],[12,19,"19:35"]]),
+        P("Manasse",{king:1,reign:"716–662",refs:[[14,33,"2Pa 33"]]}),
+        P("Amon",{king:1,reign:"661–660",refs:[[12,21,"2K 21:19–26"]]}),
+        P("Josijáš",{king:1,faithful:1,reign:"659–629",refs:[[12,22,"2K 22–23"]]}),
+        P("Jehojakim",{king:1,omit:1,reign:"628–618",note:"Vazalský král faraóna Neka, pak Nebukadnecara.",refs:[[12,23,"2K 23:34–37"]]}),
+        P("Jekonjáš",{king:1,alt:"Jehojakin",reign:"618/617 (3 měsíce)",note:"Odveden do Babylóna. Jehova prohlásil, že nikdo z jeho potomků nebude úspěšně vládnout na Davidově trůnu – proto Ježíš nepochází od Jekonjáše přirozeně, ale přes Marii.",refs:[[12,24,"2K 24:8–15"],[24,22,"Jer 22:30"]]}),
+        E(607,"Nebukadnecar ničí Jeruzalém · Sedekjáš poslední král"),
+        S("Ten, kdo má zákonné právo","Koruna bude sňata, „dokud nepřijde ten, kdo má zákonné právo“.",[[26,21,"Ez 21:25–27"]])
+      ],
+      lk:[
+        P("Natan",{note:"Syn Davida a Bat-šeby, Šalomounův bratr. Nevládl – přes něj vede Mariina linie.",refs:[[13,3,"1Pa 3:5"],[42,3,"Lk 3:31"]]}),
+        ..."Mattata Menna Melea Eljakim Jonam Josef Juda Simeon Levi Mattat Jorim Eliezer Ježíš Er Elmadam Kosam Addi Melchi".split(" ").map(n=>P(n,{refs:L3,note:n==="Ježíš"?"Jiný Ježíš (Jozue) – jméno bylo běžné.":undefined})),
+        P("Neri",{note:"Lukáš uvádí Šealtiela jako Neriho syna – zřejmě šlo o zetě nebo o švagrovské manželství.",refs:L3})
+      ]},
+    {id:"zajeti",short:"Zajetí",title:"Od zajetí k Ježíšovi",sub:"Obě linie se na chvíli potkají",merge:1,
+      top:[
+        P("Šealtiel",{note:"Podle Matouše syn Jekonjáše, podle Lukáše syn Neriho. Tady se obě linie spojují.",refs:[[40,1,"Mt 1:12"],[42,3,"Lk 3:27"],[13,3,"1Pa 3:17"]]}),
+        P("Zerubábel",{key:1,note:"Místodržitel Judy. Vedl Židy zpět z Babylóna a obnovil chrám.",refs:[[15,3,"Ezd 3:8"],[40,1,"Mt 1:12, 13"],[42,3,"Lk 3:27"]]}),
+        E(537,"Židé propuštěni z Babylóna · obnova chrámu"),
+        O("Haman chce vyhladit Židy","Perský výnos měl zničit všechny Židy – i předky Mesiáše. Ester a Mordokaj je zachránili.",[[17,3,"Est 3:6–13"],[17,8,"8"]]),
+        E(455,"Obnovují se hradby Jeruzaléma · začíná 70 týdnů let"),
+        S("70 týdnů","Od obnovy Jeruzaléma „do Mesiáše, Vůdce“ uplyne 7 + 62 týdnů let.",[[27,9,"Dan 9:24–27"]])
+      ],
+      heads:[["Matouš 1","k Josefovi","mt"],["Lukáš 3","k Marii","lk"]],
+      mt:[
+        ..."Abiud Eljakim Azor Cadok Achim Eliud Eleazar Matan Jákob".split(" ").map(n=>P(n,{refs:M1})),
+        P("Josef",{key:1,note:"Tesař z Nazaretu, Mariin manžel a Ježíšův adoptivní otec. Byl Davidovým potomkem, a tak Ježíš získal zákonné právo na Davidův trůn.",refs:[[40,1,"Mt 1:16–25"]]})
+      ],
+      lk:[
+        ..."Resa Joanan Joda Josech Semein Mattatiáš Maat Naggaj Esli Nahum Amos Mattatiáš Josef Jannaj Melchi Levi Mattat".split(" ").map(n=>P(n,{refs:L3})),
+        P("Heli",{note:"Lukáš píše „Josef, syn Heliho“ – Heli byl zřejmě Mariin otec a Josef jeho zeť.",refs:L3}),
+        P("Marie",{key:1,woman:1,note:"Panna z Judova kmene a Davidova rodu. Anděl jí oznámil, že porodí Božího Syna.",refs:[[42,1,"Lk 1:26–35"]]})
+      ],
+      end:[
+        S("Davidův trůn navždy","„Bůh Jehova mu dá trůn jeho otce Davida… a jeho kralování nikdy neskončí.“",[[42,1,"Lk 1:32, 33"]]),
+        P("Ježíš",{key:1,jesus:1,b:2,born:"narozen v Betlémě",note:"Slíbené potomstvo. Zákonné právo na Davidův trůn zdědil po Josefovi, přirozený původ z Davida má přes Marii. Na zemi žil asi 33,5 roku.",refs:[[40,1,"Mt 1:18–25"],[42,2,"Lk 2:1–7"],[48,3,"Gal 3:16"]]}),
+        O("Herodes zabíjí děti v Betlémě","Josef s Marií a dítětem utekli do Egypta.",[[40,2,"Mt 2:13–16"]]),
+        E(-29,"Ježíš pokřtěn a pomazán – objevuje se Mesiáš (konec 69. týdne)"),
+        O("Satan a lidé proti Ježíšovi","Tři pokušení v pustině, pokus shodit ho z útesu v Nazaretu, opakované pokusy farizeů o jeho život.",[[40,4,"Mt 4:1–11"],[42,4,"Lk 4:29, 30"],[43,8,"Jan 8:59"]]),
+        E(-33,"Ježíš umírá – výkupné je zaplaceno; vzkříšen třetí den")
+      ]}
+  ];
+
+  /* ---------- vykreslení ---------- */
+  const tree=document.getElementById("tree");
+  const all=[]; // osoby pro hledání
+  let genShared=0;
+
+  function refLabelClean(r){
+    const [b,c,v]=r; const book=BOOK[b]||"";
+    if(!v) return `${book} ${c}`;
+    if(/^[0-9]/.test(v)) return v.includes(":")?`${book} ${v}`:(v===String(c)?`${book} ${c}`:`${book} ${c}:${v}`);
+    return v; // už zkrácený tvar např. "2K 11:1–3"
+  }
+
+  function el(tag,cls,html){const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e;}
+
+  function renderItem(it,parentName,lane,gen){
+    if(it.k==="p"){
+      const b=el("button","node"+(it.key?" key":"")+(it.faithful?" faithful":"")+(it.omit?" omit":"")+(it.woman?" woman":"")+(it.jesus?" jesus":""));
+      b.type="button";
+      let meta="";
+      if(it.reign) meta=`vládl ${it.reign.replace(" př. n. l.","")}`;
+      else if(it.b!=null) meta=yr(it.b)+(it.life?` · ${it.life} let`:"");
+      if(it.omit) meta=(meta?meta+" · ":"")+"u Matouše chybí";
+      b.innerHTML=`<span class="nm">${it.king?"👑 ":""}${it.n}</span>${meta?`<span class="mt">${meta}</span>`:""}${it.sp?`<span class="sp">${it.sp}</span>`:""}`;
+      it._parent=parentName; it._lane=lane; it._gen=gen; it._el=b;
+      b.addEventListener("click",()=>openPerson(it));
+      all.push(it);
+      return b;
+    }
+    if(it.k==="e") return el("div","ev",(it.y!=null?`<b>${yr(it.y)}</b> `:"")+it.t);
+    const c=el("button","card "+(it.k==="s"?"promise":"threat"));
+    c.type="button";
+    c.innerHTML=`<span class="t">${it.k==="s"?"⭐":"⚠️"} ${it.t}</span>${it.x}`;
+    c.addEventListener("click",()=>openCard(it));
+    return c;
+  }
+
+  function renderList(list,container,lane,startParent,countGen){
+    let parent=startParent;
+    for(const it of list){
+      let g=null;
+      if(it.k==="p"&&countGen){ genShared++; g=genShared; }
+      container.appendChild(renderItem(it,parent,lane,g));
+      if(it.k==="p") parent=it.n;
+    }
+    return parent;
+  }
+
+  function fork(merge){
+    const s='<svg class="fork" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">';
+    const a=merge?'M25 0 C25 22 50 18 50 40':'M50 0 C50 22 25 18 25 40';
+    const b=merge?'M75 0 C75 22 50 18 50 40':'M50 0 C50 22 75 18 75 40';
+    return s+`<path d="${a}" stroke="var(--line-mt)"/><path d="${b}" stroke="var(--line-lk)"/></svg>`;
+  }
+
+  function lanes(era,parents){
+    const wrap=el("div","lanes");
+    const out={};
+    era.heads.forEach(([t,s,cls])=>{
+      const ln=el("div","lane "+cls);
+      ln.appendChild(el("div","lane-head",`<b>${t}</b>${s}`));
+      const people=era[cls].filter(x=>x.k==="p");
+      out[cls]=renderList(era[cls],ln,cls,parents[cls],false);
+      ln.appendChild(el("div","lane-foot",`${people.filter(p=>!p.omit).length} jmen`+(people.some(p=>p.omit)?` (+${people.filter(p=>p.omit).length} vynechaní)`:"")));
+      wrap.appendChild(ln);
+    });
+    return {wrap,out};
+  }
+
+  let last="";
+  for(const era of ERAS){
+    const sec=el("section","era"); sec.id="era-"+era.id;
+    sec.appendChild(el("h2",null,era.title));
+    if(era.sub) sec.appendChild(el("p","sub",era.sub));
+    if(era.items){
+      const tr=el("div","track");
+      last=renderList(era.items,tr,"shared",last,true);
+      sec.appendChild(tr);
+    }
+    if(era.fork){
+      sec.insertAdjacentHTML("beforeend",fork(false));
+      const {wrap,out}=lanes(era,{mt:last,lk:last});
+      sec.appendChild(wrap);
+      era._out=out;
+    }
+    if(era.merge){
+      const prev=ERAS[ERAS.indexOf(era)-1]._out;
+      const mf=document.createElement("div"); mf.innerHTML=fork(true);
+      sec.insertBefore(mf.firstChild,sec.querySelector("h2"));
+      const tr=el("div","track");
+      // Šealtiel má dva rodiče
+      const firstParent=`${prev.mt} (Mt) / ${prev.lk} (Lk)`;
+      const endTop=renderList(era.top,tr,"shared",firstParent,false);
+      sec.appendChild(tr);
+      sec.insertAdjacentHTML("beforeend",fork(false));
+      const {wrap,out}=lanes(era,{mt:endTop,lk:endTop});
+      sec.appendChild(wrap);
+      sec.insertAdjacentHTML("beforeend",fork(true));
+      const tr2=el("div","track");
+      renderList(era.end,tr2,"shared",`${out.mt} (Mt) a ${out.lk} (Lk)`,false);
+      sec.appendChild(tr2);
+    }
+    tree.appendChild(sec);
+  }
+  // Ježíšovi: rodiče
+  const jesus=all.find(p=>p.jesus); jesus._parent="Josef (adoptivní otec) a Marie";
+
+  /* ---------- navigace období ---------- */
+  const erasNav=document.getElementById("eras");
+  ERAS.forEach(era=>{
+    const b=el("button","era-btn",era.short); b.type="button"; b.dataset.id=era.id;
+    b.addEventListener("click",()=>document.getElementById("era-"+era.id).scrollIntoView());
+    erasNav.appendChild(b);
+  });
+  const jb=el("button","era-btn","Ježíš"); jb.type="button";
+  jb.addEventListener("click",()=>{jesus._el.scrollIntoView({block:"center"});flash(jesus._el)});
+  erasNav.appendChild(jb);
+  const btns=[...erasNav.querySelectorAll(".era-btn[data-id]")];
+  const io=new IntersectionObserver(ents=>{
+    ents.forEach(e=>{ if(e.isIntersecting){ const id=e.target.id.replace("era-",""); btns.forEach(b=>b.classList.toggle("active",b.dataset.id===id)); const a=btns.find(b=>b.dataset.id===id); a&&a.scrollIntoView({inline:"nearest",block:"nearest"}); } });
+  },{rootMargin:"-45% 0px -50% 0px"});
+  document.querySelectorAll("section.era").forEach(s=>io.observe(s));
+
+  /* ---------- přepínače ---------- */
+  function toggle(id,cls){
+    const b=document.getElementById(id);
+    b.addEventListener("click",()=>{ const on=b.getAttribute("aria-pressed")!=="true"; b.setAttribute("aria-pressed",on); document.body.classList.toggle(cls,!on); });
+  }
+  toggle("tgPromise","hide-promise"); toggle("tgThreat","hide-threat");
+
+  /* ---------- hledání ---------- */
+  const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const search=document.getElementById("search");
+  let hits=[],hitIdx=0,lastQ="";
+  function flash(elm){ elm.classList.remove("flash"); void elm.offsetWidth; elm.classList.add("flash"); }
+  function find(next){
+    const q=norm(search.value.trim());
+    if(!q){search.classList.remove("miss");return;}
+    if(q!==lastQ){ lastQ=q; hitIdx=0;
+      hits=all.filter(p=>norm(p.n).startsWith(q)||(p.alt&&norm(p.alt).startsWith(q)));
+      if(!hits.length) hits=all.filter(p=>norm(p.n).includes(q)||(p.alt&&norm(p.alt).includes(q)));
+    } else if(next) hitIdx=(hitIdx+1)%Math.max(hits.length,1);
+    search.classList.toggle("miss",!hits.length);
+    search.title=hits.length?`${hitIdx+1} z ${hits.length} – Enter = další`:"Jméno v rodokmenu není";
+    if(hits.length){ const h=hits[hitIdx]._el; h.scrollIntoView({block:"center"}); flash(h); }
+  }
+  let tmr; search.addEventListener("input",()=>{clearTimeout(tmr);tmr=setTimeout(()=>find(false),350)});
+  search.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); find(true); } });
+
+  /* ---------- detail ---------- */
+  const bg=document.getElementById("sheetBg"), sheet=document.getElementById("sheet");
+  let lastFocus=null;
+  const refsHtml=refs=>(refs&&refs.length)?`<div class="refs">${refs.map(r=>`<a href="${bibleUrl(r[0],r[1])}" target="_blank" rel="noopener">📖 ${refLabelClean(r)}</a>`).join("")}</div>`:"";
+  function show(html){
+    lastFocus=document.activeElement;
+    sheet.innerHTML=html; bg.classList.add("show");
+    sheet.querySelector(".x").addEventListener("click",close);
+    sheet.querySelector(".x").focus();
+  }
+  function close(){ bg.classList.remove("show"); lastFocus&&lastFocus.focus(); }
+  bg.addEventListener("click",e=>{ if(e.target===bg) close(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&bg.classList.contains("show")) close(); });
+
+  const laneName={shared:"společná linie",mt:"Matoušův rodokmen (přes Šalomouna)",lk:"Lukášův rodokmen (přes Natana)"};
+  function openPerson(p){
+    const rows=[];
+    if(p._parent) rows.push(["Předek v linii",p._parent]);
+    if(p.b!=null) rows.push([p.born?p.born[0].toUpperCase()+p.born.slice(1):"Narozen",yr(p.b)]);
+    if(p.life) rows.push(["Žil",`${p.life} let`]);
+    if(p.reign) rows.push(["Vládl",p.reign.includes("př.")?p.reign:p.reign+" př. n. l."]);
+    if(p.sp) rows.push(["Manželka",p.sp.replace("⚭ ","")]);
+    if(p._gen) rows.push(["Generace",`${p._gen}. od Adama`]);
+    rows.push(["Linie",laneName[p._lane]||""]);
+    if(p.omit) rows.push(["Pozn.","Matouš tohoto krále ve výčtu vynechává"]);
+    show(`<div class="sheet-h"><div><h3 id="sheetTitle">${p.king?"👑 ":""}${p.n}</h3>${p.alt?`<div class="alt">také ${p.alt}</div>`:""}</div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
+      <dl class="facts">${rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
+      ${p.note?`<p>${p.note}</p>`:""}
+      ${refsHtml(p.refs)}
+      <div class="refs"><a href="https://wol.jw.org/cs/wol/s/r29/lp-b?q=${encodeURIComponent(p.n)}" target="_blank" rel="noopener">🔎 Hledat „${p.n}“ v Online knihovně</a></div>`);
+  }
+  function openCard(c){
+    show(`<div class="sheet-h"><h3 id="sheetTitle">${c.k==="s"?"⭐":"⚠️"} ${c.t}</h3><button class="x" type="button" aria-label="Zavřít">✕</button></div>
+      <p style="color:var(--ink-soft);font-size:.85em;margin-bottom:0">${c.k==="s"?"Informace od Jehovy o slíbeném potomstvu":"Možné ohrožení linie slíbeného potomstva"}</p>
+      <p>${c.x}</p>${refsHtml(c.refs)}`);
+  }
+})();
+</script>
+</body>
+</html>
