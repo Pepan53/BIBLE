@@ -47,7 +47,7 @@
   .tm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
   .tm-zoom button:hover{ border-color:var(--gold); }
   .tm-zoom button:disabled{ opacity:.4; cursor:default; }
-  .tm-index-btn{ position:absolute; right:10px; top:10px; z-index:6; font:inherit; font-size:.82em; font-weight:700; padding:5px 12px; border-radius:999px;
+  .tm-index-btn{ position:absolute; left:10px; top:10px; z-index:6; font:inherit; font-size:.82em; font-weight:700; padding:5px 12px; border-radius:999px;
     border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; box-shadow:var(--shadow); }
   .tm-index-btn:hover{ border-color:var(--gold); }
   /* ---------- rejstřík míst ---------- */
@@ -104,7 +104,7 @@
 
 
   /* ---------- karta události (modální okno nad mapou) ---------- */
-  .ev-card{ position:absolute; left:2.5%; top:2%; width:50%; max-height:46%; overflow:auto; z-index:7;
+  .ev-card{ position:absolute; left:10px; top:48px; width:54%; max-height:44%; overflow:auto; z-index:7;
     background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; box-shadow:0 6px 22px rgba(40,28,10,.22);
     padding:12px 14px 12px; transition:opacity .2s ease, transform .2s ease; }
   .ev-card.hidden{ opacity:0; transform:translateY(-6px); pointer-events:none; }
@@ -126,6 +126,8 @@
   .ev-pager{ display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid var(--border); padding-top:8px; }
   .ev-pager button{ font:inherit; font-size:.8em; padding:4px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; }
   .ev-pager button:disabled{ opacity:.35; cursor:default; }
+  .ev-pager button, .ev-pager .ev-count{ white-space:nowrap; }
+  .ev-pager .ev-play{ padding:2px 7px; margin-right:2px; }
   .ev-pager .ev-count{ font-size:.75em; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
 
   /* ---------- časová osa ---------- */
@@ -160,17 +162,30 @@
   .tl-tip.show{ opacity:1; }
   .tl-tip b{ color:#f0cf87; font-weight:700; }
 
+  /* mobil: mapa + úzká časová osa vpravo vedle sebe, událost dole jako pevný panel */
   @media (max-width: 860px){
-    .wrap{ padding-left:10px; padding-right:10px; }
-    .tm-layout{ flex-direction:column; align-items:stretch; gap:12px; }
-    .tm-mapbox{ height:auto; width:100%; min-height:0; }
-    .tl-card{ width:auto; height:auto; min-height:0; }
-    .tl-rail{ flex:none; height:64px; }
-    .ev-card{ position:static; width:auto; max-height:none; box-shadow:var(--shadow); }
+    body{ padding-bottom:var(--sheetH, 220px); }
+    .wrap{ padding:8px 8px 20px; }
+    header{ margin-bottom:12px; }
+    .subtitle{ display:none; }
+    h1{ margin:4px 46px 0 46px; font-size:1.25em; }
+    .tm-layout{ flex-direction:row; justify-content:center; align-items:flex-start; gap:6px; }
+    .tm-mapbox{ min-height:0; }
+    .tl-card{ width:54px; min-height:0; padding:4px 0; border-radius:10px; }
+    .tl-head{ display:none; }
+    .tl-rail{ margin-top:0; }
+    .tl-tip{ max-width:200px; }
+    .ev-card{ position:fixed; left:0; right:0; bottom:0; top:auto; width:auto; height:var(--sheetH, 220px); max-height:none; z-index:4000;
+      border-radius:16px 16px 0 0; padding:10px 14px 0; box-shadow:0 -4px 18px rgba(40,28,10,.2); }
     .ev-card.hidden{ opacity:1; transform:none; pointer-events:auto; }
     .ev-close{ display:none; }
-    h1{ margin-left:46px; margin-right:92px; font-size:1.3em; }
-    .tm-mobile-card{ display:block; }
+    .ev-eyebrow{ font-size:.62em; margin-bottom:2px; }
+    .ev-when{ font-size:.92em; }
+    .ev-where{ font-size:.76em; margin-bottom:5px; }
+    .ev-text{ font-size:.9em; margin-bottom:6px; }
+    .ev-pager{ position:sticky; bottom:0; background:var(--bg-panel); padding:8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
+    .tm-index-btn{ font-size:.75em; padding:4px 10px; }
+    footer{ margin-top:14px; }
   }
 </style>
 </head>
@@ -277,7 +292,7 @@
         <div class="ev-refs" id="evRefs"></div>
         <div class="ev-pager">
           <button type="button" id="evPrev">‹ Předchozí</button>
-          <span class="ev-count" id="evCount"></span>
+          <span class="ev-count"><button type="button" class="ev-play" id="evPlay" aria-label="Přehrát automaticky" title="Přehrát automaticky">▶</button> <span id="evCount"></span></span>
           <button type="button" id="evNext">Další ›</button>
         </div>
       </div>
@@ -770,23 +785,34 @@
     // ---------- časová osa ----------
     const rail = $("tlRail");
     const isH = ()=> !!(window.matchMedia && matchMedia("(max-width: 860px)").matches);
-    let horiz = isH(), railLen = 0, PAD = 14;
+    let horiz = false, narrow = isH(), railLen = 0, PAD = 14;
     const yearOf = ev=>{
       let d = ev.d.replace(/\s*\(.*\)\s*/g, "");
       if(ev.sec === 5 && ev.i > 0 && E[ev.i-1].sec === 5) return d.split(", ").pop();
       return d.split(",")[0].replace("1 př. n. l. nebo 1 n. l.", "1 př./1 n. l.");
     };
     let handle, fill, tip, stops = [];
+    // mobil: mapa a osa se vejdou mezi nadpis a spodní panel s událostí
+    const RATIO = 301.551 / 470.222;
+    function layoutMobile(){
+      const mb = $("tmMapbox"), tc = document.querySelector(".tl-card"), lay = document.querySelector(".tm-layout");
+      if(!narrow){ document.documentElement.style.removeProperty("--sheetH"); mb.style.width = mb.style.height = tc.style.height = ""; return; }
+      const vh = window.innerHeight;
+      const sheetH = Math.round(Math.max(175, Math.min(vh*0.33, 270)));
+      document.documentElement.style.setProperty("--sheetH", sheetH+"px");
+      const top = lay.getBoundingClientRect().top + window.scrollY;
+      const availH = vh - top - sheetH - 8, availW = lay.clientWidth - 54 - 6;
+      const h = Math.max(300, Math.min(availH, availW / RATIO));
+      mb.style.height = h+"px"; mb.style.width = Math.min(availW, h*RATIO)+"px"; tc.style.height = h+"px";
+    }
     function buildRail(){
-      horiz = isH();
-      // na mobilu je okno s událostí pod časovou osou, na počítači nad mapou
-      const cardEl = $("evCard");
-      if(horiz) document.querySelector(".tm-layout").appendChild(cardEl); else $("tmMapbox").appendChild(cardEl);
+      horiz = false; narrow = isH();
+      layoutMobile();
       rail.innerHTML = "";
       const W = rail.clientWidth, H = rail.clientHeight;
       railLen = (horiz ? W : H) - 2*PAD;
       const at = k=>PAD + (N > 1 ? k*railLen/(N-1) : 0);
-      const LX = horiz ? 0 : 100;           // svislá osa: pozice čáry zleva
+      const LX = narrow ? Math.round(W/2) : 100;           // svislá osa: pozice čáry zleva
       const LY = horiz ? 40 : 0;           // vodorovná osa: pozice čáry shora
       const line = document.createElement("div"); line.className = "tl-line";
       if(horiz) Object.assign(line.style, {left:PAD+"px", width:railLen+"px", top:(LY-2)+"px", height:"4px"});
@@ -802,7 +828,7 @@
           if(horiz) Object.assign(b.style, {left:a0+"px", width:(a1-a0)+"px", top:(LY+7)+"px", height:"5px"});
           else Object.assign(b.style, {top:a0+"px", height:(a1-a0)+"px", left:(LX+7)+"px", width:"5px"});
           rail.appendChild(b);
-          if(!horiz){
+          if(!narrow){
             const lab = document.createElement("div"); lab.className = "tl-sec";
             lab.style.borderColor = SEC_COL[E[s0].sec];
             lab.textContent = SECTIONS[E[s0].sec].replace(/^Ježíšova |^Ježíšovy /, "").replace(/^./, c=>c.toUpperCase());
@@ -825,7 +851,7 @@
       let last = null, lastPos = -99;
       E.forEach((ev, k)=>{
         const y = yearOf(ev);
-        if(y === last) return;
+        if(narrow || y === last) return;
         last = y;
         const p = at(k);
         if(p - lastPos < (horiz ? 46 : 12)) return;
@@ -893,7 +919,9 @@
         const tw = Math.min(220, r.width - 8);
         tip.style.left = Math.max(0, Math.min(r.width - tw, p - tw/2))+"px"; tip.style.top = "60px"; tip.style.right = "auto";
       } else {
-        tip.style.top = Math.max(0, Math.min(r.height - 70, p - 20))+"px"; tip.style.right = "auto"; tip.style.left = (rail._LX + 20)+"px";
+        tip.style.top = Math.max(0, Math.min(r.height - 70, p - 20))+"px";
+        if(narrow){ tip.style.left = "auto"; tip.style.right = (r.width - rail._LX + 18)+"px"; }
+        else { tip.style.right = "auto"; tip.style.left = (rail._LX + 20)+"px"; }
       }
       tip.classList.add("show");
     }
@@ -933,7 +961,8 @@
     // automatické přehrávání
     let playT = null;
     const playBtn = $("tlPlay");
-    function stopPlay(){ if(playT){ clearTimeout(playT); playT = null; } playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "▶"; playBtn.title = "Přehrát automaticky"; }
+    const evPlay = $("evPlay");
+    function stopPlay(){ if(playT){ clearTimeout(playT); playT = null; } playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = evPlay.textContent = "▶"; playBtn.title = evPlay.title = "Přehrát automaticky"; }
     function tick(){
       if(idx >= N-1){ stopPlay(); return; }
       next();
@@ -944,9 +973,10 @@
     playBtn.addEventListener("click", ()=>{
       if(playT){ stopPlay(); return; }
       if(idx >= N-1) goTo(0, false);
-      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = "⏸"; playBtn.title = "Zastavit";
+      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = evPlay.textContent = "⏸"; playBtn.title = evPlay.title = "Zastavit";
       playT = setTimeout(tick, 600);
     });
+    evPlay.addEventListener("click", ()=>playBtn.click());
 
     // ---------- zoom a posun mapy ----------
     const scroller = $("tmScroll");
