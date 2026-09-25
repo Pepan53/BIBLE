@@ -140,6 +140,7 @@
   .ev-list button:hover{ background:var(--hover-tint); }
   .ev-list button .n{ color:var(--ink-soft); text-align:right; font-variant-numeric:tabular-nums; }
   .ev-list button small{ color:var(--ink-soft); }
+  .ev-list button .trip{ display:block; width:fit-content; margin-top:3px; font-size:.88em; color:var(--maroon); background:var(--hover-tint); border-radius:999px; padding:0 8px; white-space:nowrap; }
   .ev-list button[aria-current="true"]{ background:#f1e6ce; font-weight:600; }
   :root[data-theme="dark"] .ev-list button[aria-current="true"]{ background:#3a2f1e; }
   .ev-pager .ev-play{ display:inline-grid; place-items:center; }
@@ -762,15 +763,15 @@
     const card = $("evCard");
     // seznam událostí po obdobích (klik = skok na událost)
     const evList = $("evList");
-    (function(){
+    function buildList(){
       let html = "", sec = -1;
       E.forEach(ev=>{
         if(ev.sec !== sec){ sec = ev.sec; html += '<h4 style="border-left:4px solid '+SEC_COL[sec]+'">'+esc(SECTIONS[sec])+'</h4>'; }
-        html += '<button type="button" data-i="'+ev.i+'"><span class="n">'+(ev.i+1)+'.</span><span>'+esc(ev.x)+' <small>· '+esc(ev.d)+'</small></span></button>';
+        html += '<button type="button" data-i="'+ev.i+'"><span class="n">'+(ev.i+1)+'.</span><span>'+esc(ev.x)+' <small>· '+esc(ev.d)+'</small>'+tripShort(ev)+'</span></button>';
       });
       evList.innerHTML = html;
       evList.addEventListener("click", e=>{ const b = e.target.closest("button"); if(!b) return; stopPlay(); const k = +b.dataset.i; goTo(k, Math.abs(k - idx) === 1); });
-    })();
+    }
     function markList(i){
       const prev = evList.querySelector('[aria-current="true"]'); if(prev) prev.removeAttribute("aria-current");
       const b = evList.querySelector('button[data-i="'+i+'"]'); if(!b) return;
@@ -819,6 +820,20 @@
       }
       const air = k.egypt ? "" : " (vzdušnou čarou ~" + roundKm(k.air) + " km)";
       return "🚶 Cesta: <b>" + pre + roundKm(walk) + " km</b> pěšky" + air + " · " + dur;
+    }
+    // krátký údaj o cestě do seznamu událostí
+    function tripShort(ev){
+      const k = tripKm(ev);
+      if(k.air + k.egypt < 3) return "";
+      const fuzzy = ev.route.concat(ev.from || []).some(id=>PL[id] && PL[id][3] === "area") || k.egypt > 0;
+      const t = fuzzy ? "~" : "";
+      if(ev.route.concat(ev.from || []).some(id=>BOAT.includes(id))) return '<span class="trip">⛵ '+t+roundKm(k.air)+' km lodí/pěšky</span>';
+      const walk = k.air * 1.3 + k.egypt;
+      let dur;
+      if(walk < 20) dur = Math.max(1, Math.round(walk/5)) + " h";
+      else if(walk < 36) dur = "1 den";
+      else { const d = walk/30, a = Math.max(1, Math.floor(d)), b = Math.max(a, Math.ceil(d)); dur = (a === b ? a : a+"–"+b) + (b <= 4 ? " dny" : " dní"); }
+      return '<span class="trip">🚶 '+t+roundKm(walk)+' km · '+dur+'</span>';
     }
     function renderCard(i){
       markList(i);
@@ -1239,6 +1254,7 @@
     buildRail();
     let start = 0;
     try{ const v = parseInt(localStorage.getItem("jesusLifeIdx"), 10); if(v >= 0 && v < N) start = v; }catch(e){}
+    buildList();
     goTo(start, false);
   })();
 })();
