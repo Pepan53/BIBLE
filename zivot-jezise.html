@@ -127,7 +127,8 @@
   .ev-pager button{ font:inherit; font-size:.8em; padding:4px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; }
   .ev-pager button:disabled{ opacity:.35; cursor:default; }
   .ev-pager button, .ev-pager .ev-count{ white-space:nowrap; }
-  .ev-pager .ev-play{ padding:2px 7px; margin-right:2px; }
+  .ev-pager .ev-play{ width:44px; height:34px; padding:0; margin-right:4px; font-size:1.25em; line-height:1; border-radius:10px; vertical-align:middle; }
+  .ev-pager .ev-count{ display:inline-flex; align-items:center; }
   .ev-pager .ev-count{ font-size:.75em; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
 
   /* ---------- časová osa ---------- */
@@ -175,7 +176,7 @@
     .tl-head{ display:none; }
     .tl-rail{ margin-top:0; }
     .tl-tip{ max-width:200px; }
-    .ev-card{ position:fixed; left:0; right:0; bottom:0; top:auto; width:auto; height:var(--sheetH, 220px); max-height:none; z-index:4000;
+    .ev-card{ position:fixed; left:0; right:0; bottom:0; top:auto; width:auto; height:auto; max-height:45vh; overflow:auto; z-index:4000;
       border-radius:16px 16px 0 0; padding:10px 14px 0; box-shadow:0 -4px 18px rgba(40,28,10,.2); }
     .ev-card.hidden{ opacity:1; transform:none; pointer-events:auto; }
     .ev-close{ display:none; }
@@ -793,15 +794,18 @@
     let handle, fill, tip, stops = [];
     // mobil: mapa a osa se vejdou mezi nadpis a spodní panel s událostí
     const RATIO = 301.551 / 470.222;
+    let sheetRes = 0;   // největší dosavadní výška spodního okna (mapa se tak nepřeskupuje u každé události)
     function layoutMobile(){
       const mb = $("tmMapbox"), tc = document.querySelector(".tl-card"), lay = document.querySelector(".tm-layout");
       if(!narrow){ document.documentElement.style.removeProperty("--sheetH"); mb.style.width = mb.style.height = tc.style.height = ""; return; }
-      const vh = window.innerHeight;
-      const sheetH = Math.round(Math.max(175, Math.min(vh*0.33, 270)));
+      // skutečná výška obrazovky (bez lišt prohlížeče) a skutečná výška spodního okna
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      sheetRes = Math.max(sheetRes, card.offsetHeight || 0);
+      const sheetH = Math.max(150, sheetRes);
       document.documentElement.style.setProperty("--sheetH", sheetH+"px");
       const top = lay.getBoundingClientRect().top + window.scrollY;
-      const availH = vh - top - sheetH - 8, availW = lay.clientWidth - 54 - 6;
-      const h = Math.max(300, Math.min(availH, availW / RATIO));
+      const availH = vh - top - sheetH - 6, availW = lay.clientWidth - 54 - 6;
+      const h = Math.max(240, Math.min(availH, availW / RATIO));
       mb.style.height = h+"px"; mb.style.width = Math.min(availW, h*RATIO)+"px"; tc.style.height = h+"px";
     }
     function buildRail(){
@@ -1115,7 +1119,11 @@
     });
 
     let rT = null;
-    window.addEventListener("resize", ()=>{ clearTimeout(rT); rT = setTimeout(buildRail, 120); });
+    const relayout = ()=>{ clearTimeout(rT); rT = setTimeout(()=>{ sheetRes = 0; buildRail(); }, 120); };
+    window.addEventListener("resize", relayout);
+    if(window.visualViewport) window.visualViewport.addEventListener("resize", relayout);
+    // když se spodní okno s delším textem zvětší, mapu jednou zmenšit
+    if(window.ResizeObserver) new ResizeObserver(()=>{ if(narrow && card.offsetHeight > sheetRes + 2) buildRail(); }).observe(card);
     buildRail();
     let start = 0;
     try{ const v = parseInt(localStorage.getItem("jesusLifeIdx"), 10); if(v >= 0 && v < N) start = v; }catch(e){}
