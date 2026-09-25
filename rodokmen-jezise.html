@@ -93,6 +93,20 @@
   .card.threat .t{color:var(--red)}
   body.hide-promise .card.promise{display:none}
   body.hide-threat .card.threat{display:none}
+  body.hide-side details.branch{display:none}
+  details.branch{position:relative;z-index:1;margin:7px 4px;background:var(--list-bg);border:1.5px dashed var(--border);border-radius:10px;
+    width:min(34em,calc(100% - 8px));font-size:.82em;color:var(--ink);box-shadow:var(--shadow)}
+  details.branch[open]{border-style:solid;border-color:var(--gold)}
+  details.branch summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:7px 11px}
+  details.branch summary::-webkit-details-marker{display:none}
+  details.branch summary::after{content:"▾";margin-left:auto;color:var(--ink-soft);transition:transform .15s}
+  details.branch[open] summary::after{transform:rotate(180deg)}
+  details.branch .bt{font-weight:700}
+  .bbody{padding:2px 11px 10px;border-top:1px solid var(--border)}
+  .bl{padding:3px 0 3px calc(var(--d)*14px + 8px);line-height:1.4;border-left:2px solid color-mix(in srgb,var(--gold) 35%,transparent)}
+  .bl.top{border-left-color:var(--gold);font-weight:600;margin-top:4px}
+  .bl .sp2{color:var(--maroon)}
+  .bl.flash{animation:flash 1.4s ease 2;border-radius:6px;background:var(--star-bg)}
 
   .finale{text-align:center;margin:18px auto 0;max-width:34em;color:var(--ink-soft);line-height:1.55;font-size:.92em}
   footer{text-align:center;color:var(--ink-soft);font-size:.82em;margin-top:30px}
@@ -169,6 +183,7 @@
       <input id="search" class="search" type="search" placeholder="Najdi jméno…" autocomplete="off" aria-label="Najdi jméno v rodokmenu">
       <button class="chip" id="tgPromise" aria-pressed="true" type="button">⭐ Sliby</button>
       <button class="chip" id="tgThreat" aria-pressed="true" type="button">⚠️ Ohrožení</button>
+      <button class="chip" id="tgSide" aria-pressed="true" type="button">👥 Větve</button>
     </div>
   </div>
 
@@ -179,6 +194,7 @@
       <li><span class="sw" style="background:var(--line-lk)"></span>Lukášův rodokmen – přes Natana k Marii (přirozený původ)</li>
       <li>👑 král · zlaté pozadí = věrný judský král po Šalomounovi</li>
       <li>Uvedeni jsou všichni judští králové. Jehoachaz a Sedekjáš (světlejší rámeček) vládli, ale nebyli Ježíšovými předky. Achazjáše, Jehoaše, Amacjáše a Jehojakima Matouš ve svém výčtu přeskakuje – je to uvedeno v jejich detailu.</li>
+      <li>👥 Boční větve – příbuzní a potomci, kteří nejsou Ježíšovými předky (klepni pro rozbalení)</li>
       <li>⭐ Informace od Jehovy o slíbeném potomstvu · ⚠️ Možné ohrožení linie</li>
       <li>~ přibližné datum</li>
     </ul>
@@ -207,7 +223,7 @@
     document.addEventListener("click",()=>icon.classList.remove("tooltip-open"));
   })();
   /* ---------- pomocné ---------- */
-  const BOOK={1:"1. Mojžíšova",2:"2. Mojžíšova",4:"4. Mojžíšova",15:"Ezdráš",43:"Jan",6:"Jozue",8:"Rut",9:"1. Samuelova",10:"2. Samuelova",11:"1. Královská",12:"2. Královská",13:"1. Paralipomenon",14:"2. Paralipomenon",16:"Nehemiáš",17:"Ester",23:"Izajáš",24:"Jeremjáš",26:"Ezekiel",27:"Daniel",40:"Matouš",42:"Lukáš",48:"Galaťanům",58:"Hebrejcům"};
+  const BOOK={1:"1. Mojžíšova",2:"2. Mojžíšova",4:"4. Mojžíšova",15:"Ezdráš",43:"Jan",6:"Jozue",8:"Rut",9:"1. Samuelova",10:"2. Samuelova",11:"1. Královská",12:"2. Královská",13:"1. Paralipomenon",14:"2. Paralipomenon",16:"Nehemiáš",17:"Ester",7:"Soudci",36:"Sefanjáš",41:"Marek",23:"Izajáš",24:"Jeremjáš",26:"Ezekiel",27:"Daniel",40:"Matouš",42:"Lukáš",48:"Galaťanům",58:"Hebrejcům"};
   const bibleUrl=(b,c)=>`https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/${b}/${c}`;
   const yr=v=>{ if(v==null) return ""; const s=String(v); const approx=s.startsWith("~"); const n=parseInt(s.replace("~",""),10);
     return (approx?"~":"")+(n>0?`${n} př. n. l.`:`${-n} n. l.`); };
@@ -217,6 +233,235 @@
   const S=(t,x,refs)=>({k:"s",t,x,refs});
   const O=(t,x,refs)=>({k:"o",t,x,refs});
 
+  /* ---------- boční větve (podle mapy „Slíbené potomstvo“, jména podle Překladu nového světa) ----------
+     Odsazení 2 mezery = další generace. „⚭“ = manželka/manžel, „:“ = výčet dětí. */
+  const SIDE={
+kain:`Adam ⚭ Eva
+  Ábel – zabit Kainem
+  Kain
+    Enoch
+      Irad
+        Mechujael
+          Metušael
+            Lamek
+              ⚭ Ada: Jabal, Jubal
+              ⚭ Cilla: Tubal-kajin, Naama (dcera)
+  Set – linie potomstva pokračuje`,
+noe:`Noe – synové Sem, Cham a Jafet
+  Cham
+    Kuš: Seba, Chavila, Sabta, Raama, Sabteka, Nimrod
+      Raama: Šeba, Dedan
+    Micrajim: Ludim, Anamim, Lehabim, Naftuchim, Patrusim, Kasluchim, Kaftorim
+    Put
+    Kanaán: Sidon, Chet, Jebusejci, Amorejci, Girgašejci, Chivijci, Arkovci, Sinici, Arvaďani, Cemarité, Chamaťani
+  Jafet
+    Gomer: Aškenaz, Rifat, Togarma
+    Magog
+    Madai
+    Javan: Elišah, Taršiš, Kittim, Dodanim
+    Tubal
+    Mešek
+    Tiras`,
+sem:`Sem – synové Elam, Aššur, Arpakšad, Lud, Aram
+  Aram: Uc, Chul, Geter, Maš
+  Arpakšad – linie potomstva pokračuje`,
+eber:`Eber – synové Peleg a Joktan
+  Joktan: Almodad, Šelef, Chacarmavet, Jerach, Hadoram, Uzal, Dikla, Obal, Abimael, Šeba, Ofir, Chavila, Jobab
+  Peleg – linie potomstva pokračuje`,
+terach:`Terach – synové Abram, Nachor, Charan
+  Charan: Lot, Milka (dcera), Jiska (dcera)
+    Lot – jeho dcery porodily: Moab, Ben-ammi (Ammonité)
+  Nachor
+    ⚭ Milka: Uc, Buz, Kemuel, Kesed, Chazo, Pildaš, Jidlaf, Betuel
+      Kemuel: Aram
+      Buz – z jeho rodu byl Elihu, Jobův přítel
+      Betuel: Laban, Rebeka (manželka Izáka)
+        Laban: Lea, Ráchel (manželky Jákoba)
+    ⚭ Reuma: Tebach, Gacham, Tachaš, Maaka`,
+abraham:`Abraham
+  ⚭ Sára: Izák – linie potomstva pokračuje
+  ⚭ Hagar: Išmael
+    Išmael: Nebajot, Kedar, Adbeel, Mibsam, Mišma, Duma, Massa, Hadad, Tema, Jetur, Nafiš, Kedema
+  ⚭ Ketura: Zimran, Jokšan, Medan, Midian, Jišbak, Šuach
+    Jokšan: Šeba, Dedan
+      Dedan: Aššurim, Letušim, Leummim
+    Midian: Efa, Efer, Chanok, Abida, Eldaa`,
+ezau:`Izák ⚭ Rebeka – dvojčata Ezau a Jákob
+  Ezau (Edom)
+    ⚭ Ada: Elifaz
+      Elifaz: Teman, Omar, Cefo, Gatam, Kenaz
+      Elifaz ⚭ Timna: Amalek
+    ⚭ Basemat (dcera Išmaele): Reuel
+      Reuel: Nachat, Zerach, Šammah, Mizza
+    ⚭ Oholibama: Jeuš, Jalam, Korach`,
+jakob:`Jákob (Izrael)
+  ⚭ Lea: Ruben, Simeon, Levi, Juda, Isachar, Zebulon, Dina (dcera)
+  ⚭ Bilha (služka Ráchel): Dan, Naftali
+  ⚭ Zilpa (služka Ley): Gad, Ašer
+  ⚭ Ráchel: Josef, Benjamín
+Ruben: Chanok, Pallu, Checron, Karmi
+  Pallu: Eliab
+    Eliab: Nemuel, Datan, Abiram (Datan a Abiram se vzbouřili s Korachem)
+Simeon: Jemuel (Nemuel), Jamin, Ohad, Jakin, Cochar (Zerach), Šaul
+  Šaul → Šallum → Mibsam → Mišma → Chammuel → Zakkur → Šimei
+Levi – viz větev „Levi: Mojžíš, Áron a kněží“
+Juda – viz větve u Judy a Checrona
+Isachar: Tola, Puva (Pua), Job (Jašub), Šimron
+  Tola: Uzzi, Refajáš, Jeriel, Jachmai, Jibsam, Šemuel
+    Uzzi: Jizrachjáš
+      Jizrachjáš: Michael, Obadjáš, Joel, Jiššijáš (a další)
+Zebulon: Sered, Elon, Jachleel
+Dan: Chušim (Šucham)
+Naftali: Jachceel, Guni, Jecer, Šillem
+Gad: Cifjon (Cefon), Chaggi, Šuni, Ecbon (Ozni), Eri, Arodi, Areli
+Ašer: Jimnah, Jišva, Jišvi, Beria, Serach (dcera)
+  Beria: Cheber, Malkiel
+    Cheber: Jaflet, Šomer, Chotam, Šua (dcera)
+Josef ⚭ Asenat: Manasse, Efrajim
+  Manasse
+    Makir ⚭ Maaka: Pereš, Šereš, Hammoleket (sestra Gileada), Gilead
+      Gilead: Iezer (Abiezer), Chelek, Asriel, Šekem, Šemida, Chefer
+        Iezer → … → Joaš → Gideon (soudce)
+        Chefer: Celofchad
+          Celofchad – měl jen dcery: Machla, Noa, Chogla, Milka, Tirca
+  Efrajim: Šutelach, Beker, Tachan, Ezer, Elead, Beria, Šeera (dcera)
+    Šutelach → Bered → Tachat → Eleada → Tachat → Zabad → Šutelach
+    Eran (syn Šutelacha)
+    Refach, Rešef → Telach → Tachan → Ladan → Ammihud → Elišama → Nun → Jozue
+Benjamín: Bela, Beker, Ašbel, Gera, Naaman, Echi (Achiram), Roš, Muppim, Chuppim, Ard, Nocha, Rafa
+  Gera → Ehud (soudce)
+  Afiach → Bekorat → Ceror → Abiel – předkové krále Saula (viz větev „Saul“)`,
+juda:`Juda
+  ⚭ Kananejka (dcera Šuy): Er, Onan, Šela – Er a Onan zemřeli bez dětí
+    Šela: Er, Laada
+      Er: Leka   ·   Laada: Mareša
+      další Šelovi potomci: Jokim, Joaš, Saraf, Ašbea
+  ⚭ Tamar (snacha): Perec, Zerach
+    Zerach: Zimri (Zabdi), Etan, Heman, Kalkol, Dara
+      Zabdi: Karmi
+        Karmi: Achan (Achar) – ukradl věci určené ke zničení v Jerichu
+    Perec: Checron, Chamul`,
+checron:`Checron: Jerachmeel, Ram (Arni), Kaleb (Kelubai)
+  Ram – linie potomstva pokračuje (Amminadab, Nachšon…)
+  Jerachmeel: Ram, Buna, Oren, Ocem, Achijáš, Onam
+    Ram: Maac, Jamin, Eker
+  Kaleb (Kelubai)
+    ⚭ Azuba a Jeriot: Ješer, Šobab, Ardon
+    ⚭ Efrat: Chur
+      Chur: Uri
+        Uri: Becalel – umělec, který dělal svatostánek
+  Checron ⚭ dcera Makira: Segub
+    Segub: Jair (měl 23 měst v Gileadu)
+  Checron ⚭ Abija: Ašchur, otec Tekoy`,
+levi:`Levi: Geršon (Geršom), Kehat, Merari
+  Geršon: Libni, Šimei
+  Merari: Machli, Muši
+  Kehat: Amram, Jicchar, Hebron, Uzziel
+    Uzziel: Mišael, Elcafan, Sitri
+    Hebron: Eliel
+    Jicchar: Korach, Nefeg, Zikri
+      Korach: Assir, Elkana, Abiasaf (Ebjasaf)
+        … Tachat, Sefanjáš, Azarjáš, Joel, Elkana, Amasai, Machat, Elkana, Cofai (Cuf), Nachat (Toach), Eliab (Eliel), Jerocham, Elkana
+          Elkana ⚭ Hana (a Peninna): Samuel – prorok
+            Samuel: Joel, Abijáš
+              Joel: Heman – zpěvák
+    Amram ⚭ Jokebed: Áron, Mojžíš, Miriam (sestra)
+      Mojžíš ⚭ Cippora (dcera Jetra, sestra Chobaba): Geršom, Eliezer
+        Geršom: Šebuel   ·   Eliezer: Rechabjáš
+      Áron ⚭ Elišeba (sestra Nachšona): Nadab, Abihu, Eleazar, Itamar
+        Nadab a Abihu zemřeli, když obětovali nepovolený oheň
+        Eleazar – velekněží: Pinechas → Abišua → Bukki → Uzzi → Zerachjáš → Merajot → Amarjáš → Achitub → Cadok
+        Itamar → … Eli (velekněz)
+          Eli: Chofni, Pinechas
+            Pinechas: Achitub, Ikabod
+              Achitub: Achijáš, Achimelek
+                Achimelek: Abjatar
+                  Abjatar: Jonatan, Achimelek`,
+soudci:`Soudci, kteří vysvobozovali Izrael (s číslem v pořadí)
+  1. Otniel – syn Kenaze, Kalebův synovec; ⚭ Aksa (Kalebova dcera): Chatat
+  2. Ehud – syn Gery, z kmene Benjamín
+  3. Šamgar – syn Anata
+  4. Barak – syn Abinoama (s prorokyní Deborou)
+  5. Gideon (Jerubbaal) – syn Joaše
+    Gideon: 70 synů (nejmladší Jotam) a Abimelek (syn vedlejší manželky)
+  6. Tola – syn Puy, vnuk Doda
+  7. Jair
+  8. Jefta – syn Gileada; jeho dcera sloužila u svatostánku
+  9. Ibcan
+  10. Elon
+  11. Abdon – syn Hillela
+  12. Samson – syn Manoacha
+Cheber (Kenita) ⚭ Jael – zabila Siseru`,
+rut:`Elimelek ⚭ Noemi: Machlon, Kiljon
+  Machlon ⚭ Rut (později manželka Boaze)
+  Kiljon ⚭ Orpa`,
+saul:`Afiach → Bekorat → Ceror → Abiel (Jeiel) ⚭ Maaka
+  Abiel: Abdon, Cur, Kiš, Baal, Nadab, Ner, Gedor, Achjo, Zecher, Miklot
+    Ner: Abner (velitel Saulova vojska), Kiš
+      Abner: Jaasiel
+      Kiš: Saul – první král Izraele
+        Saul (manželka Achinoam): Jonatan, Jišvi, Abinadab, Malki-šua, Iš-bošet (Ešbaal), Merab (dcera), Mikal (dcera)
+          Jonatan: Mefibošet (Merib-baal)
+          Iš-bošet – vládl 2 roky nad 11 kmeny
+          Merab ⚭ Adriel: 5 synů
+          Mikal – manželka Davida
+        Saul ⚭ Ricpa: Armoni, Mefibošet`,
+jisai:`Jišai: Eliab, Abinadab, Šimea (Šammah), Netanel, Raddai, Ocem, David
+  sestry Ceruja a Abigail
+  Šimea: Jonatan (Jehonadab)
+  Ceruja: Abišai, Joab, Asahel
+  Abigail ⚭ Jeter (Jitra): Amasa`,
+david:`David – manželky a synové
+  ⚭ Mikal (dcera Saula) – bez dětí
+  ⚭ Achinoam: Amnon
+  ⚭ Abigail (vdova po Nabalovi): Kileab (Daniel)
+  ⚭ Maaka (dcera krále Talmaie): Absalom, Tamar (dcera)
+    Absalom: Tamar (dcera)
+  ⚭ Chaggit: Adonijáš
+  ⚭ Abital: Šefatjáš
+  ⚭ Egla: Jitream
+  ⚭ Bat-šeba (dcera Ammiela, vnučka Achitofela; předtím manželka Urijáše): Šimea (Šammua), Šobab, Natan, Šalomoun
+  další synové narození v Jeruzalémě a nejmenované dcery`,
+kralove:`Matky judských králů (podle knih Královské)
+  Šalomoun ⚭ Naama → Rechoboam
+  Rechoboam ⚭ Maaka → Abijáš
+  Asa ⚭ Azuba → Jehošafat
+  Jehoram ⚭ Atalja → Achazjáš (Atalja vládla 905–899 jako královna)
+  Achazjáš ⚭ Cibja → Jehoaš
+  Jehoaš ⚭ Jehoaddan → Amacjáš
+  Amacjáš ⚭ Jekolja → Uzzijáš
+  Uzzijáš ⚭ Jeruša → Jotam
+  Achaz ⚭ Abija (Abi) → Ezekjáš
+  Ezekjáš ⚭ Chefciba → Manasse
+  Manasse ⚭ Mešullemet → Amon
+  Amon ⚭ Jedida → Josijáš
+  Josijáš ⚭ Chamutal → Jehoachaz, Sedekjáš
+  Josijáš ⚭ Zebida → Jehojakim
+  Josijáš: Jochanan (nejstarší syn)
+  Jehojakim ⚭ Nechušta → Jekonjáš
+Ezekjáš → Amarjáš → Gedaljáš → Kuši → Sefanjáš – prorok
+Kněz Jehojada ⚭ Jehošeba (dcera krále Jehorama) – ukryli malého Jehoaše
+  Jehojada: Zecharjáš – kněz, ukamenován na Jehoašův rozkaz`,
+velekneze:`Velekněží od Šalomounova chrámu po návrat ze zajetí (Eleazarova linie)
+  Cadok → Achimaac → Azarjáš → Jochanan → Azarjáš → Amarjáš → Achitub → Cadok → Šallum → Chilkijáš → Azarjáš → Serajáš → Jehocadak
+  Za krále Uzzijáše: Azarjáš; za krále Achaze: Urijáš
+  Serajáš – zabit Nebukadnecarem; jeho potomek byl Ezra, opisovač Zákona
+Po návratu z Babylonu
+  Jehocadak → Ješua (Jozue) → Jojakim → Eljašib → Jojada → Jonatan → Jaddua`,
+zajeti:`Jekonjáš: Šealtiel, Malkiram, Pedajáš, Šenaccar, Jekamjáš, Hošama, Nedabjáš
+  Pedajáš: Zerubbabel, Šimei
+Kiš (z kmene Benjamín) → Šimei → Jair → Mordekai
+  Mordekai vychoval svou sestřenici Ester, dceru Abichajila
+  Ester – manželka perského krále Ahasvera`,
+pribuzni:`Ježíšovi příbuzní
+  Zecharjáš (kněz) ⚭ Alžběta (příbuzná Marie, z Áronových dcer): Jan Křtitel
+  Zebedeus ⚭ Salome: Jakub, Jan – apoštolové
+  Alfeos (Klopas) ⚭ Marie („druhá Marie“): Jakub (Menší), Joses (Josef); s touto rodinou je spojován i Jidáš (Tadeáš)
+  Josef ⚭ Marie – Ježíšovi nevlastní sourozenci: Jakub, Josef, Šimon, Juda a nejméně dvě sestry
+    Jakub a Juda napsali biblické knihy`
+  };
+  const BR=(key,title,refs)=>({k:"b",key,t:title,refs});
+
   /* ---------- data ---------- */
   const G5=[[1,5,"5"]], G11=[[1,11,"11:10–26"]], L3=[[42,3,"3:23–38"]], M1=[[40,1,"1:1–17"]];
   const ERAS=[
@@ -224,6 +469,7 @@
       S("Slib v Edenu","Bůh oznámil, že přijde „potomstvo“ ženy, které rozdrtí hlavu hada – Satana, a samo bude zraněno na patě.",[[1,3,"3:15"]]),
       P("Adam",{key:1,b:4026,born:"stvořen",life:930,note:"První člověk. Jeho neposlušnost způsobila, že lidstvo potřebuje výkupné – a tedy slíbené potomstvo.",refs:[[1,2,"2:7"],[1,5,"5:1–5"]]}),
       O("Kain zabíjí Ábela","Vypadalo to, že bohabojná linie skončí. Bůh však dal Evě „jiné potomstvo“ – Seta.",[[1,4,"4:8, 25"]]),
+      BR("kain","Adamova rodina a Kainovi potomci",[[1,4,"1M 4"]]),
       P("Set",{b:3896,life:912,note:"Narodil se, když bylo Adamovi 130 let.",refs:G5}),
       P("Enoš",{b:3791,life:905,note:"Za jeho dnů se začalo zneužívat Jehovovo jméno.",refs:[[1,4,"4:26"],[1,5,"5"]]}),
       P("Kenan",{b:3701,life:910,refs:G5}),
@@ -234,54 +480,70 @@
       P("Lamek",{b:3152,life:777,note:"Dal synovi jméno Noe s nadějí, že přinese úlevu.",refs:[[1,5,"5:28–31"]]}),
       P("Noe",{key:1,b:2970,life:950,note:"Byl bezúhonný mezi svými současníky. Postavil archu a přežil potopu s rodinou – linie potomstva byla zachována.",refs:[[1,6,"6:9"],[1,9,"9:28, 29"]]}),
       O("Celosvětová potopa","Svět plný násilí a obrů (nefilim). Přežilo jen 8 lidí v arše – i Noe a jeho syn Sem.",[[1,7,"7:23"]]),
-      E(2370,"Potopa · smlouva s Noemem, duha jako znamení")
+      E(2370,"Potopa · smlouva s Noemem, duha jako znamení"),
+      BR("noe","Noemovi synové Cham a Jafet a jejich potomci (národy)",[[1,10,"1M 10"]]),
     ]},
     {id:"sem",short:"Potopa",title:"Od potopy k Abrahamovi",sub:"10 generací · 1. Mojžíšova 11",items:[
       S("Požehnání pro Sema","Noe předpověděl, že Semův Bůh, Jehova, bude požehnán – linie půjde přes Sema.",[[1,9,"9:26"]]),
       P("Sem",{b:2468,life:600,note:"Syn Noeho, přežil potopu.",refs:G11}),
+      BR("sem","Semovi další synové",[[1,10,"1M 10:21–31"]]),
       P("Arpakšad",{b:2368,life:438,note:"Narodil se 2 roky po potopě. (Lukáš 3:36 uvádí po něm ještě Kainana.)",refs:G11}),
       P("Šela",{b:2333,life:433,refs:G11}),
       P("Eber",{b:2303,life:464,note:"Od jeho jména je zřejmě odvozeno označení „Hebrejci“.",refs:G11}),
+      BR("eber","Eberův syn Joktan a jeho potomci",[[1,10,"1M 10:25–30"]]),
       P("Peleg",{b:2269,life:239,note:"Za jeho dnů „byla země rozdělena“ – zřejmě zmatení jazyků v Babelu.",refs:[[1,10,"10:25"],[1,11,"11:16–19"]]}),
       E(null,"Věž v Babelu · založení Babylonu · rozptýlení národů"),
       P("Reu",{b:2239,life:239,refs:G11}),
       P("Serug",{b:2207,life:230,refs:G11}),
       P("Nachor",{b:2177,life:148,refs:G11}),
-      P("Terach",{b:2148,life:205,note:"Odešel s Abramem z Ur do Charanu.",refs:[[1,11,"11:24–32"]]})
+      P("Terach",{b:2148,life:205,note:"Odešel s Abramem z Ur do Charanu.",refs:[[1,11,"11:24–32"]]}),
+      BR("terach","Terachovi další synové: Nachor, Charan a Lot",[[1,11,"1M 11:26–32"],[1,22,"1M 22:20–24"]]),
     ]},
     {id:"abraham",short:"Abraham",title:"Od Abrahama k Davidovi",sub:"14 generací · Matouš 1:2–6",items:[
       P("Abraham",{alt:"Abram",key:1,b:2018,life:175,note:"Přítel Jehovy. Uvěřil Božímu slibu, že z jeho potomstva přijde požehnání pro všechny národy.",refs:[[1,12,"12:1–3"],[1,25,"25:7"]]}),
+      BR("abraham","Abrahamovi další synové: Išmael a synové Ketury",[[1,25,"1M 25:1–18"]]),
       E(1943,"Abraham překračuje Eufrat · začíná smlouva s Abrahamem (430 let)"),
       S("Smlouva s Abrahamem","„Prostřednictvím tvého potomstva získají požehnání všechny národy na zemi.“",[[1,22,"22:18"],[1,15,"15:18"]]),
       O("Sára u faraona a u Abimeleka","Dvakrát hrozilo, že Sára – budoucí matka potomstva – skončí v cizím harému. Bůh zasáhl.",[[1,12,"12:14–20"],[1,20,"20:1–7"]]),
       P("Izák",{key:1,b:1918,life:180,note:"Syn slibu, narozený Abrahamovi ve 100 letech a Sáře v 90 letech. Byl ochoten nechat se obětovat.",refs:[[1,21,"21:1–5"],[1,22,"22:1–18"],[1,35,"35:28"]]}),
+      BR("ezau","Ezau (Edom) a jeho potomci",[[1,36,"1M 36"]]),
       O("Išmael se Izákovi vysmívá","Rok 1913 př. n. l., když byl Izák odstaven. Tady začíná předpovězených 400 let trápení.",[[1,21,"21:8–12"],[48,4,"Gal 4:29"]]),
       S("Slib pro Izáka","Bůh zopakoval Izákovi slib o požehnání skrze jeho potomstvo.",[[1,26,"26:3, 4"]]),
       P("Jákob",{alt:"Izrael",key:1,b:1858,life:147,note:"Získal právo prvorozeného a otcovo požehnání. Z jeho 12 synů vzešlo 12 kmenů Izraele.",refs:[[1,25,"25:26"],[1,47,"47:28"]]}),
+      BR("jakob","Jákobova rodina – 12 kmenů Izraele",[[1,46,"1M 46:8–27"],[13,7,"1Pa 7"]]),
       O("Ezau chce Jákoba zabít","Jákob musel utéct do Charanu.",[[1,27,"27:41–45"]]),
       S("Slib pro Jákoba","„Prostřednictvím tebe a tvého potomstva budou požehnány všechny rodiny země.“",[[1,28,"28:13–15"]]),
       P("Juda",{key:1,b:"~1770",note:"Čtvrtý syn Jákoba a Ley. Z jeho kmene měla vzejít královská linie.",sp:"⚭ Tamar",refs:[[1,29,"29:35"],[1,38,"38"]]}),
+      BR("juda","Judovi další synové",[[13,2,"1Pa 2:3–8"],[13,4,"1Pa 4:21–23"]]),
       S("Žezlo se od Judy nevzdálí","Juda bude mít vládu, „dokud nepřijde Šilo, kterého budou poslouchat národy“.",[[1,49,"49:10"]]),
       O("Sedmiletý hladomor","Jákobova rodina mohla vyhladovět. Bůh ji zachránil skrze Josefa v Egyptě.",[[1,45,"45:5–7"]]),
       E(1728,"Izrael vchází do Egypta"),
       P("Perec",{note:"Syn Judy a Tamar. Po něm se jmenuje rod Perecovců.",refs:[[1,38,"38:27–30"],[8,4,"Rut 4:18"]]}),
       P("Checron",{refs:[[8,4,"Rut 4:18, 19"]]}),
+      BR("checron","Checronovi další potomci (Jerachmeel, Kaleb…)",[[13,2,"1Pa 2:9–55"]]),
       P("Ram",{note:"Lukáš na tomto místě uvádí jméno Arni.",refs:[[8,4,"Rut 4:19"],[42,3,"Lk 3:33"]]}),
       P("Amminadab",{note:"Jeho dcera Elišeba se vdala za Árona.",refs:[[8,4,"Rut 4:19, 20"],[2,6,"2M 6:23"]]}),
+      BR("levi","Levi: Mojžíš, Áron a kněží",[[2,6,"2M 6:16–25"],[13,6,"1Pa 6"]]),
       O("Faraon zabíjí izraelské chlapce","Faraon nařídil házet novorozené chlapce do Nilu.",[[2,1,"1:15–22"]]),
       P("Nachšon",{note:"Předák kmene Juda na cestě pouští.",refs:[[4,1,"4M 1:7"],[8,4,"Rut 4:20"]]}),
       E(1513,"Mojžíš vyvádí Izraelity z Egypta · smlouva Zákona"),
       P("Salmon",{sp:"⚭ Raab",note:"Jeho manželkou byla Raab z Jericha, která ukryla izraelské zvědy.",refs:[[8,4,"Rut 4:20, 21"],[6,2,"Jozue 2"]]}),
+      BR("soudci","Soudci Izraele",[[7,2,"Soudci 2:16"]]),
       E(1473,"Vstup do Zaslíbené země · Jericho zničeno, Raab zachráněna"),
       P("Boaz",{sp:"⚭ Rut",note:"Ujal se Moábky Rut jako výkupce a oženil se s ní.",refs:[[8,4,"Rut 4:9–13"]]}),
+      BR("rut","Rodina Noemi a Rut",[[8,1,"Rut 1:1–5"]]),
       P("Obed",{refs:[[8,4,"Rut 4:17"]]}),
       P("Jišai",{note:"Betlémec, otec osmi synů; nejmladší byl David.",refs:[[9,16,"1S 16:1–13"]]}),
+      BR("jisai","Davidovi sourozenci",[[13,2,"1Pa 2:13–17"]]),
+      BR("saul","Saul a jeho rodina (kmen Benjamín)",[[9,14,"1S 14:49–51"],[13,8,"1Pa 8:29–40"]]),
       S("Výhonek z Jišaiova pařezu","Izajáš předpověděl, že z Jišaiova rodu vyroste ten, na kterého se budou obracet národy.",[[23,11,"11:1, 10"]]),
       P("David",{key:1,king:1,b:1107,life:70,reign:"1077–1037 př. n. l. (nad celým Izraelem od 1070)",sp:"⚭ Bat-šeba",note:"Muž podle Jehovova srdce. Bůh s ním uzavřel smlouvu o věčném království.",refs:[[9,16,"1S 16:13"],[10,5,"2S 5:4, 5"]]}),
+      BR("david","Davidovy manželky a synové",[[10,3,"2S 3:2–5"],[13,3,"1Pa 3:1–9"]]),
       O("Saul pronásleduje Davida","Král Saul se Davida opakovaně snažil zabít.",[[9,19,"1S 19:10"]]),
       S("Smlouva s Davidem","„Tvůj dům a tvé kralování potrvají věčně a tvůj trůn bude navždy pevně stát.“",[[10,7,"7:12–16"]])
     ]},
     {id:"kralove",short:"David",title:"Od Davida k babylonskému zajetí",sub:"Tady se linie rozdělí na dva Davidovy syny",fork:1,
+      after:[BR("kralove","Matky judských králů a další příbuzní",[[12,11,"2K 11"],[36,1,"Sef 1:1"]])],
       heads:[["Matouš 1","přes Šalomouna → Josef","mt"],["Lukáš 3","přes Natana → Marie","lk"]],
       mt:[
         P("Šalomoun",{king:1,alt:"Jedidjáš",reign:"1037–998 př. n. l.",note:"Syn Davida a Bat-šeby. Postavil Jehovův chrám.",refs:[[11,1,"1K 1:39"],[11,6,"1K 6:1"]]}),
@@ -321,9 +583,11 @@
       top:[
         P("Šealtiel",{note:"Podle Matouše syn Jekonjáše, podle Lukáše syn Neriho. Tady se obě linie spojují.",refs:[[40,1,"Mt 1:12"],[42,3,"Lk 3:27"],[13,3,"1Pa 3:17"]]}),
         P("Zerubbabel",{key:1,note:"Místodržitel Judy. Vedl Židy zpět z Babylonu a obnovil chrám.",refs:[[15,3,"Ezd 3:8"],[40,1,"Mt 1:12, 13"],[42,3,"Lk 3:27"]]}),
+        BR("zajeti","Jekonjášovi synové · Ester a Mordekai",[[13,3,"1Pa 3:17–19"],[17,2,"Est 2:5–7"]]),
         E(537,"Židé propuštěni z Babylonu · obnova chrámu"),
         O("Haman chce vyhladit Židy","Perský výnos měl zničit všechny Židy – i předky Mesiáše. Ester a Mordekai je zachránili.",[[17,3,"Est 3:6–13"],[17,8,"8"]]),
         E(455,"Obnovují se hradby Jeruzaléma · začíná 70 týdnů let"),
+        BR("velekneze","Velekněží",[[13,6,"1Pa 6:1–15"],[16,12,"Neh 12:10, 11"]]),
         S("70 týdnů","Od obnovy Jeruzaléma „do Mesiáše, Vůdce“ uplyne 7 + 62 týdnů let.",[[27,9,"Dan 9:24–27"]])
       ],
       heads:[["Matouš 1","k Josefovi","mt"],["Lukáš 3","k Marii","lk"]],
@@ -339,6 +603,7 @@
       end:[
         S("Davidův trůn navždy","„Bůh Jehova mu dá trůn jeho otce Davida… a jeho kralování nikdy neskončí.“",[[42,1,"Lk 1:32, 33"]]),
         P("Ježíš",{key:1,jesus:1,b:2,born:"narozen v Betlémě",note:"Slíbené potomstvo. Zákonné právo na Davidův trůn zdědil po Josefovi, přirozený původ z Davida má přes Marii. Na zemi žil asi 33,5 roku.",refs:[[40,1,"Mt 1:18–25"],[42,2,"Lk 2:1–7"],[48,3,"Gal 3:16"]]}),
+        BR("pribuzni","Ježíšovi příbuzní",[[42,1,"Lk 1:5, 36"],[40,13,"Mt 13:55, 56"],[41,15,"Mr 15:40"]]),
         O("Herodes zabíjí děti v Betlémě","Josef s Marií a dítětem utekli do Egypta.",[[40,2,"Mt 2:13–16"]]),
         E(-29,"Ježíš pokřtěn a pomazán – objevuje se Mesiáš (konec 69. týdne)"),
         O("Satan a lidé proti Ježíšovi","Tři pokušení v pustině, pokus shodit ho z útesu v Nazaretu, opakované pokusy farizeů o jeho život.",[[40,4,"Mt 4:1–11"],[42,4,"Lk 4:29, 30"],[43,8,"Jan 8:59"]]),
@@ -347,15 +612,17 @@
   ];
 
   /* ---------- vykreslení ---------- */
+  const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   const tree=document.getElementById("tree");
   const all=[]; // osoby pro hledání
   let genShared=0;
 
   function refLabelClean(r){
-    const [b,c,v]=r; const book=BOOK[b]||"";
+    let [b,c,v]=r; const book=BOOK[b]||"";
     if(!v) return `${book} ${c}`;
+    v=v.replace(/^\d?[A-Za-zÁ-ž]+\.?\s+/,""); // zkratka knihy („2K 11:1“) → plný název
     if(/^[0-9]/.test(v)) return v.includes(":")?`${book} ${v}`:(v===String(c)?`${book} ${c}`:`${book} ${c}:${v}`);
-    return v; // už zkrácený tvar např. "2K 11:1–3"
+    return `${book} ${v}`;
   }
 
   function el(tag,cls,html){const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e;}
@@ -374,12 +641,34 @@
       all.push(it);
       return b;
     }
+    if(it.k==="b") return renderBranch(it);
     if(it.k==="e") return el("div","ev",(it.y!=null?`<b>${yr(it.y)}</b> `:"")+it.t);
     const c=el("button","card "+(it.k==="s"?"promise":"threat"));
     c.type="button";
     c.innerHTML=`<span class="t">${it.k==="s"?"⭐":"⚠️"} ${it.t}</span>${it.x}`;
     c.addEventListener("click",()=>openCard(it));
     return c;
+  }
+
+  const sideHits=[]; // řádky bočních větví pro hledání
+  function renderBranch(it){
+    const d=el("details","branch");
+    const lines=SIDE[it.key].split("\n");
+    const people=new Set();
+    lines.forEach(l=>l.replace(/\([^)]*\)/g,"").split(/[:,→·⚭–]/).forEach(x=>{ x=x.trim().replace(/^\d+\.\s*/,"").replace(/^(a |manželka |synové |dcery? )/,""); if(/^[A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][a-záčďéěíňóřšťúůýž]+(-[a-záčďéěíňóřšťúůýž]+)?$/.test(x)) people.add(x); }));
+    d.innerHTML=`<summary><span class="bi">👥</span><span class="bt">${it.t}</span></summary>`;
+    const body=el("div","bbody");
+    lines.forEach(l=>{
+      const depth=(l.match(/^ */)[0].length)/2;
+      const row=el("div","bl"+(depth===0?" top":""));
+      row.style.setProperty("--d",depth);
+      row.innerHTML=l.trim().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/⚭/g,'<span class="sp2">⚭</span>');
+      body.appendChild(row);
+      sideHits.push({line:norm(l),_el:row,_det:d,side:1});
+    });
+    if(it.refs&&it.refs.length) body.insertAdjacentHTML("beforeend",refsHtml(it.refs));
+    d.appendChild(body);
+    return d;
   }
 
   function renderList(list,container,lane,startParent,countGen){
@@ -408,8 +697,6 @@
       ln.appendChild(el("div","lane-head",`<b>${t}</b>${s}`));
       const people=era[cls].filter(x=>x.k==="p");
       out[cls]=renderList(era[cls],ln,cls,parents[cls],false);
-      const anc=people.filter(p=>!p.side).length, sideN=people.length-anc;
-      ln.appendChild(el("div","lane-foot",`${anc} jmen v linii`+(sideN?` + ${sideN} další ${sideN<5?"králové":"králů"}`:"")));
       wrap.appendChild(ln);
     });
     return {wrap,out};
@@ -430,6 +717,7 @@
       const {wrap,out}=lanes(era,{mt:last,lk:last});
       sec.appendChild(wrap);
       era._out=out;
+      if(era.after){ const ta=el("div","track"); renderList(era.after,ta,"shared",null,false); sec.appendChild(ta); }
     }
     if(era.merge){
       const prev=ERAS[ERAS.indexOf(era)-1]._out;
@@ -474,10 +762,9 @@
     const b=document.getElementById(id);
     b.addEventListener("click",()=>{ const on=b.getAttribute("aria-pressed")!=="true"; b.setAttribute("aria-pressed",on); document.body.classList.toggle(cls,!on); });
   }
-  toggle("tgPromise","hide-promise"); toggle("tgThreat","hide-threat");
+  toggle("tgPromise","hide-promise"); toggle("tgThreat","hide-threat"); toggle("tgSide","hide-side");
 
   /* ---------- hledání ---------- */
-  const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   const search=document.getElementById("search");
   let hits=[],hitIdx=0,lastQ="";
   function flash(elm){ elm.classList.remove("flash"); void elm.offsetWidth; elm.classList.add("flash"); }
@@ -487,10 +774,15 @@
     if(q!==lastQ){ lastQ=q; hitIdx=0;
       hits=all.filter(p=>norm(p.n).startsWith(q)||(p.alt&&norm(p.alt).startsWith(q)));
       if(!hits.length) hits=all.filter(p=>norm(p.n).includes(q)||(p.alt&&norm(p.alt).includes(q)));
+      if(!document.body.classList.contains("hide-side")){
+        const qe=q.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+        const re=new RegExp("(^|[^a-z])"+qe);
+        hits=hits.concat(sideHits.filter(h=>re.test(h.line)));
+      }
     } else if(next) hitIdx=(hitIdx+1)%Math.max(hits.length,1);
     search.classList.toggle("miss",!hits.length);
     search.title=hits.length?`${hitIdx+1} z ${hits.length} – Enter = další`:"Jméno v rodokmenu není";
-    if(hits.length){ const h=hits[hitIdx]._el; h.scrollIntoView({block:"center"}); flash(h); }
+    if(hits.length){ const hh=hits[hitIdx]; if(hh._det) hh._det.open=true; const h=hh._el; h.scrollIntoView({block:"center"}); flash(h); }
   }
   let tmr; search.addEventListener("input",()=>{clearTimeout(tmr);tmr=setTimeout(()=>find(false),350)});
   search.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); find(true); } });
@@ -498,7 +790,7 @@
   /* ---------- detail ---------- */
   const bg=document.getElementById("sheetBg"), sheet=document.getElementById("sheet");
   let lastFocus=null;
-  const refsHtml=refs=>(refs&&refs.length)?`<div class="refs">${refs.map(r=>`<a href="${bibleUrl(r[0],r[1])}" target="_blank" rel="noopener">📖 ${refLabelClean(r)}</a>`).join("")}</div>`:"";
+  function refsHtml(refs){ return (refs&&refs.length)?`<div class="refs">${refs.map(r=>`<a href="${bibleUrl(r[0],r[1])}" target="_blank" rel="noopener">📖 ${refLabelClean(r)}</a>`).join("")}</div>`:""; }
   function show(html){
     lastFocus=document.activeElement;
     sheet.innerHTML=html; bg.classList.add("show");
