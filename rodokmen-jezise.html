@@ -38,6 +38,7 @@
     padding:6px 12px;font-size:.85em;cursor:pointer;white-space:nowrap}
   .era-btn.active{background:var(--maroon);border-color:var(--maroon);color:#fff}
   .tools{display:flex;gap:6px;margin-top:8px;align-items:center}
+  .tools{flex-wrap:wrap}
   .search{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;padding:7px 12px;font-size:.9em}
   .search.miss{border-color:var(--red)}
   .chip{border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink-soft);border-radius:18px;padding:6px 10px;font-size:.82em;cursor:pointer;white-space:nowrap}
@@ -94,6 +95,23 @@
   body.hide-promise .card.promise{display:none}
   body.hide-threat .card.threat{display:none}
   body.hide-side details.branch{display:none}
+  :root{--pr-j:#8a6d12;--pr-i:#2b58a6;--pr-ji:#2f7d3a;--pr-b:#b0327a;--rc:118px}
+  :root[data-theme="dark"]{--pr-j:#e0b35a;--pr-i:#7fa8ec;--pr-ji:#6fcf8f;--pr-b:#ec7fc0}
+  .tree-wrap{position:relative;padding-right:var(--rc)}
+  body.hide-proph .tree-wrap{padding-right:0}
+  body.hide-proph .timecol{display:none}
+  .timecol{position:absolute;top:0;right:0;bottom:0;width:var(--rc);border-left:1px dashed var(--border)}
+  .tc-head{position:sticky;top:112px;z-index:2;font-size:.68em;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+    text-align:center;padding:4px 2px;background:var(--bg);line-height:1.2;display:none}
+  .tc{position:absolute;left:6px;right:0;font-size:.74em;line-height:1.3;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--gold);
+    border-radius:0 8px 8px 0;padding:4px 6px;box-shadow:var(--shadow);cursor:default}
+  .tc .y{display:block;font-weight:700;color:var(--ink);font-size:.95em}
+  .tc .n{display:block}
+  .tc .n small{color:var(--ink-soft);font-weight:400}
+  .tc .j{color:var(--pr-j)} .tc .i{color:var(--pr-i)} .tc .ji{color:var(--pr-ji)} .tc .b{color:var(--pr-b)}
+  .tc.judges{border-left-color:#2f7d3a}
+  .tc-span{position:absolute;left:0;width:3px;border-radius:2px;background:#2f7d3a;opacity:.55}
+  @media (min-width:700px){:root{--rc:190px} .tc{font-size:.8em}}
   details.branch{position:relative;z-index:1;margin:7px 4px;background:var(--list-bg);border:1.5px dashed var(--border);border-radius:10px;
     width:min(34em,calc(100% - 8px));font-size:.82em;color:var(--ink);box-shadow:var(--shadow)}
   details.branch[open]{border-style:solid;border-color:var(--gold)}
@@ -137,6 +155,7 @@
     .card{font-size:.76em;padding:7px 8px}
     .lanes .card,.lanes .ev{margin-left:3px;margin-right:3px}
   }
+  @media (max-width:560px){ .tools .search{flex:1 1 100%} .tools .chip{flex:1 1 0;padding:6px 4px;text-align:center} }
 </style>
 </head>
 <body>
@@ -184,6 +203,7 @@
       <button class="chip" id="tgPromise" aria-pressed="true" type="button">⭐ Sliby</button>
       <button class="chip" id="tgThreat" aria-pressed="true" type="button">⚠️ Ohrožení</button>
       <button class="chip" id="tgSide" aria-pressed="true" type="button">👥 Větve</button>
+      <button class="chip" id="tgProph" aria-pressed="true" type="button">📜 Proroci</button>
     </div>
   </div>
 
@@ -195,12 +215,13 @@
       <li>👑 král · zlaté pozadí = věrný judský král po Šalomounovi</li>
       <li>Uvedeni jsou všichni judští králové. Jehoachaz a Sedekjáš (světlejší rámeček) vládli, ale nebyli Ježíšovými předky. Achazjáše, Jehoaše, Amacjáše a Jehojakima Matouš ve svém výčtu přeskakuje – je to uvedeno v jejich detailu.</li>
       <li>👥 Boční větve – příbuzní a potomci, kteří nejsou Ježíšovými předky (klepni pro rozbalení)</li>
+      <li>📜 Pravý sloupec: kdy působili soudci a proroci. Barva jména: <b style="color:var(--pr-j)">v Judsku</b>, <b style="color:var(--pr-i)">v Izraeli</b>, <b style="color:var(--pr-ji)">v Judsku i Izraeli</b>, <b style="color:var(--pr-b)">v Babyloně</b>.</li>
       <li>⭐ Informace od Jehovy o slíbeném potomstvu · ⚠️ Možné ohrožení linie</li>
       <li>~ přibližné datum</li>
     </ul>
   </details>
 
-  <main id="tree"></main>
+  <div class="tree-wrap" id="treeWrap"><main id="tree"></main><aside class="timecol" id="timeCol" aria-label="Kdy působili soudci a proroci"><div class="tc-head">Soudci<br>a proroci</div></aside></div>
 
   <p class="finale">Sliby dané Abrahamovi a jeho potomstvu se naplnily hlavně v Kristovi (<a href="https://wol.jw.org/cs/wol/b/r29/lp-b/nwt/48/3" target="_blank" rel="noopener">Galaťanům 3:16, 29</a>). Rodokmen podle mapy „Slíbené potomstvo“ a chronologie z publikací svědků Jehovových.</p>
   <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
@@ -642,7 +663,7 @@ pribuzni:`Ježíšovi příbuzní
       return b;
     }
     if(it.k==="b") return renderBranch(it);
-    if(it.k==="e") return el("div","ev",(it.y!=null?`<b>${yr(it.y)}</b> `:"")+it.t);
+    if(it.k==="e"){ const e=el("div","ev",(it.y!=null?`<b>${yr(it.y)}</b> `:"")+it.t); if(it.y!=null) evAnchors[String(it.y)]=e; return e; }
     const c=el("button","card "+(it.k==="s"?"promise":"threat"));
     c.type="button";
     c.innerHTML=`<span class="t">${it.k==="s"?"⭐":"⚠️"} ${it.t}</span>${it.x}`;
@@ -651,6 +672,7 @@ pribuzni:`Ježíšovi příbuzní
   }
 
   const sideHits=[]; // řádky bočních větví pro hledání
+  const evAnchors={}; // události podle roku (kotvy pro sloupec proroků)
   function renderBranch(it){
     const d=el("details","branch");
     const lines=SIDE[it.key].split("\n");
@@ -741,6 +763,61 @@ pribuzni:`Ježíšovi příbuzní
   // Ježíšovi: rodiče
   const jesus=all.find(p=>p.jesus); jesus._parent="Josef (adoptivní otec) a Marie";
 
+  /* ---------- pravý sloupec: kdy působili soudci a proroci (podle mapy „Slíbené potomstvo“) ----------
+     a = kotva: jméno osoby v rodokmenu nebo rok události; to = konec úseku (jen u soudců).
+     Barva: j = v Judsku, i = v Izraeli, ji = v Judsku i Izraeli, b = v Babyloně */
+  const PROPH=[
+    {a:"Enoch",y:"před potopou",n:[["Enoch","",""]],note:"prorokoval o Božím soudu"},
+    {a:"Noe",y:"před potopou",n:[["Noe","","kazatel spravedlnosti"]]},
+    {a:"1513",y:"1513–1473",n:[["Mojžíš","","prorok, vůdce"],["Miriam","","prorokyně"]]},
+    {a:"1473",to:"Jišai",judges:1,y:"~1450–1117 · soudci",n:[["Jozue","",""],["Otniel","",""],["Ehud","",""],["Šamgar","",""],["Barak a Debora","",""],["Gideon","",""],["Tola","",""],["Jair","",""],["Jefta","",""],["Ibcan","",""],["Elon","",""],["Abdon","",""],["Samson","",""],["Eli","","velekněz"],["Samuel","","soudce a prorok"]]},
+    {a:"David",y:"1117–997",n:[["Samuel","j",""],["Natan","j",""],["Gad","j",""],["Achijáš","j",""],["Iddo","j",""]]},
+    {a:"Rechoboam",y:"997–",n:[["Šemajáš","j",""],["Iddo","j",""]]},
+    {a:"Asa",y:"977–",n:[["Azarjáš","j","syn Odeda"],["Chanani","j","jasnozřivec"],["Jehu","ji","syn Chananiho"]]},
+    {a:"Jehošafat",y:"936–",n:[["Elijáš","i",""],["Mikajáš","i",""],["Jachaziel","j",""],["Eliezer","j",""],["Eliša","i","od ~917"]]},
+    {a:"Jehoram",y:"913–",n:[["Elijáš","i","konec"],["Eliša","i",""]]},
+    {a:"Jehoaš",y:"898–",n:[["Eliša","i","do ~858"],["Zecharjáš","j","syn Jehojady"]]},
+    {a:"Amacjáš",y:"858–",n:[["Jonáš","i","od ~844"]]},
+    {a:"Uzzijáš",y:"829–",n:[["Ámos","i",""],["Joel","j","asi"],["Ozeáš","i","od 804"],["Izajáš","ji","od 778"]]},
+    {a:"Jotam",y:"777–",n:[["Izajáš","ji",""],["Micheáš","ji",""],["Ozeáš","i",""]]},
+    {a:"Achaz",y:"761–",n:[["Izajáš","ji",""],["Micheáš","ji",""],["Oded","i",""],["Ozeáš","i","do 740"]]},
+    {a:"Ezekjáš",y:"745–",n:[["Izajáš","ji","do 732"],["Micheáš","ji","do 717"]]},
+    {a:"Josijáš",y:"659–",n:[["Chulda","j","prorokyně"],["Sefanjáš","j",""],["Jeremjáš","j","od 647"],["Nahum","j",""]]},
+    {a:"Jehojakim",y:"628–",n:[["Jeremjáš","j",""],["Habakuk","j",""],["Urijáš","j","zabit"]]},
+    {a:"Jekonjáš",y:"618–607",n:[["Jeremjáš","j","do 580"],["Daniel","b","odveden 617"],["Ezekiel","b","od 613"],["Obadjáš","j",""]]},
+    {a:"Zerubbabel",y:"537–443",n:[["Daniel","b","do 536"],["Ageus","j","520"],["Zecharjáš","j","520–518"],["Malachiáš","j","~443"]]},
+    {a:"Ježíš",y:"29 n. l.",n:[["Jan Křtitel","j","prorok, předchůdce Mesiáše"]]}
+  ];
+  const timeCol=document.getElementById("timeCol"), treeWrap=document.getElementById("treeWrap");
+  const findAnchor=a=>{
+    if(evAnchors[a]) return evAnchors[a];
+    const p=all.find(x=>x.n===a&&!x.side); return p?p._el:null;
+  };
+  const tcEls=PROPH.map(g=>{
+    const d=el("div","tc"+(g.judges?" judges":""));
+    d.innerHTML=`<span class="y">${g.y}</span>`+g.n.map(([nm,c,s])=>`<span class="n ${c}">${nm}${s?` <small>${s}</small>`:""}</span>`).join("")+(g.note?`<span class="n"><small>${g.note}</small></span>`:"");
+    timeCol.appendChild(d);
+    let bar=null; if(g.to){ bar=el("div","tc-span"); timeCol.appendChild(bar); }
+    return {g,d,bar};
+  });
+  const topOf=elm=>{ let y=0,e=elm; while(e&&e!==treeWrap){ y+=e.offsetTop; e=e.offsetParent; } return y; };
+  function layoutProph(){
+    if(document.body.classList.contains("hide-proph")) return;
+    let bottom=0;
+    tcEls.forEach(({g,d,bar})=>{
+      const a=findAnchor(g.a); if(!a){ d.style.display="none"; return; }
+      d.style.display="";
+      const y=Math.max(topOf(a)-2,bottom+6);
+      d.style.top=y+"px";
+      bottom=y+d.offsetHeight;
+      if(bar){ const b=findAnchor(g.to); const y2=b?topOf(b)+b.offsetHeight:bottom; const y1=topOf(a); bar.style.top=y1+"px"; bar.style.height=Math.max(0,y2-y1)+"px"; }
+    });
+  }
+  layoutProph();
+  if(window.ResizeObserver) new ResizeObserver(()=>layoutProph()).observe(document.getElementById("tree"));
+  window.addEventListener("load",layoutProph);
+  document.getElementById("tgProph").addEventListener("click",()=>setTimeout(layoutProph,0));
+
   /* ---------- navigace období ---------- */
   const erasNav=document.getElementById("eras");
   ERAS.forEach(era=>{
@@ -762,7 +839,7 @@ pribuzni:`Ježíšovi příbuzní
     const b=document.getElementById(id);
     b.addEventListener("click",()=>{ const on=b.getAttribute("aria-pressed")!=="true"; b.setAttribute("aria-pressed",on); document.body.classList.toggle(cls,!on); });
   }
-  toggle("tgPromise","hide-promise"); toggle("tgThreat","hide-threat"); toggle("tgSide","hide-side");
+  toggle("tgPromise","hide-promise"); toggle("tgThreat","hide-threat"); toggle("tgSide","hide-side"); toggle("tgProph","hide-proph");
 
   /* ---------- hledání ---------- */
   const search=document.getElementById("search");
