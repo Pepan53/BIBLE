@@ -129,7 +129,18 @@
   .ev-pager button, .ev-pager .ev-count{ white-space:nowrap; }
   .ev-pager .ev-play{ width:44px; height:34px; padding:0; margin-right:4px; font-size:1.25em; line-height:1; border-radius:10px; vertical-align:middle; }
   .ev-pager .ev-count{ display:inline-flex; align-items:center; }
-  .ev-pager .ev-play{ letter-spacing:-3px; }
+  /* seznam všech událostí (jen v širokém mobilním rozložení, kde je místo) */
+  .ev-list{ display:none; }
+  .ev-list h4{ position:sticky; top:0; z-index:1; margin:0 -8px; padding:8px 12px 5px; font-size:.68em; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gold-dark); background:var(--item-bg); border-bottom:1px solid var(--border); }
+  .ev-list button{ display:grid; grid-template-columns:30px 1fr; gap:6px; width:100%; text-align:left; font:inherit; font-size:.8em; line-height:1.35;
+    background:none; border:0; border-radius:6px; color:var(--ink); padding:6px 6px; cursor:pointer; }
+  .ev-list button:hover{ background:var(--hover-tint); }
+  .ev-list button .n{ color:var(--ink-soft); text-align:right; font-variant-numeric:tabular-nums; }
+  .ev-list button small{ color:var(--ink-soft); }
+  .ev-list button[aria-current="true"]{ background:#f1e6ce; font-weight:600; }
+  :root[data-theme="dark"] .ev-list button[aria-current="true"]{ background:#3a2f1e; }
+  .ev-pager .ev-play{ display:inline-grid; place-items:center; }
   .ev-pager .ev-count{ font-size:.75em; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
 
   /* ---------- časová osa ---------- */
@@ -197,6 +208,9 @@
     body.side .ev-text{ font-size:.98em; }
     body.side header{ margin:6px 0 16px; }
     body.side .ev-pager{ flex-wrap:wrap; row-gap:8px; position:static; }
+    body.side .ev-card{ display:flex; flex-direction:column; overflow:hidden; padding-bottom:0; }
+    body.side .ev-card > *{ flex:none; }
+    body.side .ev-list{ display:block; flex:1 1 auto; min-height:0; overflow:auto; margin:10px -14px 0; padding:0 8px 8px; border-top:1px solid var(--border); background:var(--item-bg); }
     body.side .ev-pager .ev-count{ order:3; flex-basis:100%; justify-content:center; }
   }
 </style>
@@ -303,9 +317,10 @@
         <div class="ev-refs" id="evRefs"></div>
         <div class="ev-pager">
           <button type="button" id="evPrev">‹ Předchozí</button>
-          <span class="ev-count"><button type="button" class="ev-play" id="evPlay" aria-label="Přehrát automaticky" title="Přehrát automaticky">▶</button> <span id="evCount"></span></span>
+          <span class="ev-count"><button type="button" class="ev-play" id="evPlay" aria-label="Přehrát automaticky" title="Přehrát automaticky"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 3.5 L16.5 10 L5 16.5 Z" fill="currentColor"/></svg></button> <span id="evCount"></span></span>
           <button type="button" id="evNext">Další ›</button>
         </div>
+        <div class="ev-list" id="evList" aria-label="Všechny události chronologicky"></div>
       </div>
 
     </div>
@@ -742,7 +757,29 @@
 
     // ---------- karta události ----------
     const card = $("evCard");
+    // seznam událostí po obdobích (klik = skok na událost)
+    const evList = $("evList");
+    (function(){
+      let html = "", sec = -1;
+      E.forEach(ev=>{
+        if(ev.sec !== sec){ sec = ev.sec; html += '<h4 style="border-left:4px solid '+SEC_COL[sec]+'">'+esc(SECTIONS[sec])+'</h4>'; }
+        html += '<button type="button" data-i="'+ev.i+'"><span class="n">'+(ev.i+1)+'.</span><span>'+esc(ev.x)+' <small>· '+esc(ev.d)+'</small></span></button>';
+      });
+      evList.innerHTML = html;
+      evList.addEventListener("click", e=>{ const b = e.target.closest("button"); if(!b) return; stopPlay(); const k = +b.dataset.i; goTo(k, Math.abs(k - idx) === 1); });
+    })();
+    function markList(i){
+      const prev = evList.querySelector('[aria-current="true"]'); if(prev) prev.removeAttribute("aria-current");
+      const b = evList.querySelector('button[data-i="'+i+'"]'); if(!b) return;
+      b.setAttribute("aria-current", "true");
+      if(evList.clientHeight){
+        const top = b.offsetTop - evList.offsetTop, h4 = 30;
+        if(top - h4 < evList.scrollTop || top + b.offsetHeight > evList.scrollTop + evList.clientHeight)
+          evList.scrollTo({top: top - h4 - evList.clientHeight/3, behavior: reduceMotion ? "auto" : "smooth"});
+      }
+    }
     function renderCard(i){
+      markList(i);
       const ev = E[i];
       $("evSec").textContent = SECTIONS[ev.sec];
       $("evWhen").textContent = ev.d;
@@ -995,7 +1032,8 @@
     let playT = null;
     const playBtn = $("tlPlay");
     const evPlay = $("evPlay");
-    function stopPlay(){ if(playT){ clearTimeout(playT); playT = null; } playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = evPlay.textContent = "▶"; playBtn.title = evPlay.title = "Přehrát automaticky"; }
+    const PLAY_SVG = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 3.5 L16.5 10 L5 16.5 Z" fill="currentColor"/></svg>', PAUSE_SVG = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="4.5" y="3.5" width="4" height="13" rx="1" fill="currentColor"/><rect x="11.5" y="3.5" width="4" height="13" rx="1" fill="currentColor"/></svg>';
+    function stopPlay(){ if(playT){ clearTimeout(playT); playT = null; } playBtn.setAttribute("aria-pressed", "false"); playBtn.textContent = "▶"; evPlay.innerHTML = PLAY_SVG; playBtn.title = evPlay.title = "Přehrát automaticky"; }
     function tick(){
       if(idx >= N-1){ stopPlay(); return; }
       next();
@@ -1006,7 +1044,7 @@
     playBtn.addEventListener("click", ()=>{
       if(playT){ stopPlay(); return; }
       if(idx >= N-1) goTo(0, false);
-      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = "⏸"; evPlay.textContent = "❚❚"; playBtn.title = evPlay.title = "Zastavit";
+      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = "⏸"; evPlay.innerHTML = PAUSE_SVG; playBtn.title = evPlay.title = "Zastavit";
       playT = setTimeout(tick, 600);
     });
     evPlay.addEventListener("click", ()=>playBtn.click());
