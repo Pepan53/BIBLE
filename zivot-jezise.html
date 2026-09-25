@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ježíšův život na mapě</title>
+<title>Ježíšův život</title>
 <link rel="stylesheet" href="assets/common.css">
 <style>
   *{ box-sizing: border-box; }
@@ -219,7 +219,7 @@
 
 <div class="wrap">
   <header>
-    <h1>Ježíšův život na mapě<span class="help-icon hint-icon" id="tmHintIcon" tabindex="0" hidden>?<span class="tooltip">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.</span></span></h1>
+    <h1>Ježíšův život<span class="help-icon hint-icon" id="tmHintIcon" tabindex="0">?<span class="tooltip">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.<br><br>Události a pořadí podle tabulky „Hlavní události Ježíšova života na zemi“ (Překlad nového světa, dodatek A7). Šipky a trasy neukazují přesné cesty, jen směr. Poloha oblastí (Galilea, Judea, Perea…) je orientační.</span></span></h1>
     <div class="subtitle" id="tmHint">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.</div>
   </header>
 
@@ -298,7 +298,6 @@
       <div class="tl-rail" id="tlRail"></div>
     </div>
   </div>
-  <p class="note">Události a pořadí podle tabulky „Hlavní události Ježíšova života na zemi“ (Překlad nového světa, dodatek A7). Šipky a trasy neukazují přesné cesty, jen směr. Poloha oblastí (Galilea, Judea, Perea…) je orientační.</p>
   <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
 
@@ -312,7 +311,7 @@
     const hint = document.getElementById("tmHint"), icon = document.getElementById("tmHintIcon");
     let seen = false;
     try{ seen = localStorage.getItem(KEY) === "1"; localStorage.setItem(KEY, "1"); }catch(e){}
-    if(seen){ hint.hidden = true; icon.hidden = false; }
+    if(seen) hint.hidden = true;
     icon.addEventListener("click", e=>{ e.stopPropagation(); icon.classList.toggle("tooltip-open"); });
     document.addEventListener("click", ()=>icon.classList.remove("tooltip-open"));
   })();
