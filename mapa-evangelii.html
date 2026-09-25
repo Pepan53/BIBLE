@@ -1584,7 +1584,7 @@
       const refs = refsHtml(ev.r);
       tabPanel.innerHTML =
         '<p class="gm-big">'+esc(ev.x)+'</p>' +
-        '<p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+' · '+ev.o+'. událost v pořadí</p>' +
+        '<p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+'</p>' +
         (modalEvs.length > 1 ? '<div class="gm-pager"><button type="button" id="gmPrev"'+(i === 0 ? " disabled" : "")+'>‹ Předchozí</button><button type="button" id="gmNext"'+(i === modalEvs.length-1 ? " disabled" : "")+'>Další ›</button></div>' : '');
       const p = document.getElementById("gmPrev"), nx = document.getElementById("gmNext");
       if(p) p.addEventListener("click", ()=>showTab(Math.max(0, modalIdx-1)));
@@ -1594,7 +1594,7 @@
       modalEvs = E.filter(e=>e.n === n);
       document.getElementById("gmModalTitle").innerHTML = '<span class="gm-stack">'+stackHtml(n, modalEvs)+'</span>Místo č. '+n+(modalEvs.length > 1 ? ' · '+modalEvs.length+' '+plural(modalEvs.length) : '');
       tabs.hidden = modalEvs.length < 2;
-      tabs.innerHTML = modalEvs.map((ev, k)=>'<button type="button" class="gm-tab" role="tab" data-k="'+k+'">'+chip(ev)+DATA.names[ev.g]+' · '+ev.o+'.</button>').join("");
+      tabs.innerHTML = modalEvs.map((ev, k)=>'<button type="button" class="gm-tab" role="tab" data-k="'+k+'">'+chip(ev)+DATA.names[ev.g]+'</button>').join("");
       let start = 0;
       if(startOrder){ const k = modalEvs.findIndex(e=>e.o === startOrder); if(k >= 0) start = k; }
       showTab(start);
@@ -1740,7 +1740,7 @@
         '<h2><span class="gm-stack">'+stack+'</span>'+gos.map(g=>DATA.names[g]).join(", ")+'</h2>' +
         evs.map(ev=>{
           const refs = refsHtml(ev.r);
-          return '<div class="gm-ev">'+chip(ev)+'<p>'+esc(ev.x)+'</p><p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+' · '+ev.o+'. v pořadí</p></div>';
+          return '<div class="gm-ev">'+chip(ev)+'<p>'+esc(ev.x)+'</p><p class="gm-meta"><b>'+DATA.names[ev.g]+'</b> · '+refs+'</p></div>';
         }).join("");
       drawRing();
       list.querySelectorAll(".gm-row").forEach(r=>r.setAttribute("aria-current", +r.dataset.n === n ? "true" : "false"));
