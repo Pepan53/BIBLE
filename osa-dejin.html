@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Osa dějin — biblická časová osa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📜</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  :root{ --list-bg:#fbf7ee; --axis:#a9812f; --band-s:62%; --band-l:88%; --life-s:55%; --life-l:78%; --life-ink:#2c2317; --line:#cbbd9c; --ctl-h:110px }
+  :root[data-theme="dark"]{ --list-bg:#211c14; --axis:#d9a441; --band-s:28%; --band-l:22%; --life-s:35%; --life-l:36%; --life-ink:#f3e9d0; --line:#5a4e3a }
+  *{box-sizing:border-box}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:900px;margin:0 auto;padding:22px 12px 60px}
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+
+  header{text-align:center;padding:44px 0 0;position:relative;z-index:150}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
+  h1 .hint-icon{margin-left:10px;vertical-align:middle;font-family:"Segoe UI",Verdana,Arial,sans-serif;font-size:.5em}
+  h1 .hint-icon[hidden]{display:none}
+  h1 .hint-icon .tooltip{font-weight:400;line-height:1.45;font-size:14px;left:auto;right:-14px;transform:none;width:min(300px,88vw);text-align:left}
+  h1 .hint-icon .tooltip::after{left:auto;right:18px;transform:none}
+
+  /* ---------- lepicí ovládání ---------- */
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:10px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
+  .row{display:flex;gap:6px;align-items:center}
+  .search{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;padding:7px 12px;font-size:.92em}
+  .zbtn{flex:0 0 auto;width:36px;height:34px;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--maroon-dark);border-radius:10px;font-size:1.15em;cursor:pointer;line-height:1}
+  .zbtn:active{transform:scale(.95)}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:8px;padding-bottom:2px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:16px;padding:5px 11px;font-size:.8em;cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
+  .chip.era{border-style:dashed}
+  .status{font-size:.75em;color:var(--ink-soft);margin-top:6px;min-height:1em}
+
+  /* ---------- osa ---------- */
+  #tl{position:relative;margin-top:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;overflow-x:clip}
+  #tl svg.lines{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+  .band{position:absolute;background:hsl(var(--h) var(--band-s) var(--band-l));display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .band span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;color:var(--ink-soft);white-space:nowrap;letter-spacing:.3px}
+  .period{position:absolute;border-radius:6px;background:hsl(var(--h) var(--band-s) calc(var(--band-l) - 8%));cursor:pointer}
+  .period span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:600;color:var(--ink);padding:6px 0;white-space:nowrap;margin:0 auto;width:14px}
+  .tick{position:absolute;height:1px;background:var(--line)}
+  .tick.major{background:var(--axis)}
+  .tlab{position:absolute;font-size:10.5px;color:var(--ink-soft);text-align:right;transform:translateY(-50%);white-space:nowrap}
+  .axisline{position:absolute;width:2px;background:var(--axis);border-radius:1px}
+  .dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--maroon);transform:translate(-50%,-50%);border:2px solid var(--maroon);cursor:pointer}
+  .dot.approx{background:var(--bg)}
+  .dot.rel{background:var(--bg);border-style:dashed;border-color:var(--gold-dark)}
+  .range{position:absolute;width:6px;border-radius:3px;background:repeating-linear-gradient(180deg,var(--gold) 0 4px,transparent 4px 7px);opacity:.9;transform:translateX(-50%)}
+  .range.open-top{-webkit-mask-image:linear-gradient(transparent,#000 40px);mask-image:linear-gradient(transparent,#000 40px)}
+  .range.open-bot{-webkit-mask-image:linear-gradient(#000 calc(100% - 40px),transparent);mask-image:linear-gradient(#000 calc(100% - 40px),transparent)}
+
+  .life{position:absolute;border-radius:7px;background:hsl(var(--h) var(--life-s) var(--life-l));cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .life span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;font-size:11.5px;font-weight:600;color:var(--life-ink);padding:6px 0;white-space:nowrap;margin:0 auto;width:14px;line-height:14px}
+  .life.hl,.card.hl{outline:3px solid var(--gold);outline-offset:1px}
+
+  .card{position:absolute;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:9px;padding:4px 8px 5px;cursor:pointer;display:flex;gap:7px;align-items:center;box-shadow:var(--shadow);transition:outline-color .2s}
+  .card.rel{border-style:dashed;border-color:var(--gold)}
+  .card .tx{min-width:0;flex:1}
+  .card .d{font-size:10.5px;color:var(--gold-dark)}
+  .card .t{font-size:12.5px;line-height:1.25;color:var(--ink)}
+  .card .th{flex:0 0 auto;width:44px;height:32px;border-radius:5px;background:var(--list-bg) center/cover no-repeat;position:relative;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft)}
+  .card .th.vid::after{content:"▶";position:absolute;color:#fff;font-size:12px;text-shadow:0 0 4px #000}
+  .card .ic{font-size:11px;margin-left:3px}
+
+  .msg{text-align:center;color:var(--ink-soft);padding:40px 10px}
+  footer{text-align:center;color:var(--ink-soft);font-size:.82em;margin-top:30px;line-height:1.6}
+  footer a{color:var(--ink-soft)}
+
+  /* ---------- detail ---------- */
+  .sheet-bg{position:fixed;inset:0;background:rgba(30,22,10,.5);display:none;align-items:flex-end;justify-content:center;z-index:10000}
+  .sheet-bg.show{display:flex}
+  .sheet{background:var(--bg-panel);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:18px 20px calc(22px + env(safe-area-inset-bottom,0px));max-height:85vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(30,22,10,.35)}
+  @media (min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:16px}}
+  .sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .sheet h3{margin:0;font-family:var(--heading-font);color:var(--maroon-dark);font-size:1.35em}
+  .sheet .when{color:var(--gold-dark);font-size:.92em;margin-top:3px}
+  .x{background:none;border:none;font-size:1.2em;color:var(--ink-soft);cursor:pointer;padding:4px 8px;border-radius:6px}
+  .x:hover{background:var(--hover-tint)}
+  dl.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0;font-size:.9em}
+  dl.facts dt{color:var(--ink-soft)} dl.facts dd{margin:0}
+  dl.facts a{color:var(--maroon);cursor:pointer;text-decoration:underline dotted}
+  .sheet p{line-height:1.55;margin:10px 0;white-space:pre-line}
+  .media{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:12px 0}
+  .media a,.media .vid{display:block;position:relative;border-radius:9px;overflow:hidden;background:var(--list-bg);aspect-ratio:16/10;border:1px solid var(--border);cursor:pointer}
+  .media img{width:100%;height:100%;object-fit:cover;display:block}
+  .media .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.7)}
+  .media .cap{position:absolute;left:0;right:0;bottom:0;font-size:11px;padding:3px 6px;background:rgba(0,0,0,.55);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .media iframe{width:100%;height:100%;border:0;display:block}
+  .media .noimg{display:flex;align-items:center;justify-content:center;height:100%;font-size:30px;color:var(--ink-soft)}
+  .refs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .refs a{font-size:.85em;color:var(--maroon);border:1px solid var(--border);border-radius:14px;padding:4px 10px;text-decoration:none;background:var(--list-bg)}
+  .refs a:hover{border-color:var(--maroon)}
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:11000;padding:12px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+
+  @media (max-width:480px){ h1{font-size:1.5em} .card .t{font-size:12px} }
+</style>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Osa dějin<span class="help-icon hint-icon" id="osHintIcon" tabindex="0" hidden>?<span class="tooltip" id="osHintTip"></span></span></h1>
+    <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po. Klepni na cokoli pro podrobnosti.</p>
+  </header>
+
+  <div class="controls" id="controls">
+    <div class="row">
+      <input class="search" id="search" type="search" list="names" placeholder="🔍 Hledat postavu nebo událost…" autocomplete="off">
+      <datalist id="names"></datalist>
+      <button class="zbtn" id="zoomOut" title="Oddálit" aria-label="Oddálit">−</button>
+      <button class="zbtn" id="zoomIn" title="Přiblížit" aria-label="Přiblížit">+</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="status" id="status">Načítám data…</div>
+  </div>
+
+  <div id="tl"><div class="msg">Načítám časovou osu…</div></div>
+
+  <footer>Aplikace nesbírá žádná data. Obsah osy se načítá z veřejné Google tabulky.<br>
+    <a id="editLink" href="#" target="_blank" rel="noopener">✏️ upravit tabulku</a></footer>
+</div>
+
+<div class="sheet-bg" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet" id="sheet"></div></div>
+<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+
+<script src="assets/common.js"></script>
+<script>
+(function(){
+  /* =========================================================
+     NASTAVENÍ – odkud se berou data
+     ========================================================= */
+  const SHEET_ID = "1-UJD6gjmtkHxQ_-sI49i3wH2v_bWm8QcCkgLOsw8jXI";
+  const SHEET_GID = "0";
+  const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&gid=${SHEET_GID}`;
+  const CACHE_KEY = "osaDejinData";
+  const ZOOM_KEY = "osaDejinZoom";
+  document.getElementById("editLink").href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+
+  /* ---------- nápověda: poprvé text, pak jen „?“ ---------- */
+  (function(){
+    const KEY="osaDejinHintSeen", hint=document.getElementById("osHint"), icon=document.getElementById("osHintIcon");
+    document.getElementById("osHintTip").textContent = hint.textContent;
+    let seen=false;
+    try{ seen=localStorage.getItem(KEY)==="1"; localStorage.setItem(KEY,"1"); }catch(e){}
+    if(seen){ hint.hidden=true; icon.hidden=false; }
+    icon.addEventListener("click",e=>{ e.stopPropagation(); icon.classList.toggle("tooltip-open"); });
+    document.addEventListener("click",()=>icon.classList.remove("tooltip-open"));
+  })();
+
+  /* =========================================================
+     POMOCNÉ FUNKCE
+     ========================================================= */
+  const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+
+  // CSV → pole objektů (klíče = hlavičky bez diakritiky)
+  function parseCSV(text){
+    const rows=[]; let row=[], f="", q=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(q){ if(c==='"'){ if(text[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+      else if(c==='"') q=true;
+      else if(c===','){ row.push(f); f=""; }
+      else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(f); rows.push(row); row=[]; f=""; }
+      else f+=c;
+    }
+    if(f!==""||row.length){ row.push(f); rows.push(row); }
+    if(!rows.length) return [];
+    const head=rows[0].map(h=>norm(h));
+    return rows.slice(1).filter(r=>r.some(v=>v.trim())).map(r=>{
+      const o={}; head.forEach((h,i)=>{ if(h) o[h]=(r[i]||"").trim(); }); return o;
+    });
+  }
+
+  // Rok: „4026 př. n. l.“, „~2490 př. n. l.“, „-4026“, „33 n. l.“, „1914“
+  // Interně astronomický rok (1 př. n. l. = 0, 2 př. n. l. = −1 …), aby šlo počítat přes přelom letopočtu.
+  function parseYear(s){
+    if(!s) return null;
+    s=String(s).trim();
+    const approx=/^[~≈cC]/.test(s) || /asi|cca|přibl/i.test(s);
+    const m=s.match(/-?\d[\d\s]*/); if(!m) return null;
+    let n=parseInt(m[0].replace(/\s/g,""),10);
+    const bce = n<0 || /př\.?\s*n\.?\s*l|pnl|př\.?\s*kr|bc/i.test(s);
+    n=Math.abs(n);
+    return { y: bce ? 1-n : n, approx };
+  }
+  const fmtYear = a => a<=0 ? `${1-a}\u00a0př.\u00a0n.\u00a0l.` : `${a}\u00a0n.\u00a0l.`;
+  const fmtYearShort = a => a<=0 ? `${1-a}` : `${a} n. l.`;
+  function fmtRange(a,b){ // a<b
+    if(a<=0 && b<=0) return `${1-a}–${1-b}\u00a0př.\u00a0n.\u00a0l.`;
+    if(a>0 && b>0) return `${a}–${b}\u00a0n.\u00a0l.`;
+    return `${fmtYear(a)} – ${fmtYear(b)}`;
+  }
+
+  // odkazy na verše (více oddělených středníkem)
+  const verseUrl = v => "https://wol.jw.org/cs/wol/l/r29/lp-b?q="+encodeURIComponent(v.replace(/–/g,"-")).replace(/%20/g,"+");
+  const splitList = s => String(s||"").split(/\s*[;\n]\s*/).map(x=>x.trim()).filter(Boolean);
+  const splitUrls = s => String(s||"").split(/[\s;,]+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
+
+  // náhledy obrázků a videí
+  function imageThumb(u){
+    let m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]+)/);
+    if(m) return { thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`, full:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w2000` };
+    return { thumb:u, full:u };
+  }
+  function videoInfo(u){
+    let m=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/);
+    if(m) return { kind:"yt", id:m[1], thumb:`https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`, url:u };
+    m=u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if(m) return { kind:"vimeo", id:m[1], thumb:`https://vumbnail.com/${m[1]}.jpg`, url:u };
+    let host=""; try{ host=new URL(u).hostname.replace(/^www\./,""); }catch(e){}
+    return { kind:"other", thumb:null, url:u, host };
+  }
+
+  /* =========================================================
+     DATA → MODEL
+     ========================================================= */
+  let items=[], byId={}, domain={a:0,b:1}, lanesCount=0;
+  const off = new Set();      // vypnuté kategorie
+
+  function typeOf(t){ t=norm(t); if(t.startsWith("ziv")||t.startsWith("osob")) return "life"; if(t.startsWith("obdob")||t.startsWith("era")) return "period"; return "event"; }
+
+  function buildModel(rows){
+    items=[]; byId={};
+    rows.forEach((r,i)=>{
+      const name=r["nazev"]||r["name"]; if(!name) return;
+      const it={
+        id: r["id"] || ("r"+(i+2)), name, type: typeOf(r["typ"]),
+        from: parseYear(r["od"]), to: parseYear(r["do"]),
+        after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
+        cat: r["kategorie"]||"", verses: splitList(r["vers"]),
+        images: splitUrls(r["obrazek"]), videos: splitUrls(r["video"]), links: splitUrls(r["odkaz"]),
+        note: r["poznamka"]||"", row: i+2
+      };
+      items.push(it); byId[norm(it.id)]=it;
+    });
+    // spočítat rozsah (lo..hi) pro každou položku
+    resolveAll();
+    // rozsah osy
+    let a=Infinity,b=-Infinity;
+    items.forEach(it=>{
+      [it.lo,it.hi,it.end].forEach(v=>{ if(Number.isFinite(v)){ a=Math.min(a,v); b=Math.max(b,v); } });
+    });
+    if(!Number.isFinite(a)){ a=-4025; b=0; }
+    const pad=Math.max(20,(b-a)*0.04);
+    domain={a:Math.floor(a-pad), b:Math.ceil(b+pad)};
+    // odhad polohy u položek bez přesného roku
+    items.forEach(it=>estimate(it));
+    // dráhy (sloupce) pro životy – hladové přidělení
+    const lives=items.filter(it=>it.type==="life"&&Number.isFinite(it.lo)&&Number.isFinite(it.end)).sort((x,y)=>x.lo-y.lo);
+    const laneEnd=[];
+    lives.forEach(it=>{
+      let k=laneEnd.findIndex(e=>e < it.lo - 2);
+      if(k<0){ k=laneEnd.length; laneEnd.push(0); }
+      laneEnd[k]=it.end; it.lane=k;
+    });
+    lanesCount=laneEnd.length;
+  }
+
+  function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
+
+  /* Odkazy v „po“/„před“: id, id.konec (konec života/období), nebo rovnou rok.
+     Vazby se berou oběma směry: „B po A“ = „A před B“. */
+  function refNode(ref){
+    if(/\d/.test(ref) && !byId[norm(ref)]){ const y=parseYear(ref); return y ? { year:y.y } : null; }
+    let key=norm(ref), end=false;
+    const m=key.match(/^(.*)\.(konec|smrt|end)$/); if(m){ key=m[1]; end=true; }
+    const it=byId[key]; if(!it) return null;
+    return { it, end };
+  }
+  // pevný bod (přesný/přibližný rok) nebo null
+  const fixedOf = n => n.year!=null ? n.year : (n.end ? (n.it.to ? n.it.to.y : null) : (n.it.from ? n.it.from.y : null));
+
+  function resolveAll(){
+    items.forEach(it=>{ it.preds=[]; it.succs=[]; it.afterR=[]; it.beforeR=[]; });
+    items.forEach(it=>{
+      it.after.forEach(r=>{ const n=refNode(r); if(!n) return;
+        it.afterR.push(n); it.preds.push(n);
+        if(n.it && !n.end) n.it.succs.push({it}); });
+      it.before.forEach(r=>{ const n=refNode(r); if(!n) return;
+        it.beforeR.push(n); it.succs.push(n);
+        if(n.it && !n.end) n.it.preds.push({it}); });
+    });
+    const memo={lo:new Map(), hi:new Map()};
+    function bound(it, kind, st){           // kind: "lo" (nejdřív) / "hi" (nejpozději)
+      if(it.from) return it.from.y;
+      if(memo[kind].has(it)) return memo[kind].get(it);
+      const inf = kind==="lo" ? -Infinity : Infinity;
+      if(st.has(it)) return inf; st.add(it);
+      let v=inf;
+      (kind==="lo"?it.preds:it.succs).forEach(n=>{
+        let f;
+        if(n.year!=null) f=n.year;
+        else if(n.end && n.it.to) f=n.it.to.y;
+        else f=bound(n.it, kind, st);
+        v = kind==="lo" ? Math.max(v,f) : Math.min(v,f);
+      });
+      st.delete(it); memo[kind].set(it,v); return v;
+    }
+    items.forEach(it=>{
+      if(it.from){ it.lo=it.hi=it.from.y; it.approx=it.from.approx; it.rel=false; }
+      else { it.lo=bound(it,"lo",new Set()); it.hi=bound(it,"hi",new Set()); it.rel=true; }
+      it.end = it.to ? it.to.y : null;
+    });
+  }
+
+  // délka řetězce relativních událostí před/za položkou (aby šly hezky po sobě)
+  function depth(it, dir, st){
+    if(st.has(it)) return 0; st.add(it);
+    const list = dir==="po" ? it.preds : it.succs;
+    let d=0;
+    list.forEach(n=>{ const t=n.it; if(t && t!==it && t.rel && t.type==="event" && !n.end) d=Math.max(d, 1+depth(t,dir,st)); });
+    st.delete(it); return d;
+  }
+  function estimate(it){
+    if(!it.rel){ it.est=it.lo; return; }
+    let lo=it.lo, hi=it.hi;
+    it.openTop=!Number.isFinite(lo); it.openBot=!Number.isFinite(hi);
+    if(it.openTop && it.openBot){ it.est=domain.a; it.dlo=domain.a; it.dhi=domain.a; return; }
+    const span=domain.b-domain.a;
+    if(it.openTop) lo=Math.max(domain.a, hi - span*0.05);
+    if(it.openBot) hi=Math.min(domain.b, lo + span*0.05);
+    it.dlo=lo; it.dhi=hi;
+    const p=depth(it,"po",new Set()), q=depth(it,"pred",new Set());
+    it.est = lo + (hi-lo)*(p+1)/(p+q+2);
+  }
+
+  function whenText(it){
+    if(it.type!=="event"){
+      const a=it.lo, b=it.end;
+      if(Number.isFinite(a)&&Number.isFinite(b)) return (it.approx?"~":"")+fmtRange(a,b);
+      if(Number.isFinite(a)) return (it.approx?"~":"")+fmtYear(a);
+    }
+    if(!it.rel) return (it.approx?"~":"")+fmtYear(it.lo);
+    const L=Number.isFinite(it.lo), H=Number.isFinite(it.hi);
+    if(L&&H) return it.lo===it.hi ? fmtYear(it.lo) : `mezi ${fmtRange(it.lo,it.hi)}`;
+    if(L) return `po ${fmtYear(it.lo)}`;
+    if(H) return `před ${fmtYear(it.hi)}`;
+    return "neznámo kdy";
+  }
+
+  /* =========================================================
+     VYKRESLENÍ
+     ========================================================= */
+  const tl=document.getElementById("tl");
+  let ppy = 1.5;               // pixelů na rok
+  const TOP=16, BOTTOM=40;
+  let geo=null, cardH={};      // výšky kartiček (měří se jen při změně šířky)
+
+  const visible = it => !off.has(it.type==="life" ? "__life" : (it.cat||"Ostatní")) && !(it.type==="event" && off.has("__ev"));
+  const yOf = a => TOP + (a-domain.a)*ppy;
+  const yearAt = y => domain.a + (y-TOP)/ppy;
+
+  function hue(i){ return (i*47+20)%360; }
+  function catHue(c){ let h=0; for(const ch of String(c)) h=(h*31+ch.charCodeAt(0))%360; return h; }
+
+  function layout(){
+    const W=tl.clientWidth;
+    const periodW=18, axisL=periodW+2, axisX=periodW+60;
+    let laneW=W<420?15:17, laneGap=3;
+    const lanesX=axisX+10;
+    let lanesW=lanesCount*(laneW+laneGap);
+    if(W - (lanesX+lanesW) < 150 && lanesCount){ laneW=12; laneGap=2; lanesW=lanesCount*(laneW+laneGap); }
+    const cardsX=lanesX+lanesW+(lanesCount?12:0);
+    return { W, periodW, axisL, axisX, laneW, laneGap, lanesX, cardsX, cardsW: Math.min(360, Math.max(120, W-cardsX-2)) };
+  }
+
+  function measureCards(g, evs){
+    const key=g.cardsW;
+    if(cardH._w===key && evs.every(it=>cardH[it.id]!=null)) return;
+    cardH={_w:key};
+    const tmp=document.createElement("div");
+    tmp.style.cssText=`position:absolute;visibility:hidden;left:0;top:0;width:${g.cardsW}px`;
+    tmp.innerHTML=evs.map(it=>cardHtml(it,0,g)).join("");
+    tl.appendChild(tmp);
+    [...tmp.children].forEach((el,i)=>{ cardH[evs[i].id]=el.offsetHeight; });
+    tmp.remove();
+  }
+
+  function cardHtml(it, top, g){
+    const img = it.images[0] ? imageThumb(it.images[0]).thumb : null;
+    const vid = it.videos.map(videoInfo).find(v=>v.thumb);
+    let th="";
+    if(img) th=`<div class="th" style="background-image:url('${esc(img)}')"></div>`;
+    else if(vid) th=`<div class="th vid" style="background-image:url('${esc(vid.thumb)}')"></div>`;
+    else if(it.videos.length) th=`<div class="th">▶</div>`;
+    const icons = (it.note?"":"") ;
+    return `<div class="card${it.rel?" rel":""}" data-id="${esc(it.id)}" style="left:${g.cardsX}px;top:${top}px;width:${g.cardsW}px">
+      <div class="tx"><div class="d">${esc(whenText(it))}</div><div class="t">${esc(it.name)}${icons}</div></div>${th}</div>`;
+  }
+
+  function render(){
+    if(!items.length) return;
+    const g=layout(); geo=g;
+    const H = TOP + (domain.b-domain.a)*ppy + BOTTOM;
+    const evs = items.filter(it=>it.type==="event" && visible(it) && Number.isFinite(it.est)).sort((x,y)=>x.est-y.est);
+    measureCards(g, evs);
+
+    // rozložení kartiček bez překrytí
+    let prev=-Infinity; const pos=[];
+    evs.forEach(it=>{
+      const h=cardH[it.id]||36, y=yOf(it.est);
+      let top=Math.max(y-h/2, prev+5);
+      pos.push({it,y,top,h}); prev=top+h;
+    });
+    const totalH=Math.max(H, prev+BOTTOM);
+
+    const out=[];
+    // pásy po stoletích
+    const bStep = ppy*100>=30 ? 100 : ppy*500>=30 ? 500 : 1000;
+    const conv = t => t<=0 ? t+1 : t;          // „kulatý“ letopočet → astronomický rok
+    for(let t=Math.floor((domain.a-1)/bStep)*bStep; conv(t)<domain.b; t+=bStep){
+      const a=Math.max(conv(t),domain.a), b=Math.min(conv(t+bStep),domain.b);
+      const y1=yOf(a), y2=yOf(b), h=y2-y1; if(h<=0) continue;
+      const txt = t+bStep<=0 ? `${-t}–${-(t+bStep)}` : t>=0 ? `${t}–${t+bStep}` : `${-t} př.–${t+bStep} n. l.`;
+      const lab = h>70 ? `<span>${txt}</span>` : "";
+      out.push(`<div class="band" style="left:${g.axisL}px;width:14px;top:${y1}px;height:${h}px;--h:${hue(Math.round(t/bStep))}">${lab}</div>`);
+    }
+    // období
+    items.filter(it=>it.type==="period"&&visible(it)&&Number.isFinite(it.lo)&&Number.isFinite(it.end)).forEach((it,i)=>{
+      const y1=yOf(it.lo), h=Math.max(8,yOf(it.end)-y1);
+      out.push(`<div class="period" data-id="${esc(it.id)}" style="left:0;width:${g.periodW}px;top:${y1}px;height:${h}px;--h:${catHue(it.name)}"><span>${esc(it.name)}</span></div>`);
+    });
+    // osa + dílky
+    out.push(`<div class="axisline" style="left:${g.axisX-1}px;top:${TOP-6}px;height:${totalH-TOP-BOTTOM+12}px"></div>`);
+    const steps=[1,2,5,10,20,50,100,200,500,1000];
+    const minor=steps.find(s=>s*ppy>=9)||1000, major=steps.find(s=>s*ppy>=46 && s%minor===0)||1000;
+    for(let t=Math.ceil(domain.a/minor)*minor; t<=domain.b; t+=minor){
+      // dílky na „kulatých“ letopočtech: př. n. l. rok n ↔ astronomický 1−n
+      const disp = t<=0 ? -t : t;               // kulaté číslo v zobrazení
+      const a = t<=0 ? 1-disp : t;
+      if(a<domain.a||a>domain.b) continue;
+      const isMaj = disp%major===0;
+      const y=yOf(a);
+      out.push(`<div class="tick${isMaj?" major":""}" style="left:${g.axisX-(isMaj?9:5)}px;width:${isMaj?9:5}px;top:${y}px"></div>`);
+      if(isMaj) out.push(`<div class="tlab" style="left:${g.axisL+16}px;width:${g.axisX-g.axisL-28}px;top:${y}px">${esc(fmtYearShort(a))}</div>`);
+    }
+    // životy
+    items.filter(it=>it.type==="life"&&visible(it)&&it.lane!=null).forEach(it=>{
+      const y1=yOf(it.lo), h=Math.max(10,yOf(it.end)-y1);
+      out.push(`<div class="life" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${hue(it.lane*3+it.row)}"><span>${esc(it.name)}</span></div>`);
+    });
+    // spojnice (SVG) + tečky + kartičky
+    const lines=[];
+    pos.forEach(p=>{
+      const cy=p.top+p.h/2, x1=g.axisX, x2=g.cardsX-8;
+      const dash=p.it.rel?' stroke-dasharray="3 3"':'';
+      lines.push(`<polyline points="${x1},${p.y} ${x2-6},${p.y} ${x2},${cy} ${g.cardsX},${cy}" fill="none" stroke="var(--line)" stroke-width="1.2"${dash}/>`);
+      out.push(`<div class="dot${p.it.rel?" rel":p.it.approx?" approx":""}" data-id="${esc(p.it.id)}" style="left:${g.axisX}px;top:${p.y}px"></div>`);
+      out.push(cardHtml(p.it,p.top,g));
+    });
+    out.unshift(`<svg class="lines" width="${g.W}" height="${totalH}">${lines.join("")}</svg>`);
+    out.push(`<div id="rangeHost"></div>`);
+    tl.style.height=totalH+"px";
+    tl.innerHTML=out.join("");
+    if(selected) showRange(selected);
+  }
+
+  // zvýraznění rozsahu u položky bez přesného roku
+  let selected=null;
+  function showRange(it){
+    const host=document.getElementById("rangeHost"); if(!host||!geo) return;
+    tl.querySelectorAll(".hl").forEach(e=>e.classList.remove("hl"));
+    tl.querySelectorAll(`[data-id="${CSS.escape(it.id)}"]`).forEach(e=>{ if(!e.classList.contains("dot")) e.classList.add("hl"); });
+    if(it.type==="event" && it.rel){
+      const y1=yOf(it.dlo), y2=yOf(it.dhi);
+      host.innerHTML=`<div class="range${it.openTop?" open-top":""}${it.openBot?" open-bot":""}" style="left:${geo.axisX+7}px;top:${y1}px;height:${Math.max(4,y2-y1)}px"></div>`;
+    }else host.innerHTML="";
+  }
+
+  /* ---------- zoom (tlačítka, kolečko+Ctrl, dva prsty) ---------- */
+  const MINP=0.15, MAXP=80;
+  function docTopOfTl(){ return tl.getBoundingClientRect().top + window.scrollY; }
+  function zoomTo(newP, clientY){
+    newP=Math.min(MAXP,Math.max(MINP,newP));
+    if(Math.abs(newP-ppy)<1e-6) return;
+    const yr=yearAt(clientY - tl.getBoundingClientRect().top);
+    ppy=newP; render();
+    window.scrollTo(0, docTopOfTl() + yOf(yr) - clientY);
+    try{ localStorage.setItem(ZOOM_KEY, String(ppy)); }catch(e){}
+  }
+  const ctlH=()=>document.getElementById("controls").offsetHeight;
+  const midY=()=> ctlH() + (window.innerHeight-ctlH())/2;
+  document.getElementById("zoomIn").onclick = ()=>zoomTo(ppy*1.6, midY());
+  document.getElementById("zoomOut").onclick= ()=>zoomTo(ppy/1.6, midY());
+  tl.addEventListener("wheel", e=>{ if(!e.ctrlKey) return; e.preventDefault(); zoomTo(ppy*Math.exp(-e.deltaY*0.004), e.clientY); }, {passive:false});
+
+  let pinch=null, raf=0, suppressClick=0;
+  const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+  tl.addEventListener("touchstart", e=>{
+    if(e.touches.length===2){
+      const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      pinch={ d0:dist(e.touches), p0:ppy, yr:yearAt(cy - tl.getBoundingClientRect().top) };
+    }
+  }, {passive:true});
+  tl.addEventListener("touchmove", e=>{
+    if(!pinch || e.touches.length!==2) return;
+    e.preventDefault();
+    const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    const p=Math.min(MAXP,Math.max(MINP, pinch.p0*dist(e.touches)/pinch.d0));
+    cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(()=>{ ppy=p; render(); window.scrollTo(0, docTopOfTl() + yOf(pinch.yr) - cy); });
+  }, {passive:false});
+  tl.addEventListener("touchend", e=>{
+    if(pinch && e.touches.length<2){ pinch=null; suppressClick=Date.now(); try{ localStorage.setItem(ZOOM_KEY,String(ppy)); }catch(err){} }
+  });
+
+  /* ---------- klepnutí → detail ---------- */
+  tl.addEventListener("click", e=>{
+    if(Date.now()-suppressClick<350) return;
+    const el=e.target.closest("[data-id]"); if(!el) return;
+    const it=byId[norm(el.dataset.id)]; if(it) openItem(it);
+  });
+
+  const bg=document.getElementById("sheetBg"), sheet=document.getElementById("sheet");
+  function nameLink(v){
+    if(!v.it) return esc(fmtYear(v.year));
+    return `<a data-go="${esc(v.it.id)}">${esc(v.it.name)}${v.end?" (konec)":""}</a>`;
+  }
+  function openItem(it){
+    selected=it; showRange(it);
+    const rows=[];
+    if(it.type==="life" && Number.isFinite(it.lo) && Number.isFinite(it.end)){
+      rows.push(["Narozen", (it.approx?"~":"")+fmtYear(it.lo)]);
+      rows.push(["Zemřel", ((it.to&&it.to.approx)?"~":"")+fmtYear(it.end)]);
+      rows.push(["Věk", `${it.end-it.lo} let`]);
+    }
+    if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", `${it.end-it.lo} let`]);
+    if(it.rel){
+      if(it.afterR&&it.afterR.length) rows.push(["Stalo se po", it.afterR.map(nameLink).join(", ")]);
+      if(it.beforeR&&it.beforeR.length) rows.push(["Stalo se před", it.beforeR.map(nameLink).join(", ")]);
+    }
+    if(it.cat) rows.push(["Kategorie", esc(it.cat)]);
+    const media=[];
+    it.images.forEach(u=>{ const im=imageThumb(u); media.push(`<a data-full="${esc(im.full)}"><img src="${esc(im.thumb)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'🖼️'}))"></a>`); });
+    it.videos.forEach(u=>{ const v=videoInfo(u);
+      if(v.kind==="yt") media.push(`<div class="vid" data-yt="${esc(v.id)}"><img src="${esc(v.thumb)}" alt="" loading="lazy"><div class="play">▶</div></div>`);
+      else media.push(`<a href="${esc(v.url)}" target="_blank" rel="noopener">${v.thumb?`<img src="${esc(v.thumb)}" alt="" loading="lazy">`:`<div class="noimg">🎬</div>`}<div class="play">${v.thumb?"▶":""}</div><div class="cap">${esc(v.host||"video")}</div></a>`);
+    });
+    const refs = it.verses.map(v=>`<a href="${verseUrl(v)}" target="_blank" rel="noopener">📖 ${esc(v)}</a>`)
+      .concat(it.links.map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
+    sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${esc(it.name)}</h3><div class="when">${esc(whenText(it))}</div></div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
+      ${media.length?`<div class="media">${media.join("")}</div>`:""}
+      ${it.note?`<p>${esc(it.note)}</p>`:""}
+      ${rows.length?`<dl class="facts">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl>`:""}
+      ${refs.length?`<div class="refs">${refs.join("")}</div>`:""}`;
+    bg.classList.add("show");
+    sheet.querySelector(".x").onclick=closeSheet;
+  }
+  function closeSheet(){ bg.classList.remove("show"); sheet.innerHTML=""; }
+  bg.addEventListener("click", e=>{
+    if(e.target===bg) return closeSheet();
+    const go=e.target.closest("[data-go]");
+    if(go){ const it=byId[norm(go.dataset.go)]; if(it){ closeSheet(); jumpTo(it,true); } return; }
+    const yt=e.target.closest("[data-yt]");
+    if(yt){ yt.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(yt.dataset.yt)}?autoplay=1" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`; yt.removeAttribute("data-yt"); return; }
+    const full=e.target.closest("[data-full]");
+    if(full){ document.getElementById("lightboxImg").src=full.dataset.full; document.getElementById("lightbox").classList.add("show"); }
+  });
+  document.getElementById("lightbox").onclick=function(){ this.classList.remove("show"); };
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ document.getElementById("lightbox").classList.remove("show"); closeSheet(); } });
+
+  function jumpTo(it, open){
+    const a = it.type==="event" ? it.est : it.lo;
+    if(!Number.isFinite(a)) return;
+    selected=it; showRange(it);
+    let y=yOf(a);
+    const card=tl.querySelector(`.card[data-id="${CSS.escape(it.id)}"]`);
+    if(card) y=card.offsetTop + card.offsetHeight/2;
+    window.scrollTo({ top: docTopOfTl() + y - midY(), behavior:"smooth" });
+    if(open) setTimeout(()=>openItem(it), 450);
+  }
+
+  /* ---------- hledání + filtry ---------- */
+  const search=document.getElementById("search");
+  function findByName(q){ q=norm(q); if(!q) return null; return items.find(it=>norm(it.name)===q) || items.find(it=>norm(it.name).startsWith(q)) || items.find(it=>norm(it.name).includes(q)); }
+  search.addEventListener("change", ()=>{ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } });
+  search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } } });
+
+  function buildChips(){
+    const cats=[...new Set(items.filter(it=>it.type==="event").map(it=>it.cat||"Ostatní"))];
+    const chips=[];
+    items.filter(it=>it.type==="period").forEach(it=>chips.push(`<button class="chip era" data-era="${esc(it.id)}">↳ ${esc(it.name)}</button>`));
+    if(items.some(it=>it.type==="life")) chips.push(`<button class="chip${off.has("__life")?"":" on"}" data-cat="__life">Životy</button>`);
+    cats.forEach(c=>chips.push(`<button class="chip${off.has(c)?"":" on"}" data-cat="${esc(c)}">${esc(c)}</button>`));
+    document.getElementById("chips").innerHTML=chips.join("");
+    document.getElementById("names").innerHTML=items.map(it=>`<option value="${esc(it.name)}">`).join("");
+  }
+  document.getElementById("chips").addEventListener("click", e=>{
+    const b=e.target.closest(".chip"); if(!b) return;
+    if(b.dataset.era){ const it=byId[norm(b.dataset.era)]; if(it) jumpTo(it,false); return; }
+    const c=b.dataset.cat; off.has(c)?off.delete(c):off.add(c); b.classList.toggle("on",!off.has(c)); render();
+  });
+
+  /* ---------- načtení dat ---------- */
+  const status=document.getElementById("status");
+  function setCtlVar(){ document.documentElement.style.setProperty("--ctl-h", ctlH()+"px"); }
+  function useData(csv, note){
+    buildModel(parseCSV(csv));
+    if(!items.length){ tl.innerHTML=`<div class="msg">Tabulka je prázdná.</div>`; return; }
+    let z=null; try{ z=parseFloat(localStorage.getItem(ZOOM_KEY)); }catch(e){}
+    if(!(z>0) && !render._init) ppy=Math.min(MAXP,Math.max(0.4,(window.innerHeight*3)/(domain.b-domain.a)));
+    else if(z>0) ppy=z;
+    render._init=true;
+    cardH={};
+    buildChips(); setCtlVar(); render();
+    status.textContent=note;
+  }
+  let cached=null;
+  try{ cached=JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); }catch(e){}
+  if(cached&&cached.csv) useData(cached.csv, "Zobrazuji uloženou verzi, kontroluji tabulku…");
+  fetch(CSV_URL+"&t="+Date.now(), {cache:"no-store"})
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.text(); })
+    .then(csv=>{
+      if(!cached || cached.csv!==csv) useData(csv, "");
+      status.textContent=`${items.length} položek · načteno z tabulky`;
+      try{ localStorage.setItem(CACHE_KEY, JSON.stringify({csv, t:Date.now()})); }catch(e){}
+    })
+    .catch(()=>{
+      if(cached) status.textContent=`⚠️ Tabulku se nepodařilo načíst – zobrazuji verzi uloženou ${new Date(cached.t).toLocaleDateString("cs-CZ")}.`;
+      else { status.textContent=""; tl.innerHTML=`<div class="msg">⚠️ Nepodařilo se načíst data z tabulky. Zkontroluj připojení k internetu.</div>`; }
+    });
+
+  let lastW=0;
+  window.addEventListener("resize", ()=>{ setCtlVar(); if(tl.clientWidth!==lastW){ lastW=tl.clientWidth; render(); } });
+})();
+</script>
+</body>
+</html>
