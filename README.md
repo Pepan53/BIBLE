@@ -9,6 +9,7 @@ index.html          — rozcestník (výběr hry)
 casova-osa.html      — hra Časová osa (řazení postav a událostí chronologicky)
 biblicke-knihy.html  — hra Biblické knihy (pořadí knih, pisatelé, doba vzniku...)
 mapa-evangelii.html  — interaktivní mapa míst z evangelií (klik na číslo = události)
+zivot-jezise.html    — Ježíšův život na mapě (časová osa + ikona Ježíše, 126 událostí chronologicky)
 ```
 
 Žádné buildy, žádné závislosti — stačí otevřít `index.html` v prohlížeči.
