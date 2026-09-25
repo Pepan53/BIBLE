@@ -123,6 +123,9 @@
     .gm-modal .modal-box{ max-width:none; border-radius:16px 16px 0 0; max-height:72vh; padding-bottom:calc(18px + env(safe-area-inset-bottom, 0px)); }
     .wrap{ padding-left:10px; padding-right:10px; }
   }
+  .gm-lab{ fill:transparent; cursor:pointer; }
+  .gm-lab:hover, .gm-lab:focus-visible{ fill:rgba(169,129,47,.18); stroke:rgba(125,94,32,.55); stroke-width:.6; outline:none; }
+  .gm-scroll.gm-dragging .gm-lab{ cursor:grabbing; }
 </style>
 </head>
 <body>
@@ -1478,6 +1481,26 @@
     const ringLayer = document.createElementNS(NS, "g");
     svg.appendChild(ringLayer);
     svg.appendChild(hitLayer);
+    // ---------- klik na název místa = hledání na wol.jw.org ----------
+    const LABELS = {"Jeruzalém": [[36.36, 301.12, 80.97, 309.51], [36.4, 313.93, 55.44, 319.02], [214.58, 401.58, 241.34, 406.61]], "Golgota": [[44.07, 377.02, 63.03, 382.94]], "chrám": [[104.82, 387.88, 120.09, 392.68]], "Olivová hora": [[162.43, 348.48, 181.55, 353.06], [162.4, 355.33, 174.1, 359.66]], "Betfage a Betanie": [[158.36, 384.14, 183.75, 396.08], [159.19, 392.53, 181.33, 402.12]], "údolí Kidron": [[124.13, 412.84, 135.55, 443.76]], "Akeldama": [[92.13, 479.35, 117.84, 484.17]], "Sidon": [[250.07, 54.0, 264.49, 58.82]], "Tyros": [[221.27, 111.66, 235.43, 117.41]], "hora Hermon": [[311.0, 80.91, 344.71, 85.23]], "Fénicie": [[268.55, 82.62, 287.43, 119.0]], "Galilea": [[251.6, 154.1, 288.43, 180.18]], "Magadan": [[265.82, 198.07, 288.82, 204.28]], "Nazaret": [[233.95, 219.7, 253.78, 224.17]], "Galilejské moře": [[294.43, 192.34, 318.6, 198.23], [293.54, 198.86, 306.16, 203.36]], "Gadara": [[302.32, 217.06, 325.11, 239.8]], "Dekapolis": [[334.97, 212.5, 371.1, 261.43]], "řeka Jordán": [[290.08, 289.18, 295.38, 318.6]], "Betanie": [[252.22, 403.29, 271.57, 408.06], [150.22, 437.1, 175.51, 448.88]], "Betlém": [[217.93, 413.07, 235.72, 418.1]], "Judejská pustina": [[262.43, 397.1, 285.54, 435.26]], "Solné moře": [[274.36, 460.71, 301.98, 465.31]], "Mrtvé moře": [[270.44, 467.18, 303.56, 472.82]], "Betsaida": [[311.06, 181.65, 332.92, 186.48]], "Kaifášův dům": [[38.03, 425.49, 58.72, 430.39], [46.91, 430.52, 57.65, 435.42]], "Nain": [[249.44, 233.52, 260.6, 238.3]], "Emauzy": [[205.72, 387.81, 225.72, 393.57]], "Kána": [[239.72, 198.25, 252.08, 203.28]], "Ainon": [[273.3, 284.19, 288.01, 288.96]], "Sychar": [[256.52, 313.27, 274.16, 319.39]], "Jákobova studna": [[217.12, 322.86, 259.68, 328.16]], "rybník Siloe": [[70.67, 448.43, 99.44, 454.45]], "místodržitelský palác": [[49.29, 412.93, 87.19, 418.95], [49.51, 418.16, 62.42, 424.14]], "Filipova Cesarea": [[297.07, 106.29, 316.88, 112.38], [296.85, 113.67, 316.96, 118.22]], "Kafarnaum": [[294.06, 129.42, 316.58, 151.76]], "Tiberiada": [[268.31, 207.47, 292.67, 212.3]], "Samaří": [[222.0, 292.11, 259.43, 299.28]], "Perea": [[301.79, 330.07, 332.52, 335.55]], "Judea": [[211.24, 374.0, 242.95, 379.57]], "údolí Hinnom": [[51.23, 465.97, 85.54, 475.48]], "Betanie za Jordánem": [[306.69, 257.52, 326.03, 262.29], [313.03, 262.73, 342.08, 267.76]], "síň Sanhedrinu": [[77.59, 354.95, 97.97, 388.11]], "Jericho": [[280.95, 385.83, 299.96, 390.66]], "zahrada Getsemane": [[139.65, 371.68, 159.21, 376.28], [140.65, 378.26, 168.31, 382.59]], "rybník Betzata": [[113.39, 337.02, 128.81, 343.04], [113.0, 344.82, 131.16, 349.07]], "Efrajim": [[248.73, 360.29, 266.57, 366.54]]};
+    const labLayer = document.createElementNS(NS, "g");
+    svg.insertBefore(labLayer, ringLayer);
+    Object.entries(LABELS).forEach(([q, rects])=>{
+      const url = "https://wol.jw.org/cs/wol/s/r29/lp-b?q=" + encodeURIComponent(q).replace(/%20/g, "+");
+      rects.forEach(b=>{
+        const r = document.createElementNS(NS, "rect");
+        r.setAttribute("x", b[0]-1.2); r.setAttribute("y", b[1]-1.2);
+        r.setAttribute("width", b[2]-b[0]+2.4); r.setAttribute("height", b[3]-b[1]+2.4);
+        r.setAttribute("rx", 1.5); r.setAttribute("class", "gm-lab");
+        r.setAttribute("tabindex", "0"); r.setAttribute("role", "link");
+        r.setAttribute("aria-label", "Vyhledat „" + q + "“ na wol.jw.org");
+        const t = document.createElementNS(NS, "title"); t.textContent = "Vyhledat „" + q + "“ na wol.jw.org"; r.appendChild(t);
+        const go = ()=>window.open(url, "_blank", "noopener");
+        r.addEventListener("click", go);
+        r.addEventListener("keydown", e=>{ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); go(); } });
+        labLayer.appendChild(r);
+      });
+    });
     Object.entries(markers).forEach(([n, sites])=>{
       n = +n;
       sites.forEach(site=>{
