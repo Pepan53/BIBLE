@@ -73,8 +73,6 @@
   .node.key{padding:10px 24px;border-width:3px}
   .node.key .nm{font-size:1.3em}
   .node.faithful{background:var(--star-bg)}
-  .node.omit{border-style:dashed;opacity:.72;box-shadow:none}
-  .node.omit .nm{font-weight:400;font-size:.9em}
   .node.woman .nm{color:var(--maroon-dark)}
   .node.jesus{border-color:var(--gold);background:var(--star-bg);box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 22%,transparent),var(--shadow)}
   .node.flash{animation:flash 1.4s ease 2}
@@ -178,7 +176,7 @@
       <li><span class="sw" style="background:var(--line-mt)"></span>Společná linie a Matoušův rodokmen – přes Šalomouna k Josefovi (právní nárok na Davidův trůn)</li>
       <li><span class="sw" style="background:var(--line-lk)"></span>Lukášův rodokmen – přes Natana k Marii (přirozený původ)</li>
       <li>👑 král · zlaté pozadí = věrný judský král po Šalomounovi</li>
-      <li>Přerušovaný okraj = král, kterého Matouš ve výčtu vynechává</li>
+      <li>Uvedeni jsou všichni judští králové v linii. Achazjáše, Jehoaše, Amacjáše a Jehojakima Matouš ve svém výčtu přeskakuje – je to uvedeno v jejich detailu.</li>
       <li>⭐ Informace od Jehovy o slíbeném potomstvu · ⚠️ Možné ohrožení linie</li>
       <li>~ přibližné datum</li>
     </ul>
@@ -365,7 +363,6 @@
       let meta="";
       if(it.reign) meta=`vládl ${it.reign.replace(" př. n. l.","")}`;
       else if(it.b!=null) meta=yr(it.b)+(it.life?` · ${it.life} let`:"");
-      if(it.omit) meta=(meta?meta+" · ":"")+"u Matouše chybí";
       b.innerHTML=`<span class="nm">${it.king?"👑 ":""}${it.n}</span>${meta?`<span class="mt">${meta}</span>`:""}${it.sp?`<span class="sp">${it.sp}</span>`:""}`;
       it._parent=parentName; it._lane=lane; it._gen=gen; it._el=b;
       b.addEventListener("click",()=>openPerson(it));
@@ -406,7 +403,7 @@
       ln.appendChild(el("div","lane-head",`<b>${t}</b>${s}`));
       const people=era[cls].filter(x=>x.k==="p");
       out[cls]=renderList(era[cls],ln,cls,parents[cls],false);
-      ln.appendChild(el("div","lane-foot",`${people.filter(p=>!p.omit).length} jmen`+(people.some(p=>p.omit)?` (+${people.filter(p=>p.omit).length} vynechaní)`:"")));
+      ln.appendChild(el("div","lane-foot",`${people.length} jmen`));
       wrap.appendChild(ln);
     });
     return {wrap,out};
