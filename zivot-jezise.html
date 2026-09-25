@@ -33,6 +33,43 @@
 
   /* popisky v mapě */
   #jm text{ font-family:"Segoe UI", Verdana, Arial, sans-serif; pointer-events:none; }
+  #jm text.lnk{ pointer-events:bounding-box; cursor:pointer; }
+  #jm text.lnk:hover, #jm text.lnk:focus-visible{ fill:#7a2e2e; text-decoration:underline; outline:none; }
+  #jm .dot.lnk{ cursor:pointer; }
+  #jm #iconLayer{ pointer-events:none; }
+  #jm .hl{ fill:rgba(255,214,102,.35); stroke:#b8860b; stroke-width:1.2; pointer-events:none; }
+  @media (prefers-reduced-motion: no-preference){ #jm .hl{ animation:tm-pulse 1.1s ease-in-out 5; } }
+  /* ---------- zoom a posun mapy ---------- */
+  .tm-scroll{ position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+  .tm-scroll.zoomed{ cursor:grab; }
+  .tm-scroll.dragging, .tm-scroll.dragging text.lnk{ cursor:grabbing; }
+  .tm-zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; z-index:6; }
+  .tm-zoom button{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--gold-dark); font-size:1.3em; font-weight:700; line-height:1; cursor:pointer; box-shadow:var(--shadow); }
+  .tm-zoom button:hover{ border-color:var(--gold); }
+  .tm-zoom button:disabled{ opacity:.4; cursor:default; }
+  .tm-index-btn{ position:absolute; right:10px; top:10px; z-index:6; font:inherit; font-size:.82em; font-weight:700; padding:5px 12px; border-radius:999px;
+    border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; box-shadow:var(--shadow); }
+  .tm-index-btn:hover{ border-color:var(--gold); }
+  /* ---------- rejstřík míst ---------- */
+  .tm-index .modal-box{ max-width:640px; }
+  .tm-index-search{ width:100%; font:inherit; font-size:.95em; padding:8px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--item-bg); color:var(--ink); margin-bottom:10px; }
+  .tm-index-search:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  .tm-index-list{ list-style:none; margin:0; padding:0; max-height:60vh; overflow:auto; }
+  .tm-index-list > li{ border-bottom:1px solid var(--border); }
+  .tm-index-list .tm-letter{ font-family:var(--heading-font); color:var(--gold-dark); font-weight:700; font-size:.9em; padding:10px 4px 2px; border-bottom:0; }
+  .tm-row{ display:flex; align-items:center; gap:4px; }
+  .tm-row button.tm-place{ flex:1; text-align:left; font:inherit; font-size:.95em; background:none; border:0; color:var(--ink); padding:7px 4px; cursor:pointer; border-radius:6px; }
+  .tm-row button.tm-place:hover{ background:var(--hover-tint); color:var(--maroon-dark); }
+  .tm-row button.tm-cnt{ flex:none; font:inherit; font-size:.75em; border:1px solid var(--border); background:var(--item-bg); color:var(--maroon); border-radius:999px; padding:2px 9px; cursor:pointer; white-space:nowrap; }
+  .tm-row button.tm-cnt[aria-expanded="true"]{ border-color:var(--gold); background:var(--hover-tint); }
+  .tm-row a.tm-wol{ flex:none; font-size:.75em; color:var(--ink-soft); text-decoration:none; padding:4px 6px; border-radius:6px; }
+  .tm-row a.tm-wol:hover{ background:var(--hover-tint); color:var(--maroon); }
+  .tm-evs{ list-style:none; margin:0 0 8px; padding:0 0 0 10px; border-left:3px solid var(--border); }
+  .tm-evs button{ display:block; width:100%; text-align:left; font:inherit; font-size:.82em; line-height:1.35; background:none; border:0; color:var(--ink); padding:5px 6px; cursor:pointer; border-radius:6px; }
+  .tm-evs button:hover{ background:var(--hover-tint); }
+  .tm-evs button b{ color:var(--maroon-dark); font-weight:700; }
+  .tm-evs button small{ color:var(--ink-soft); }
+  .tm-index-empty{ color:var(--ink-soft); font-size:.9em; padding:8px 4px; }
   #jm .town{ font-size:5.5px; fill:#2a2118; paint-order:stroke; stroke:rgba(255,255,255,.75); stroke-width:1.4px; stroke-linejoin:round; }
   #jm .town.on{ font-weight:700; fill:#5c2020; }
   #jm .region{ font-size:7px; letter-spacing:1.6px; fill:#2a2118; opacity:.75; }
@@ -169,6 +206,17 @@
   </div>
 </div>
 
+<div class="modal-overlay tm-index" id="tmIndex" role="dialog" aria-modal="true" aria-labelledby="tmIndexTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="tmIndexTitle">📍 Rejstřík míst</h3>
+      <button class="modal-close" id="tmIndexClose" aria-label="Zavřít">✕</button>
+    </div>
+    <input type="search" class="tm-index-search" id="tmIndexSearch" placeholder="Hledat místo…" aria-label="Hledat místo" autocomplete="off">
+    <ul class="tm-index-list" id="tmIndexList"></ul>
+  </div>
+</div>
+
 <div class="wrap">
   <header>
     <h1>Ježíšův život na mapě<span class="help-icon hint-icon" id="tmHintIcon" tabindex="0" hidden>?<span class="tooltip">Posouvej se po časové ose vpravo (táhnutím, kolečkem myši nebo šipkami na klávesnici). Ikona Ježíše se přesune na místo události a v okně uvidíš, co se tam stalo, i s odkazy na verše.</span></span></h1>
@@ -177,6 +225,7 @@
 
   <div class="tm-layout">
     <div class="tm-mapbox" id="tmMapbox">
+      <div class="tm-scroll" id="tmScroll">
       <svg id="jm" viewBox="347.733 -1.157 301.551 470.222" role="img" aria-label="Mapa Palestiny v době Ježíše s jeho aktuální polohou">
         <defs>
           <clipPath id="jClip"><circle cx="0" cy="-12" r="6.3"/></clipPath>
@@ -215,6 +264,9 @@
           </g>
         </g>
       </svg>
+      </div>
+      <button type="button" class="tm-index-btn" id="tmIndexBtn" aria-haspopup="dialog">📍 Rejstřík</button>
+      <div class="tm-zoom"><button type="button" id="tmZoomIn" aria-label="Přiblížit mapu" title="Přiblížit">+</button><button type="button" id="tmZoomOut" aria-label="Oddálit mapu" title="Oddálit">−</button></div>
 
       <div class="ev-card hidden" id="evCard" role="dialog" aria-live="polite" aria-labelledby="evWhen">
         <div class="ev-top"><p class="ev-eyebrow" id="evSec"></p><button type="button" class="ev-close" id="evClose" aria-label="Zavřít okno">✕</button></div>
@@ -457,19 +509,32 @@
 
     // ---------- popisky v mapě ----------
     const base = $("baseLayer");
-    const T = (txt, x, y, cls, anchor, rot)=>{ const t = mk("text", {x, y, class:cls, "text-anchor":anchor || "start"}, base); if(rot) t.setAttribute("transform", "rotate("+rot+" "+x+" "+y+")"); t.textContent = txt; return t; };
-    T("Středozemní", 415, 215, "sea", "middle"); T("moře", 415, 225, "sea", "middle");
-    T("GALILEA", 517, 145, "region", "start", -32);
-    T("SAMAŘÍ", 503, 282, "region");
-    T("JUDEA", 480, 368, "region");
-    T("PEREA", 592, 340, "region");
-    T("DEKAPOLIS", 612, 180, "region", "start", 62);
-    T("FÉNICIE", 552, 66, "region", "start", -68);
-    T("Galilejské", 585, 194, "water", "middle"); T("moře", 585, 199, "water", "middle");
-    T("Solné", 563, 440, "water", "middle"); T("moře", 563, 446, "water", "middle");
+    // klik na popisek v mapě = hledání na wol.jw.org
+    const wolSearch = q=>"https://wol.jw.org/cs/wol/s/r29/lp-b?q=" + encodeURIComponent(q).replace(/%20/g, "+");
+    let dragMovedMap = false;
+    function linkify(el, q){
+      el.classList.add("lnk");
+      el.setAttribute("tabindex", "0"); el.setAttribute("role", "link");
+      el.setAttribute("aria-label", "Vyhledat „" + q + "“ na wol.jw.org");
+      const tt = document.createElementNS(NS, "title"); tt.textContent = "Vyhledat „" + q + "“ na wol.jw.org"; el.appendChild(tt);
+      const go = ()=>{ if(dragMovedMap) return; window.open(wolSearch(q), "_blank", "noopener"); };
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", e=>{ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); e.stopPropagation(); go(); } });
+      return el;
+    }
+    const T = (txt, x, y, cls, anchor, rot, q)=>{ const t = mk("text", {x, y, class:cls, "text-anchor":anchor || "start"}, base); if(rot) t.setAttribute("transform", "rotate("+rot+" "+x+" "+y+")"); t.textContent = txt; linkify(t, q || txt); return t; };
+    T("Středozemní", 415, 215, "sea", "middle", 0, "Středozemní moře"); T("moře", 415, 225, "sea", "middle", 0, "Středozemní moře");
+    T("GALILEA", 517, 145, "region", "start", -32, "Galilea");
+    T("SAMAŘÍ", 503, 282, "region", "start", 0, "Samaří");
+    T("JUDEA", 480, 368, "region", "start", 0, "Judea");
+    T("PEREA", 592, 340, "region", "start", 0, "Perea");
+    T("DEKAPOLIS", 612, 180, "region", "start", 62, "Dekapolis");
+    T("FÉNICIE", 552, 66, "region", "start", -68, "Fénicie");
+    T("Galilejské", 585, 194, "water", "middle", 0, "Galilejské moře"); T("moře", 585, 199, "water", "middle", 0, "Galilejské moře");
+    T("Solné", 563, 440, "water", "middle", 0, "Solné moře"); T("moře", 563, 446, "water", "middle", 0, "Solné moře");
     T("Jordán", 574, 318, "water", "middle", -90);
-    T("judejská pustina", 548, 420, "terrain", "start", -64);
-    T("do Egypta", 396, 466, "terrain", "start");
+    T("judejská pustina", 548, 420, "terrain", "start", -64, "Judejská pustina");
+    T("do Egypta", 396, 466, "terrain", "start", 0, "Egypt");
     // hora Hermon
     mk("path", {d:"M632.1 56.4 L634.5 60.6 L629.7 60.6 Z", fill:"#2a2118"}, base);
     T("hora Hermon", 628.5, 56, "terrain", "end");
@@ -485,8 +550,8 @@
       const p = PL[id];
       mk("circle", {cx:p[0], cy:p[1], r:1.45, class:"dot"}, base);
       if(id === "betanieZJ"){
-        const t = T("Betanie", p[0]+dx, p[1]+dy, "town", an);
-        const t2 = T("za Jordánem", p[0]+dx, p[1]+dy+5.6, "town", an);
+        const t = T("Betanie", p[0]+dx, p[1]+dy, "town", an, 0, "Betanie za Jordánem");
+        const t2 = T("za Jordánem", p[0]+dx, p[1]+dy+5.6, "town", an, 0, "Betanie za Jordánem");
         townText[id] = [t, t2];
       } else townText[id] = [T(p[2], p[0]+dx, p[1]+dy, "town", an)];
     });
@@ -498,7 +563,8 @@
     mk("ellipse", {cx:84, cy:44, rx:13, ry:20, fill:"#dfe8cf"}, ins);
     mk("ellipse", {cx:84, cy:44, rx:8, ry:13, fill:"#d2dfbd"}, ins);
     mk("path", {d:"M62 12 C66 30 61 50 63 70 C64 78 60 84 57 88", fill:"none", stroke:"#9cc3d6", "stroke-width":1.4, "stroke-dasharray":"2 1.3"}, ins);
-    mk("text", {x:66, y:80, class:"ins-lab", "font-style":"italic", transform:"rotate(-78 66 80)"}, ins).textContent = "údolí Kidron";
+    const kid = mk("text", {x:66, y:80, class:"ins-lab", "font-style":"italic", transform:"rotate(-78 66 80)"}, ins); kid.textContent = "údolí Kidron"; linkify(kid, "údolí Kidron");
+    const SUBQ = {chram:"chrám v Jeruzalémě", palac:"Pilát", kaifas:"Kaifáš", mistnost:"horní místnost", betzata:"rybník Betzata", siloe:"rybník Siloe", olivova:"Olivová hora"};
     mk("path", {d:"M14 22 L42 14 L58 18 L59 60 L50 80 L28 83 L15 68 Z", fill:"#efe2c4", stroke:"#8a7650", "stroke-width":.7}, ins);
     mk("rect", {x:45, y:27, width:12, height:19, rx:1, fill:"#e1cb95", stroke:"#8a7650", "stroke-width":.4}, ins);
     mk("path", {d:"M93 50 C99 56 103 63 107 70", fill:"none", stroke:"#b6a27a", "stroke-width":.6, "stroke-dasharray":"1.2 1"}, ins);
@@ -511,6 +577,7 @@
       if(id !== "chram" && id !== "olivova") mk("circle", {cx:p[0], cy:p[1], r:1.1, class:"ins-dot"}, ins);
       const t = mk("text", {x:p[0]+dx, y:p[1]+dy, class:"ins-lab", "text-anchor":an}, ins);
       t.textContent = p[2]; subText[id] = t;
+      linkify(t, SUBQ[id] || p[2]);
     });
     const insRoute = mk("g", {}, ins);
     const insIcon = mk("g", {}, ins);
@@ -538,16 +605,17 @@
     // ---------- ikona Ježíše ----------
     const icon = $("jIcon");
     const ICON_S = 1.25;
+    let iconScale = ICON_S;   // při přiblížení se ikona trochu zmenšuje
     let iconXY = null, anim = null, insXY = null;
     function placeIcon(xy){
       iconXY = xy;
       if(!xy){ icon.style.display = "none"; return; }
       icon.style.display = "";
-      icon.setAttribute("transform", "translate("+xy[0].toFixed(2)+" "+xy[1].toFixed(2)+") scale("+ICON_S+")");
+      icon.setAttribute("transform", "translate("+xy[0].toFixed(2)+" "+xy[1].toFixed(2)+") scale("+iconScale.toFixed(3)+")");
     }
     function placeIns(xy){
       insXY = xy;
-      if(xy) insIcon.setAttribute("transform", "translate("+xy[0]+" "+xy[1]+")");
+      if(xy) insIcon.setAttribute("transform", "translate("+xy[0]+" "+xy[1]+") scale("+(iconScale/ICON_S).toFixed(3)+")");
     }
     const reduceMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
     function polyLen(pts){ let L = 0; for(let k=1;k<pts.length;k++) L += Math.hypot(pts[k][0]-pts[k-1][0], pts[k][1]-pts[k-1][1]); return L; }
@@ -680,6 +748,7 @@
       drawState(i);
       renderCard(i);
       updateRail(i);
+      followIcon(i);
       const target = ev.pos ? P(ev.pos) : null;
       const subPts = (ev.o.sub && !ev.o.nj) ? [ev.subFrom ? S(ev.subFrom) : S(ev.o.sub[0])].concat(ev.o.sub.map(S)) : null;
       if(!target){ placeIcon(null); if(subPts) placeIns(subPts[subPts.length-1]); return; }
@@ -878,6 +947,143 @@
       if(idx >= N-1) goTo(0, false);
       playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = "⏸"; playBtn.title = "Zastavit";
       playT = setTimeout(tick, 600);
+    });
+
+    // ---------- zoom a posun mapy ----------
+    const scroller = $("tmScroll");
+    let zoom = 1;
+    const vb = svg.viewBox.baseVal;
+    function setZoom(z){
+      const old = zoom; zoom = Math.max(1, Math.min(4, z));
+      const cx = (scroller.scrollLeft + scroller.clientWidth/2) / old, cy = (scroller.scrollTop + scroller.clientHeight/2) / old;
+      svg.style.width = svg.style.height = (zoom*100) + "%";
+      scroller.scrollLeft = cx*zoom - scroller.clientWidth/2; scroller.scrollTop = cy*zoom - scroller.clientHeight/2;
+      $("tmZoomOut").disabled = zoom <= 1; $("tmZoomIn").disabled = zoom >= 4;
+      scroller.classList.toggle("zoomed", zoom > 1);
+      iconScale = ICON_S / Math.sqrt(zoom);
+      if(iconXY) placeIcon(iconXY);
+      insIcon.setAttribute("transform", insXY ? "translate("+insXY[0]+" "+insXY[1]+") scale("+(1/Math.sqrt(zoom)).toFixed(3)+")" : "");
+    }
+    function centerOn(xy, smooth){
+      const k = svg.clientWidth / vb.width;
+      // na počítači cíl posunout vpravo od okna s událostí, aby ho nezakrývalo
+      let cx = scroller.clientWidth/2;
+      if(!isH() && !card.classList.contains("hidden")){ const right = card.offsetLeft + card.offsetWidth; cx = Math.max(cx, (right + scroller.clientWidth)/2); }
+      scroller.scrollTo({left:(xy[0]-vb.x)*k - cx, top:(xy[1]-vb.y)*k - scroller.clientHeight/2, behavior:(smooth && !reduceMotion) ? "smooth" : "auto"});
+    }
+    // při přiblížené mapě se výřez posouvá za Ježíšem
+    function followIcon(i){
+      if(zoom <= 1) return;
+      const ev = E[i], id = ev.pos || (ev.o.at && ev.o.at[0]);
+      if(id) centerOn(P(id), true);
+    }
+    $("tmZoomIn").addEventListener("click", ()=>{ setZoom(zoom + 0.75); followIcon(idx); });
+    $("tmZoomOut").addEventListener("click", ()=>setZoom(zoom - 0.75));
+    scroller.addEventListener("wheel", e=>{ if(!e.ctrlKey) return; e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.2 : 1/1.2)); }, {passive:false});
+    // popotahování přiblížené mapy myší (prstem se posouvá přirozeně)
+    let drag = null;
+    scroller.addEventListener("pointerdown", e=>{
+      dragMovedMap = false;
+      if(e.pointerType !== "mouse" || e.button !== 0 || zoom <= 1) return;
+      drag = {x:e.clientX, y:e.clientY, l:scroller.scrollLeft, t:scroller.scrollTop};
+    });
+    window.addEventListener("pointermove", e=>{
+      if(!drag) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if(!dragMovedMap && Math.hypot(dx, dy) > 4){ dragMovedMap = true; scroller.classList.add("dragging"); }
+      if(dragMovedMap){ scroller.scrollLeft = drag.l - dx; scroller.scrollTop = drag.t - dy; e.preventDefault(); }
+    });
+    window.addEventListener("pointerup", ()=>{ if(!drag) return; drag = null; scroller.classList.remove("dragging"); });
+    scroller.addEventListener("dragstart", e=>e.preventDefault());
+    setZoom(1);
+
+    // ---------- rejstřík míst ----------
+    // [název, dotaz pro wol.jw.org, místa na mapě, místa ve výřezu Jeruzaléma]
+    const IDX = [
+      ["Ainon",0,["ainon"]], ["Betanie",0,["betanie"],["betanie"]], ["Betanie za Jordánem",0,["betanieZJ"]], ["Betfage",0,["betfage"],["betfage"]],
+      ["Betlém",0,["betlem"]], ["Betsaida",0,["betsaida"]], ["Betzata (rybník)","rybník Betzata",[],["betzata"]], ["Dekapolis",0,["dekapolis"]],
+      ["Efrajim",0,["efrajim"]], ["Egypt",0,["egypt"]], ["Emauzy",0,["emauzy"]], ["Fénicie",0,["fenicie","tyros","sidon"]],
+      ["Filipova Cesarea",0,["cesarea"]], ["Gadara",0,["gadara","gadbreh"]], ["Galilea",0,["galilea","samgal"]],
+      ["Galilejské moře",0,["jezero","jezeroNE","kafbreh","genezaret","gadbreh"]], ["Genezaret",0,["genezaret"]],
+      ["Getsemane",0,[],["getsemane"]], ["Golgota",0,[],["golgota"]], ["hora Hermon",0,["hermon"]], ["chrám (Jeruzalém)","chrám v Jeruzalémě",[],["chram"]],
+      ["Jericho",0,["jericho"]], ["Jeruzalém",0,["jeruzalem"]], ["Jordán",0,["pustinaJ","betanieZJ"]], ["Judea",0,["judea","judeaV"]],
+      ["judejská pahorkatina",0,["pahork"]], ["judejská pustina",0,["pustina"]], ["Kafarnaum",0,["kafarnaum","kafbreh","horaKaf"]],
+      ["Kána",0,["kana"]], ["Magadan",0,["magadan"]], ["Nain",0,["nain"]], ["Nazaret",0,["nazaret"]], ["Olivová hora",0,["olivova"],["olivova"]],
+      ["Perea",0,["perea","pereaN","pereaS"]], ["Samaří",0,["samari","samgal","sychar"]], ["Sidon",0,["sidon"]],
+      ["Siloe (rybník)","rybník Siloe",[],["siloe"]], ["Sychar",0,["sychar"]], ["Tiberias",0,["tiberias"]], ["Tyros",0,["tyros"]]
+    ].map(a=>({name:a[0], q:a[1] || a[0], ids:a[2], subs:a[3] || []}));
+    IDX.forEach(p=>{
+      p.evs = E.filter(ev=>{
+        const main = ev.route.concat(ev.o.at || [], ev.o.also || []);
+        return p.ids.some(id=>main.includes(id)) || p.subs.some(id=>(ev.o.sub || []).includes(id));
+      }).map(ev=>ev.i);
+    });
+    const idxModal = $("tmIndex"), idxList = $("tmIndexList"), idxSearch = $("tmIndexSearch");
+    const norm = s=>s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const plural = k=>k === 1 ? "událost" : (k >= 2 && k <= 4 ? "události" : "událostí");
+    function renderIndex(filter){
+      const f = norm(filter || "");
+      const items = IDX.filter(p=>!f || norm(p.name).includes(f)).sort((a, b)=>a.name.localeCompare(b.name, "cs"));
+      if(!items.length){ idxList.innerHTML = '<li class="tm-index-empty">Žádné místo neodpovídá hledání.</li>'; return; }
+      let last = "";
+      idxList.innerHTML = items.map(p=>{
+        const L = p.name.charAt(0).toLocaleUpperCase("cs");
+        const head = (!f && L !== last) ? '<li class="tm-letter" aria-hidden="true">'+L+'</li>' : "";
+        last = L;
+        const k = IDX.indexOf(p);
+        return head + '<li><div class="tm-row"><button type="button" class="tm-place" data-k="'+k+'" title="Ukázat na mapě">'+esc(p.name)+'</button>' +
+          (p.evs.length ? '<button type="button" class="tm-cnt" data-k="'+k+'" aria-expanded="false">'+p.evs.length+' '+plural(p.evs.length)+' ▾</button>' : '') +
+          '<a class="tm-wol" href="'+wolSearch(p.q)+'" target="_blank" rel="noopener" title="Vyhledat na wol.jw.org">wol ↗</a></div></li>';
+      }).join("");
+    }
+    function openIndex(){ stopPlay(); idxSearch.value = ""; renderIndex(""); idxModal.classList.add("show"); if(!isH()) idxSearch.focus(); }
+    function closeIndex(){ idxModal.classList.remove("show"); }
+    const hlL = mk("g", {}); svg.insertBefore(hlL, $("iconLayer"));
+    const hlIns = mk("g", {}, ins);
+    let hlT = null;
+    function showPlace(p){
+      closeIndex();
+      hlL.innerHTML = ""; hlIns.innerHTML = "";
+      p.ids.forEach(id=>{ const q = PL[id]; mk("circle", {cx:q[0], cy:q[1], r:q[3] === "area" ? 13 : 6, class:"hl"}, hlL); });
+      if(p.subs.length){
+        ins.classList.remove("off"); $("callout").classList.remove("off");
+        if(!E[idx].o.sub) insIcon.style.display = "none";
+        p.subs.forEach(id=>{ const q = SUB[id]; mk("circle", {cx:q[0], cy:q[1], r:4.5, class:"hl"}, hlIns); });
+        if(!p.ids.length){ const q = PL.jeruzalem; mk("circle", {cx:q[0], cy:q[1], r:6, class:"hl"}, hlL); }
+      }
+      // místa jen ve výřezu Jeruzaléma: zaměřit přímo výřez
+      const c = p.ids.length ? P(p.ids[0]) : [352 + SUB[p.subs[0]][0], 262 + SUB[p.subs[0]][1]];
+      if(zoom < 2.5) setZoom(2.5);
+      centerOn(c, true);
+      const box = $("tmMapbox").getBoundingClientRect();
+      if(box.top < 0 || box.top > window.innerHeight*0.5) $("tmMapbox").scrollIntoView({behavior:"smooth", block:"start"});
+      clearTimeout(hlT);
+      hlT = setTimeout(()=>{ hlL.innerHTML = ""; hlIns.innerHTML = ""; drawState(idx); }, 6000);
+    }
+    $("tmIndexBtn").addEventListener("click", openIndex);
+    $("tmIndexClose").addEventListener("click", closeIndex);
+    idxModal.addEventListener("click", e=>{ if(e.target === idxModal) closeIndex(); });
+    document.addEventListener("keydown", e=>{ if(e.key === "Escape" && idxModal.classList.contains("show")) closeIndex(); });
+    idxSearch.addEventListener("input", ()=>renderIndex(idxSearch.value));
+    idxSearch.addEventListener("keydown", e=>{ if(e.key === "Enter"){ const b = idxList.querySelector(".tm-place"); if(b) showPlace(IDX[+b.dataset.k]); } });
+    idxList.addEventListener("click", e=>{
+      const pl = e.target.closest(".tm-place");
+      if(pl){ showPlace(IDX[+pl.dataset.k]); return; }
+      const cnt = e.target.closest(".tm-cnt");
+      if(cnt){
+        const li = cnt.closest("li"), open = cnt.getAttribute("aria-expanded") === "true";
+        cnt.setAttribute("aria-expanded", String(!open));
+        const old = li.querySelector(".tm-evs"); if(old) old.remove();
+        if(!open){
+          const p = IDX[+cnt.dataset.k];
+          const ul = document.createElement("ul"); ul.className = "tm-evs";
+          ul.innerHTML = p.evs.map(i=>'<li><button type="button" data-i="'+i+'"><b>'+(i+1)+'.</b> '+esc(E[i].x)+' <small>· '+esc(E[i].d)+'</small></button></li>').join("");
+          li.appendChild(ul);
+        }
+        return;
+      }
+      const evb = e.target.closest(".tm-evs button");
+      if(evb){ closeIndex(); clearTimeout(hlT); hlL.innerHTML = ""; hlIns.innerHTML = ""; goTo(+evb.dataset.i, false); card.classList.remove("hidden"); }
     });
 
     let rT = null;
