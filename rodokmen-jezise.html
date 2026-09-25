@@ -447,7 +447,7 @@
   erasNav.appendChild(jb);
   const btns=[...erasNav.querySelectorAll(".era-btn[data-id]")];
   const io=new IntersectionObserver(ents=>{
-    ents.forEach(e=>{ if(e.isIntersecting){ const id=e.target.id.replace("era-",""); btns.forEach(b=>b.classList.toggle("active",b.dataset.id===id)); const a=btns.find(b=>b.dataset.id===id); a&&a.scrollIntoView({inline:"nearest",block:"nearest"}); } });
+    ents.forEach(e=>{ if(e.isIntersecting){ const id=e.target.id.replace("era-",""); btns.forEach(b=>b.classList.toggle("active",b.dataset.id===id)); const a=btns.find(b=>b.dataset.id===id); if(a){ /* posunout jen lištu období do strany – scrollIntoView by hýbal celou stránkou a bránil posouvání */ const L=a.offsetLeft-erasNav.offsetLeft, R=L+a.offsetWidth; if(L<erasNav.scrollLeft||R>erasNav.scrollLeft+erasNav.clientWidth) erasNav.scrollTo({left:Math.max(0,L-12),behavior:"smooth"}); } } });
   },{rootMargin:"-45% 0px -50% 0px"});
   document.querySelectorAll("section.era").forEach(s=>io.observe(s));
 
