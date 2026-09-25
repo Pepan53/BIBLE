@@ -73,6 +73,8 @@
   .node.key{padding:10px 24px;border-width:3px}
   .node.key .nm{font-size:1.3em}
   .node.faithful{background:var(--star-bg)}
+  .node.side{border-color:var(--border);background:var(--list-bg)}
+  .node.side .mt{color:var(--maroon)}
   .node.woman .nm{color:var(--maroon-dark)}
   .node.jesus{border-color:var(--gold);background:var(--star-bg);box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 22%,transparent),var(--shadow)}
   .node.flash{animation:flash 1.4s ease 2}
@@ -176,7 +178,7 @@
       <li><span class="sw" style="background:var(--line-mt)"></span>Společná linie a Matoušův rodokmen – přes Šalomouna k Josefovi (právní nárok na Davidův trůn)</li>
       <li><span class="sw" style="background:var(--line-lk)"></span>Lukášův rodokmen – přes Natana k Marii (přirozený původ)</li>
       <li>👑 král · zlaté pozadí = věrný judský král po Šalomounovi</li>
-      <li>Uvedeni jsou všichni judští králové v linii. Achazjáše, Jehoaše, Amacjáše a Jehojakima Matouš ve svém výčtu přeskakuje – je to uvedeno v jejich detailu.</li>
+      <li>Uvedeni jsou všichni judští králové. Jehoachaz a Sedekjáš (světlejší rámeček) vládli, ale nebyli Ježíšovými předky. Achazjáše, Jehoaše, Amacjáše a Jehojakima Matouš ve svém výčtu přeskakuje – je to uvedeno v jejich detailu.</li>
       <li>⭐ Informace od Jehovy o slíbeném potomstvu · ⚠️ Možné ohrožení linie</li>
       <li>~ přibližné datum</li>
     </ul>
@@ -303,9 +305,11 @@
         P("Manasse",{king:1,reign:"716–662",refs:[[14,33,"2Pa 33"]]}),
         P("Amon",{king:1,reign:"661–660",refs:[[12,21,"2K 21:19–26"]]}),
         P("Josijáš",{king:1,faithful:1,reign:"659–629",refs:[[12,22,"2K 22–23"]]}),
+        P("Jehoachaz",{king:1,side:1,reign:"628 (3 měsíce)",note:"Syn Josijáše. Faraon Neko ho sesadil a odvedl do Egypta. Nebyl Ježíšovým předkem – linie pokračuje přes jeho bratra Jehojakima.",refs:[[12,23,"2K 23:30–34"]]}),
         P("Jehojakim",{king:1,omit:1,reign:"628–618",note:"Vazalský král faraona Neka, pak Nebukadnecara.",refs:[[12,23,"2K 23:34–37"]]}),
         P("Jekonjáš",{king:1,alt:"Jehojakin",reign:"618/617 (3 měsíce)",note:"Odveden do Babylonu. Jehova prohlásil, že nikdo z jeho potomků nebude úspěšně vládnout na Davidově trůnu – proto Ježíš nepochází od Jekonjáše přirozeně, ale přes Marii.",refs:[[12,24,"2K 24:8–15"],[24,22,"Jer 22:30"]]}),
-        E(607,"Nebukadnecar ničí Jeruzalém · Sedekjáš poslední král"),
+        P("Sedekjáš",{king:1,side:1,alt:"Mattanjáš",reign:"617–607",note:"Poslední judský král, syn Josijáše a strýc Jekonjáše. Nebukadnecar ho oslepil a odvedl do Babylonu. Nebyl Ježíšovým předkem – linie pokračuje přes Jekonjáše.",refs:[[12,24,"2K 24:17–20"],[12,25,"2K 25:1–7"]]}),
+        E(607,"Nebukadnecar ničí Jeruzalém"),
         S("Ten, kdo má zákonné právo","Koruna bude sňata, „dokud nepřijde ten, kdo má zákonné právo“.",[[26,21,"Ez 21:25–27"]])
       ],
       lk:[
@@ -358,10 +362,11 @@
 
   function renderItem(it,parentName,lane,gen){
     if(it.k==="p"){
-      const b=el("button","node"+(it.key?" key":"")+(it.faithful?" faithful":"")+(it.omit?" omit":"")+(it.woman?" woman":"")+(it.jesus?" jesus":""));
+      const b=el("button","node"+(it.side?" side":"")+(it.key?" key":"")+(it.faithful?" faithful":"")+(it.omit?" omit":"")+(it.woman?" woman":"")+(it.jesus?" jesus":""));
       b.type="button";
       let meta="";
       if(it.reign) meta=`vládl ${it.reign.replace(" př. n. l.","")}`;
+      if(it.side) meta=(meta?meta+" · ":"")+"nebyl předkem Ježíše";
       else if(it.b!=null) meta=yr(it.b)+(it.life?` · ${it.life} let`:"");
       b.innerHTML=`<span class="nm">${it.king?"👑 ":""}${it.n}</span>${meta?`<span class="mt">${meta}</span>`:""}${it.sp?`<span class="sp">${it.sp}</span>`:""}`;
       it._parent=parentName; it._lane=lane; it._gen=gen; it._el=b;
@@ -383,7 +388,7 @@
       let g=null;
       if(it.k==="p"&&countGen){ genShared++; g=genShared; }
       container.appendChild(renderItem(it,parent,lane,g));
-      if(it.k==="p") parent=it.n;
+      if(it.k==="p"&&!it.side) parent=it.n;
     }
     return parent;
   }
@@ -403,7 +408,8 @@
       ln.appendChild(el("div","lane-head",`<b>${t}</b>${s}`));
       const people=era[cls].filter(x=>x.k==="p");
       out[cls]=renderList(era[cls],ln,cls,parents[cls],false);
-      ln.appendChild(el("div","lane-foot",`${people.length} jmen`));
+      const anc=people.filter(p=>!p.side).length, sideN=people.length-anc;
+      ln.appendChild(el("div","lane-foot",`${anc} jmen v linii`+(sideN?` + ${sideN} další ${sideN<5?"králové":"králů"}`:"")));
       wrap.appendChild(ln);
     });
     return {wrap,out};
@@ -514,6 +520,7 @@
     if(p._gen) rows.push(["Generace",`${p._gen}. od Adama`]);
     rows.push(["Linie",laneName[p._lane]||""]);
     if(p.omit) rows.push(["Pozn.","Matouš tohoto krále ve výčtu vynechává"]);
+    if(p.side) rows.push(["Pozn.","Judský král, ale ne Ježíšův předek (boční větev)"]);
     show(`<div class="sheet-h"><div><h3 id="sheetTitle">${p.king?"👑 ":""}${p.n}</h3>${p.alt?`<div class="alt">také ${p.alt}</div>`:""}</div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
       <dl class="facts">${rows.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>
       ${p.note?`<p>${p.note}</p>`:""}
