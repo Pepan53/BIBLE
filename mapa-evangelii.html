@@ -47,7 +47,7 @@
   .gm-layout{ display:grid; grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr); gap:16px; align-items:start; }
   @media (max-width: 860px){ .gm-layout{ grid-template-columns:1fr; } }
   .gm-mapbox{ background:#efe7d9; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); position:sticky; top:12px; }
-  @media (max-width: 860px){ .gm-mapbox{ position:static; } }
+  @media (max-width: 860px){ .gm-mapbox{ position:relative; top:auto; } }
   #gospelMap{ display:block; width:100%; height:auto; }
   #gospelMap .gm-hot{ filter:brightness(1.1); }
   .gm-hit{ fill:transparent; cursor:pointer; }
@@ -90,7 +90,6 @@
   .gm-row .t small{ color:var(--ink-soft); font-size:.9em; }
 
   /* ---------- zoom mapy ---------- */
-  .gm-mapbox{ position:relative; }
   .gm-scroll{ overflow:auto; -webkit-overflow-scrolling:touch; }
   .gm-zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; gap:6px; z-index:5; }
   .gm-scroll{ width:100%; aspect-ratio:404 / 519; }
@@ -126,6 +125,22 @@
   .gm-lab{ fill:transparent; cursor:pointer; }
   .gm-lab:hover, .gm-lab:focus-visible{ fill:rgba(169,129,47,.18); stroke:rgba(125,94,32,.55); stroke-width:.6; outline:none; }
   .gm-scroll.gm-dragging .gm-lab{ cursor:grabbing; }
+  .gm-index-btn{ position:absolute; left:12px; top:10px; z-index:6; font:inherit; font-size:.82em; font-weight:700; padding:5px 12px; border-radius:999px; border:1.5px solid var(--border); background:var(--bg-panel); color:var(--maroon-dark); cursor:pointer; box-shadow:var(--shadow); display:inline-flex; align-items:center; gap:6px; }
+  .gm-index-btn:hover{ border-color:var(--gold); }
+  .gm-index .modal-box{ max-width:620px; }
+  .gm-index-search{ width:100%; font:inherit; font-size:.95em; padding:8px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--item-bg); color:var(--ink); margin-bottom:10px; }
+  .gm-index-search:focus{ outline:2px solid var(--gold); outline-offset:1px; }
+  .gm-index-list{ list-style:none; margin:0; padding:0; columns:2 200px; column-gap:18px; }
+  .gm-index-list li{ break-inside:avoid; display:flex; align-items:center; gap:4px; border-bottom:1px solid var(--border); }
+  .gm-index-list .gm-letter{ font-family:var(--heading-font); color:var(--gold-dark); font-weight:700; font-size:.9em; padding:8px 4px 2px; border-bottom:0; }
+  .gm-index-list button.gm-place{ flex:1; text-align:left; font:inherit; font-size:.95em; background:none; border:0; color:var(--ink); padding:7px 4px; cursor:pointer; border-radius:6px; }
+  .gm-index-list button.gm-place:hover{ background:var(--hover-tint); color:var(--maroon-dark); }
+  .gm-index-list a.gm-wol{ flex:none; font-size:.75em; color:var(--ink-soft); text-decoration:none; padding:4px 6px; border-radius:6px; }
+  .gm-index-list a.gm-wol:hover{ background:var(--hover-tint); color:var(--maroon); }
+  .gm-index-empty{ color:var(--ink-soft); font-size:.9em; }
+  .gm-labring{ fill:rgba(255,214,102,.35); stroke:#b8860b; stroke-width:1.2; pointer-events:none; }
+  @media (prefers-reduced-motion: no-preference){ .gm-labring{ animation:gm-pulse 1.2s ease-in-out 4; } }
+  @media (max-width: 860px){ .gm-index-btn{ left:62px; top:4px; font-size:.72em; padding:3px 9px; } }
 </style>
 </head>
 <body>
@@ -160,6 +175,17 @@
   </div>
 </div>
 
+<div class="modal-overlay gm-index" id="gmIndex" role="dialog" aria-modal="true" aria-labelledby="gmIndexTitle">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="gmIndexTitle">📍 Rejstřík míst</h3>
+      <button class="modal-close" id="gmIndexClose" aria-label="Zavřít">✕</button>
+    </div>
+    <input type="search" class="gm-index-search" id="gmIndexSearch" placeholder="Hledat místo…" aria-label="Hledat místo" autocomplete="off">
+    <ul class="gm-index-list" id="gmIndexList"></ul>
+  </div>
+</div>
+
 <div class="modal-overlay gm-modal" id="gmModal" role="dialog" aria-modal="true" aria-labelledby="gmModalTitle">
   <div class="modal-box">
     <div class="modal-header">
@@ -178,7 +204,7 @@
   </header>
 
   <div class="gm-layout">
-    <div class="gm-mapbox"><div class="gm-scroll" id="gmScroll"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" id="gospelMap" role="img" aria-label="Mapa míst událostí ze čtyř evangelií" viewBox="0 0 404 519">
+    <div class="gm-mapbox"><button type="button" class="gm-index-btn" id="gmIndexBtn" aria-haspopup="dialog">📍 Rejstřík</button><div class="gm-scroll" id="gmScroll"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" id="gospelMap" role="img" aria-label="Mapa míst událostí ze čtyř evangelií" viewBox="0 0 404 519">
 <defs>
 <clipPath id="clip_1">
 <path d="M0 0H404V519H0Z"/>
@@ -1629,6 +1655,61 @@
     document.getElementById("gmZoomIn").addEventListener("click", ()=>setZoom(zoom + 0.75));
     document.getElementById("gmZoomOut").addEventListener("click", ()=>setZoom(zoom - 0.75));
     setZoom(1);
+
+    // ---------- rejstřík míst ----------
+    const idxModal = document.getElementById("gmIndex");
+    const idxList = document.getElementById("gmIndexList");
+    const idxSearch = document.getElementById("gmIndexSearch");
+    const PLACES = Object.keys(LABELS).sort((a, b)=>a.localeCompare(b, "cs"));
+    const norm = t=>t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    function renderIndex(filter){
+      const f = norm(filter || "");
+      const items = PLACES.filter(p=>!f || norm(p).includes(f));
+      if(!items.length){ idxList.innerHTML = '<li class="gm-index-empty">Žádné místo neodpovídá hledání.</li>'; return; }
+      let last = "";
+      idxList.innerHTML = items.map(p=>{
+        const L = p.charAt(0).toLocaleUpperCase("cs");
+        const head = (!f && L !== last) ? '<li class="gm-letter" aria-hidden="true">'+L+'</li>' : "";
+        last = L;
+        const url = "https://wol.jw.org/cs/wol/s/r29/lp-b?q=" + encodeURIComponent(p).replace(/%20/g, "+");
+        return head + '<li><button type="button" class="gm-place" data-p="'+esc(p)+'">'+esc(p)+'</button>' +
+               '<a class="gm-wol" href="'+url+'" target="_blank" rel="noopener" title="Vyhledat na wol.jw.org" aria-label="Vyhledat „'+esc(p)+'“ na wol.jw.org">wol ↗</a></li>';
+      }).join("");
+    }
+    function openIndex(){
+      idxSearch.value = ""; renderIndex("");
+      idxModal.classList.add("show");
+      if(!isMobile()) idxSearch.focus();
+    }
+    function closeIndex(){ idxModal.classList.remove("show"); }
+    function showPlace(p){
+      const rects = LABELS[p]; if(!rects || !rects.length) return;
+      closeIndex();
+      const b = rects[rects.length-1];
+      ringLayer.querySelectorAll(".gm-labring").forEach(n=>n.remove());
+      rects.forEach(r=>{
+        const e = document.createElementNS(NS, "rect");
+        e.setAttribute("x", r[0]-2.5); e.setAttribute("y", r[1]-2.5);
+        e.setAttribute("width", r[2]-r[0]+5); e.setAttribute("height", r[3]-r[1]+5);
+        e.setAttribute("rx", 2.5); e.setAttribute("class", "gm-labring");
+        ringLayer.appendChild(e);
+      });
+      if(zoom < 2) setZoom(2);
+      const vb = svg.viewBox.baseVal, k = svg.clientWidth / vb.width;
+      const cx = ((b[0]+b[2])/2 - vb.x) * k, cy = ((b[1]+b[3])/2 - vb.y) * k;
+      scroller.scrollTo({left: cx - scroller.clientWidth/2, top: cy - scroller.clientHeight/2, behavior:"smooth"});
+      const box = document.querySelector(".gm-mapbox").getBoundingClientRect();
+      if(box.top < 0 || box.top > window.innerHeight*0.5) document.querySelector(".gm-mapbox").scrollIntoView({behavior:"smooth", block:"start"});
+      clearTimeout(showPlace.t);
+      showPlace.t = setTimeout(()=>ringLayer.querySelectorAll(".gm-labring").forEach(n=>n.remove()), 6000);
+    }
+    document.getElementById("gmIndexBtn").addEventListener("click", openIndex);
+    document.getElementById("gmIndexClose").addEventListener("click", closeIndex);
+    idxModal.addEventListener("click", e=>{ if(e.target === idxModal) closeIndex(); });
+    document.addEventListener("keydown", e=>{ if(e.key === "Escape" && idxModal.classList.contains("show")) closeIndex(); });
+    idxSearch.addEventListener("input", ()=>renderIndex(idxSearch.value));
+    idxSearch.addEventListener("keydown", e=>{ if(e.key === "Enter"){ const f = idxList.querySelector(".gm-place"); if(f) showPlace(f.dataset.p); } });
+    idxList.addEventListener("click", e=>{ const b = e.target.closest(".gm-place"); if(b) showPlace(b.dataset.p); });
 
     function select(n, fromMap, startOrder){
       current = n;
