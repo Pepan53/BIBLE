@@ -129,6 +129,7 @@
   .ev-pager button, .ev-pager .ev-count{ white-space:nowrap; }
   .ev-pager .ev-play{ width:44px; height:34px; padding:0; margin-right:4px; font-size:1.25em; line-height:1; border-radius:10px; vertical-align:middle; }
   .ev-pager .ev-count{ display:inline-flex; align-items:center; }
+  .ev-pager .ev-play{ letter-spacing:-3px; }
   .ev-pager .ev-count{ font-size:.75em; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
 
   /* ---------- časová osa ---------- */
@@ -663,6 +664,8 @@
       }
       return out;
     }
+    // při přiblížené mapě kamera plynule jede s ikonou (je vidět celé cestování)
+    let camFollow = false;
     function animate(mainPts, subPts, done, drawRoute){
       if(anim) cancelAnimationFrame(anim.raf);
       const Lm = mainPts ? polyLen(mainPts) : 0, Ls = subPts ? polyLen(subPts) : 0;
@@ -676,9 +679,9 @@
       anim = {raf:0};
       const step = now=>{
         const t = Math.min(1, (now-t0)/dur), e = ease(t);
-        if(mainPts && Lm){ placeIcon(pointAt(mainPts, e)); if(rEl) rEl.setAttribute("d", pathD(partial(mainPts, e))); }
+        if(mainPts && Lm){ const pt = pointAt(mainPts, e); placeIcon(pt); if(camFollow) centerOn(pt, false); if(rEl) rEl.setAttribute("d", pathD(partial(mainPts, e))); }
         if(subPts && Ls){ placeIns(pointAt(subPts, e)); if(sEl) sEl.setAttribute("d", pathD(partial(subPts, e))); }
-        if(t < 1) anim.raf = requestAnimationFrame(step); else { anim = null; if(done) done(); }
+        if(t < 1) anim.raf = requestAnimationFrame(step); else { anim = null; camFollow = false; if(done) done(); }
       };
       anim.raf = requestAnimationFrame(step);
     }
@@ -772,10 +775,9 @@
       drawState(i);
       renderCard(i);
       updateRail(i);
-      followIcon(i);
       const target = ev.pos ? P(ev.pos) : null;
       const subPts = (ev.o.sub && !ev.o.nj) ? [ev.subFrom ? S(ev.subFrom) : S(ev.o.sub[0])].concat(ev.o.sub.map(S)) : null;
-      if(!target){ placeIcon(null); if(subPts) placeIns(subPts[subPts.length-1]); return; }
+      if(!target){ camFollow = false; followIcon(i); placeIcon(null); if(subPts) placeIns(subPts[subPts.length-1]); return; }
       const doAnim = animated && Math.abs(i - prevIdx) === 1 && prevIdx >= 0;
       if(doAnim){
         let pts = ptsOfEvent(ev);
@@ -783,9 +785,13 @@
         if(!iconXY) placeIcon(pts[0]);
         const sp = (subPts && i > prevIdx) ? subPts : (subPts ? [insXY || subPts[subPts.length-1], subPts[subPts.length-1]] : null);
         if(sp && !insXY) placeIns(sp[0]);
+        // přiblíženo + krok vpřed s přesunem: nejdřív ukázat výchozí místo, pak mapu posouvat s Ježíšem
+        camFollow = zoom > 1 && i > prevIdx && pts.length > 1 && !reduceMotion;
+        if(camFollow) centerOn(pts[0], false); else followIcon(i);
         animate(pts.length > 1 ? pts : [target], sp, ()=>{ if(ev.o.up && idx === i) ascend(); }, i > prevIdx);
       } else {
         if(anim){ cancelAnimationFrame(anim.raf); anim = null; }
+        camFollow = false; followIcon(i);
         placeIcon(target);
         if(subPts) placeIns(subPts[subPts.length-1]);
         if(ev.o.up) ascend();
@@ -1000,7 +1006,7 @@
     playBtn.addEventListener("click", ()=>{
       if(playT){ stopPlay(); return; }
       if(idx >= N-1) goTo(0, false);
-      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = evPlay.textContent = "⏸"; playBtn.title = evPlay.title = "Zastavit";
+      playBtn.setAttribute("aria-pressed", "true"); playBtn.textContent = "⏸"; evPlay.textContent = "❚❚"; playBtn.title = evPlay.title = "Zastavit";
       playT = setTimeout(tick, 600);
     });
     evPlay.addEventListener("click", ()=>playBtn.click());
