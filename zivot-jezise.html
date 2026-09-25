@@ -187,6 +187,16 @@
     .ev-pager{ position:sticky; bottom:0; background:var(--bg-panel); padding:8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
     .tm-index-btn{ font-size:.75em; padding:4px 10px; }
     footer{ margin-top:14px; }
+    /* široký mobil (rozložený Fold): mapa | osa | okno s událostí */
+    body.side{ padding-bottom:0; }
+    body.side .tm-layout{ align-items:stretch; }
+    body.side .ev-card{ position:static; flex:1 1 260px; min-width:240px; max-width:460px; width:auto; max-height:none; overflow:auto;
+      border-radius:12px; box-shadow:var(--shadow); padding:12px 14px 0; z-index:auto; }
+    body.side .ev-eyebrow{ font-size:.66em; }
+    body.side .ev-text{ font-size:.98em; }
+    body.side header{ margin:6px 0 16px; }
+    body.side .ev-pager{ flex-wrap:wrap; row-gap:8px; position:static; }
+    body.side .ev-pager .ev-count{ order:3; flex-basis:100%; justify-content:center; }
   }
 </style>
 </head>
@@ -797,7 +807,21 @@
     let sheetRes = 0;   // největší dosavadní výška spodního okna (mapa se tak nepřeskupuje u každé události)
     function layoutMobile(){
       const mb = $("tmMapbox"), tc = document.querySelector(".tl-card"), lay = document.querySelector(".tm-layout");
+      // rozložený Fold / tablet (široký, ale pod 860 px): okno s událostí vpravo vedle osy
+      const side = narrow && window.innerWidth >= 620;
+      document.body.classList.toggle("side", side);
+      if(side){ if(card.parentNode !== lay) lay.appendChild(card); }
+      else if(card.parentNode !== mb) mb.appendChild(card);
+      card.style.height = "";
       if(!narrow){ document.documentElement.style.removeProperty("--sheetH"); mb.style.width = mb.style.height = tc.style.height = ""; return; }
+      if(side){
+        document.documentElement.style.setProperty("--sheetH", "0px");
+        const vhS = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const topS = lay.getBoundingClientRect().top + window.scrollY;
+        const hS = Math.max(300, Math.min(vhS - topS - 10, (lay.clientWidth - 54 - 12 - 260) / RATIO));
+        mb.style.height = hS+"px"; mb.style.width = (hS*RATIO)+"px"; tc.style.height = hS+"px"; card.style.height = hS+"px";
+        return;
+      }
       // skutečná výška obrazovky (bez lišt prohlížeče) a skutečná výška spodního okna
       const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       sheetRes = Math.max(sheetRes, card.offsetHeight || 0);
@@ -1123,7 +1147,7 @@
     window.addEventListener("resize", relayout);
     if(window.visualViewport) window.visualViewport.addEventListener("resize", relayout);
     // když se spodní okno s delším textem zvětší, mapu jednou zmenšit
-    if(window.ResizeObserver) new ResizeObserver(()=>{ if(narrow && card.offsetHeight > sheetRes + 2) buildRail(); }).observe(card);
+    if(window.ResizeObserver) new ResizeObserver(()=>{ if(narrow && !document.body.classList.contains("side") && card.offsetHeight > sheetRes + 2) buildRail(); }).observe(card);
     buildRail();
     let start = 0;
     try{ const v = parseInt(localStorage.getItem("jesusLifeIdx"), 10); if(v >= 0 && v < N) start = v; }catch(e){}
