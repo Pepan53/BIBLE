@@ -1655,6 +1655,20 @@
     document.getElementById("gmZoomOut").addEventListener("click", ()=>setZoom(zoom - 0.75));
     setZoom(1);
 
+    // tlačítko Rejstřík zarovnat s nadpisem LEGENDA (desktop)
+    const idxBtnEl = document.getElementById("gmIndexBtn");
+    function alignIdxBtn(){
+      if(zoom !== 1) return;
+      if(window.innerWidth <= 860){ idxBtnEl.style.left = ""; return; }
+      const svgEl = document.getElementById("gospelMap");
+      const r = svgEl.getBoundingClientRect(), vb = svgEl.viewBox.baseVal;
+      const par = idxBtnEl.offsetParent.getBoundingClientRect();
+      idxBtnEl.style.left = (r.left + 24.62 * r.width / vb.width - par.left - idxBtnEl.offsetParent.clientLeft) + "px";
+    }
+    alignIdxBtn();
+    window.addEventListener("resize", alignIdxBtn);
+    window.addEventListener("load", alignIdxBtn);
+
     // ---------- rejstřík míst ----------
     const idxModal = document.getElementById("gmIndex");
     const idxList = document.getElementById("gmIndexList");
