@@ -7,8 +7,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📜</text></svg>">
 <link rel="stylesheet" href="assets/common.css">
 <style>
-  :root{ --list-bg:#fbf7ee; --axis:#a9812f; --band-s:62%; --band-l:88%; --life-s:55%; --life-l:78%; --life-ink:#2c2317; --line:#cbbd9c; --ctl-h:110px }
-  :root[data-theme="dark"]{ --list-bg:#211c14; --axis:#d9a441; --band-s:28%; --band-l:22%; --life-s:35%; --life-l:36%; --life-ink:#f3e9d0; --line:#5a4e3a }
+  :root{ --star-bg:#fbf1d8; --list-bg:#fbf7ee; --axis:#a9812f; --band-s:62%; --band-l:88%; --life-s:55%; --life-l:78%; --life-ink:#2c2317; --line:#cbbd9c; --ctl-h:110px }
+  :root[data-theme="dark"]{ --star-bg:#3a2f1a; --list-bg:#211c14; --axis:#d9a441; --band-s:28%; --band-l:22%; --life-s:35%; --life-l:36%; --life-ink:#f3e9d0; --line:#5a4e3a }
   *{box-sizing:border-box}
   :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
@@ -62,6 +62,14 @@
 
   .card{position:absolute;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:9px;padding:4px 8px 5px;cursor:pointer;display:flex;gap:7px;align-items:center;box-shadow:var(--shadow);transition:outline-color .2s}
   .card.rel{border-style:dashed;border-color:var(--gold)}
+  /* Ježíšova rodová linie */
+  .card.line{border-left:5px solid var(--gold);background:linear-gradient(90deg,var(--star-bg),var(--bg-panel) 60%)}
+  .card.line .t::before{content:"★ ";color:var(--gold)}
+  .life.line{box-shadow:0 0 0 2px var(--gold),0 0 8px var(--gold)}
+  .life.line span::before{content:"★";display:block;color:#7d5e20;margin-bottom:2px}
+  :root[data-theme="dark"] .life.line span::before{color:#f0cf87}
+  .chip.star{border-color:var(--gold);color:var(--gold-dark);font-weight:600}
+  .chip.star.on{background:var(--gold);border-color:var(--gold);color:#fff}
   .card .tx{min-width:0;flex:1}
   .card .d{font-size:10.5px;color:var(--gold-dark)}
   .card .t{font-size:12.5px;line-height:1.25;color:var(--ink)}
@@ -275,7 +283,7 @@
         after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
         cat: r["kategorie"]||"", verses: splitList(r["vers"]),
         images: splitImgs(r["obrazek"]), videos: splitUrls(r["video"]), links: splitUrls(r["odkaz"]),
-        note: r["poznamka"]||"", row: i+2
+        note: r["poznamka"]||"", line: r["linie"]||"", row: i+2
       };
       items.push(it); byId[norm(it.id)]=it;
     });
@@ -399,7 +407,8 @@
   const TOP=16, BOTTOM=40;
   let geo=null, cardH={};      // výšky kartiček (měří se jen při změně šířky)
 
-  const visible = it => !off.has(it.cat||"Ostatní");
+  let onlyLine=false;   // filtr „jen Ježíšova rodová linie“
+  const visible = it => onlyLine ? !!it.line : !off.has(it.cat||"Ostatní");
   const yOf = a => TOP + (a-domain.a)*ppy;
   const yearAt = y => domain.a + (y-TOP)/ppy;
 
@@ -438,7 +447,7 @@
     else if(vid) th=`<div class="th vid" style="background-image:url('${esc(vid.thumb)}')"></div>`;
     else if(it.videos.length) th=`<div class="th">▶</div>`;
     const icons = (it.note?"":"") ;
-    return `<div class="card${it.rel?" rel":""}" data-id="${esc(it.id)}" style="left:${g.cardsX}px;top:${top}px;width:${g.cardsW}px">
+    return `<div class="card${it.rel?" rel":""}${it.line?" line":""}" data-id="${esc(it.id)}" style="left:${g.cardsX}px;top:${top}px;width:${g.cardsW}px">
       <div class="tx"><div class="d">${esc(whenText(it))}</div><div class="t">${esc(it.name)}${icons}</div></div>${th}</div>`;
   }
 
@@ -491,7 +500,7 @@
     // životy
     items.filter(it=>it.type==="life"&&visible(it)&&it.lane!=null).forEach(it=>{
       const y1=yOf(it.lo), h=Math.max(10,yOf(it.end)-y1);
-      out.push(`<div class="life" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${GH[it.gi%GH.length]+(it.gidx%3)*9}"${it.gidx%2?' data-alt':''}><span>${esc(it.name)}</span></div>`);
+      out.push(`<div class="life${it.line?" line":""}" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${GH[it.gi%GH.length]+(it.gidx%3)*9}"${it.gidx%2?' data-alt':''}><span>${esc(it.name)}</span></div>`);
     });
     // spojnice (SVG) + tečky + kartičky
     const lines=[];
@@ -585,6 +594,7 @@
       if(it.afterR&&it.afterR.length) rows.push(["Stalo se po", it.afterR.map(nameLink).join(", ")]);
       if(it.beforeR&&it.beforeR.length) rows.push(["Stalo se před", it.beforeR.map(nameLink).join(", ")]);
     }
+    if(it.line) rows.push(["★ Ježíšova rodová linie", esc(/^(ano|x|✓|1)$/i.test(it.line)?"ano":it.line)]);
     if(it.cat) rows.push(["Kategorie", esc(it.cat)]);
     const media=[];
     it.images.forEach(u=>{ const im=imageThumb(u); media.push(`<a data-full="${esc(im.full)}"><img src="${esc(im.thumb)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'🖼️'}))"></a>`); });
@@ -628,13 +638,14 @@
 
   /* ---------- hledání + filtry ---------- */
   const search=document.getElementById("search");
-  function findByName(q){ q=norm(q); if(!q) return null; return items.find(it=>norm(it.name)===q) || items.find(it=>norm(it.name).startsWith(q)) || items.find(it=>norm(it.name).includes(q)); }
+  function findByName(q){ q=norm(q); if(!q) return null; return items.find(it=>norm(it.name)===q) || items.find(it=>norm(it.name).startsWith(q)) || items.find(it=>norm(it.name).includes(q)) || items.find(it=>norm(it.note).includes(q)); }
   search.addEventListener("change", ()=>{ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } });
   search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } } });
 
   function buildChips(){
     const cats=[...new Set(items.filter(it=>it.type!=="period").map(it=>it.cat||"Ostatní"))];
     const chips=[];
+    if(items.some(it=>it.line)) chips.push(`<button class="chip star${onlyLine?" on":""}" data-line="1" title="Zobrazit jen Ježíšovu rodovou linii">★ Ježíšova linie</button>`);
     items.filter(it=>it.type==="period").forEach(it=>chips.push(`<button class="chip era" data-era="${esc(it.id)}">↳ ${esc(it.name)}</button>`));
     cats.forEach(c=>chips.push(`<button class="chip${off.has(c)?"":" on"}" data-cat="${esc(c)}">${esc(c)}</button>`));
     document.getElementById("chips").innerHTML=chips.join("");
@@ -643,6 +654,9 @@
   document.getElementById("chips").addEventListener("click", e=>{
     const b=e.target.closest(".chip"); if(!b) return;
     if(b.dataset.era){ const it=byId[norm(b.dataset.era)]; if(it) jumpTo(it,false); return; }
+    if(b.dataset.line){ onlyLine=!onlyLine; b.classList.toggle("on",onlyLine);
+      document.querySelectorAll(".chip[data-cat]").forEach(x=>x.style.opacity=onlyLine?".45":""); render(); return; }
+    if(onlyLine) return;
     const c=b.dataset.cat; off.has(c)?off.delete(c):off.add(c); b.classList.toggle("on",!off.has(c)); render();
   });
 
