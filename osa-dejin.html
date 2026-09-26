@@ -56,6 +56,8 @@
 
   .life{position:absolute;border-radius:7px;background:hsl(var(--h) var(--life-s) var(--life-l));cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
   .life span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;font-size:11.5px;font-weight:600;color:var(--life-ink);padding:6px 0;white-space:nowrap;margin:0 auto;width:14px;line-height:14px}
+  .life{overflow:clip}
+  .life[data-alt]{background:hsl(var(--h) var(--life-s) calc(var(--life-l) - 9%))}
   .life.hl,.card.hl{outline:3px solid var(--gold);outline-offset:1px}
 
   .card{position:absolute;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:9px;padding:4px 8px 5px;cursor:pointer;display:flex;gap:7px;align-items:center;box-shadow:var(--shadow);transition:outline-color .2s}
@@ -259,14 +261,16 @@
   let items=[], byId={}, domain={a:0,b:1}, lanesCount=0;
   const off = new Set();      // vypnuté kategorie
 
-  function typeOf(t){ t=norm(t); if(t.startsWith("ziv")||t.startsWith("osob")) return "life"; if(t.startsWith("obdob")||t.startsWith("era")) return "period"; return "event"; }
+  // typ: událost / život / vláda / působení (sloupce) / období (pás vlevo)
+  function kindOf(t){ t=norm(t); if(t.startsWith("vlad")||t.startsWith("kral")) return "reign"; if(t.startsWith("pusob")||t.startsWith("sluz")) return "work"; if(t.startsWith("ziv")||t.startsWith("osob")) return "life"; if(t.startsWith("obdob")||t.startsWith("era")) return "period"; return "event"; }
+  function typeOf(t){ const k=kindOf(t); return (k==="reign"||k==="work") ? "life" : k; }
 
   function buildModel(rows){
     items=[]; byId={};
     rows.forEach((r,i)=>{
       const name=r["nazev"]||r["name"]; if(!name) return;
       const it={
-        id: r["id"] || ("r"+(i+2)), name, type: typeOf(r["typ"]),
+        id: r["id"] || ("r"+(i+2)), name, type: typeOf(r["typ"]), kind: kindOf(r["typ"]),
         from: parseYear(r["od"]), to: parseYear(r["do"]),
         after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
         cat: r["kategorie"]||"", verses: splitList(r["vers"]),
@@ -288,14 +292,21 @@
     // odhad polohy u položek bez přesného roku
     items.forEach(it=>estimate(it));
     // dráhy (sloupce) pro životy – hladové přidělení
-    const lives=items.filter(it=>it.type==="life"&&Number.isFinite(it.lo)&&Number.isFinite(it.end)).sort((x,y)=>x.lo-y.lo);
-    const laneEnd=[];
-    lives.forEach(it=>{
-      let k=laneEnd.findIndex(e=>e < it.lo - 2);
-      if(k<0){ k=laneEnd.length; laneEnd.push(0); }
-      laneEnd[k]=it.end; it.lane=k;
+    // sloupce: každá kategorie (patriarchové, králové Judska, …) má vlastní sloupce;
+    // kategorie, které se časově nepřekrývají, můžou sdílet stejné sloupce
+    const lives=items.filter(it=>it.type==="life"&&Number.isFinite(it.lo)&&Number.isFinite(it.end));
+    const groups=[]; lives.forEach(it=>{ const c=it.cat||"Ostatní"; if(!groups.includes(c)) groups.push(c); });
+    const occ=[];   // occ[sloupec] = [[od,do], …]
+    const free=(lane,a,b)=>!(occ[lane]||[]).some(([x,y])=> a < y+2 && x < b+2);
+    groups.forEach((c,gi)=>{
+      const its=lives.filter(it=>(it.cat||"Ostatní")===c).sort((x,y)=>x.lo-y.lo);
+      const local=[], ends=[];
+      its.forEach((it,i)=>{ let k=ends.findIndex(e=> it.kind==="reign" ? e<=it.lo+0.01 : e < it.lo - 2); if(k<0){ k=ends.length; ends.push(-Infinity); } ends[k]=it.end; local.push(k); it.gi=gi; it.gidx=i; });
+      let o=0;
+      while(!its.every((it,i)=>free(o+local[i], it.lo, it.end))) o++;
+      its.forEach((it,i)=>{ it.lane=o+local[i]; (occ[it.lane]=occ[it.lane]||[]).push([it.lo,it.end]); });
     });
-    lanesCount=laneEnd.length;
+    lanesCount=occ.length;
   }
 
   function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
@@ -388,11 +399,12 @@
   const TOP=16, BOTTOM=40;
   let geo=null, cardH={};      // výšky kartiček (měří se jen při změně šířky)
 
-  const visible = it => !off.has(it.type==="life" ? "__life" : (it.cat||"Ostatní")) && !(it.type==="event" && off.has("__ev"));
+  const visible = it => !off.has(it.cat||"Ostatní");
   const yOf = a => TOP + (a-domain.a)*ppy;
   const yearAt = y => domain.a + (y-TOP)/ppy;
 
   function hue(i){ return (i*47+20)%360; }
+  const GH=[35,200,350,130,270,60,300,170];   // barva sloupců podle kategorie
   function catHue(c){ let h=0; for(const ch of String(c)) h=(h*31+ch.charCodeAt(0))%360; return h; }
 
   function layout(){
@@ -479,7 +491,7 @@
     // životy
     items.filter(it=>it.type==="life"&&visible(it)&&it.lane!=null).forEach(it=>{
       const y1=yOf(it.lo), h=Math.max(10,yOf(it.end)-y1);
-      out.push(`<div class="life" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${hue(it.lane*3+it.row)}"><span>${esc(it.name)}</span></div>`);
+      out.push(`<div class="life" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${GH[it.gi%GH.length]+(it.gidx%3)*9}"${it.gidx%2?' data-alt':''}><span>${esc(it.name)}</span></div>`);
     });
     // spojnice (SVG) + tečky + kartičky
     const lines=[];
@@ -562,9 +574,11 @@
     selected=it; showRange(it);
     const rows=[];
     if(it.type==="life" && Number.isFinite(it.lo) && Number.isFinite(it.end)){
-      rows.push(["Narozen", (it.approx?"~":"")+fmtYear(it.lo)]);
-      rows.push(["Zemřel", ((it.to&&it.to.approx)?"~":"")+fmtYear(it.end)]);
-      rows.push(["Věk", `${it.end-it.lo} let`]);
+      const L={life:["Narozen","Zemřel","Věk"], reign:["Začátek vlády","Konec vlády","Délka vlády"], work:["Působil asi od","Působil asi do","Délka působení"]}[it.kind]||["Od","Do","Trvání"];
+      const ap=(it.approx||(it.to&&it.to.approx))?"asi ":"";
+      rows.push([L[0], (it.approx?"~":"")+fmtYear(it.lo)]);
+      rows.push([L[1], ((it.to&&it.to.approx)?"~":"")+fmtYear(it.end)]);
+      if(it.end-it.lo>=1) rows.push([L[2], `${ap}${it.end-it.lo} let`]);
     }
     if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", `${it.end-it.lo} let`]);
     if(it.rel){
@@ -619,10 +633,9 @@
   search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } } });
 
   function buildChips(){
-    const cats=[...new Set(items.filter(it=>it.type==="event").map(it=>it.cat||"Ostatní"))];
+    const cats=[...new Set(items.filter(it=>it.type!=="period").map(it=>it.cat||"Ostatní"))];
     const chips=[];
     items.filter(it=>it.type==="period").forEach(it=>chips.push(`<button class="chip era" data-era="${esc(it.id)}">↳ ${esc(it.name)}</button>`));
-    if(items.some(it=>it.type==="life")) chips.push(`<button class="chip${off.has("__life")?"":" on"}" data-cat="__life">Životy</button>`);
     cats.forEach(c=>chips.push(`<button class="chip${off.has(c)?"":" on"}" data-cat="${esc(c)}">${esc(c)}</button>`));
     document.getElementById("chips").innerHTML=chips.join("");
     document.getElementById("names").innerHTML=items.map(it=>`<option value="${esc(it.name)}">`).join("");
