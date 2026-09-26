@@ -57,6 +57,7 @@
   .life{position:absolute;border-radius:7px;background:hsl(var(--h) var(--life-s) var(--life-l));cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
   .life span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;font-size:11.5px;font-weight:600;color:var(--life-ink);padding:6px 0;white-space:nowrap;margin:0 auto;width:14px;line-height:14px}
   .life{overflow:clip}
+  #tl.thin .life span{font-size:9px;width:10px;line-height:10px}
   .life[data-alt]{background:hsl(var(--h) var(--life-s) calc(var(--life-l) - 9%))}
   .life.hl,.card.hl{outline:3px solid var(--gold);outline-offset:1px}
 
@@ -66,7 +67,7 @@
   .card.line{border-left:5px solid var(--gold);background:linear-gradient(90deg,var(--star-bg),var(--bg-panel) 60%)}
   .card.line .t::before{content:"★ ";color:var(--gold)}
   .life.line{box-shadow:0 0 0 2px var(--gold),0 0 8px var(--gold)}
-  .life.line span::before{content:"★";display:block;color:#7d5e20;margin-bottom:2px}
+  .life.line span::before{content:"★ ";color:#7d5e20}
   :root[data-theme="dark"] .life.line span::before{color:#f0cf87}
   .chip.star{border-color:var(--gold);color:var(--gold-dark);font-weight:600}
   .chip.star.on{background:var(--gold);border-color:var(--gold);color:#fff}
@@ -300,21 +301,22 @@
     // odhad polohy u položek bez přesného roku
     items.forEach(it=>estimate(it));
     // dráhy (sloupce) pro životy – hladové přidělení
-    // sloupce: každá kategorie (patriarchové, králové Judska, …) má vlastní sloupce;
-    // kategorie, které se časově nepřekrývají, můžou sdílet stejné sloupce
-    const lives=items.filter(it=>it.type==="life"&&Number.isFinite(it.lo)&&Number.isFinite(it.end));
-    const groups=[]; lives.forEach(it=>{ const c=it.cat||"Ostatní"; if(!groups.includes(c)) groups.push(c); });
-    const occ=[];   // occ[sloupec] = [[od,do], …]
-    const free=(lane,a,b)=>!(occ[lane]||[]).some(([x,y])=> a < y+2 && x < b+2);
-    groups.forEach((c,gi)=>{
-      const its=lives.filter(it=>(it.cat||"Ostatní")===c).sort((x,y)=>x.lo-y.lo);
-      const local=[], ends=[];
-      its.forEach((it,i)=>{ let k=ends.findIndex(e=> it.kind==="reign" ? e<=it.lo+0.01 : e < it.lo - 2); if(k<0){ k=ends.length; ends.push(-Infinity); } ends[k]=it.end; local.push(k); it.gi=gi; it.gidx=i; });
-      let o=0;
-      while(!its.every((it,i)=>free(o+local[i], it.lo, it.end))) o++;
-      its.forEach((it,i)=>{ it.lane=o+local[i]; (occ[it.lane]=occ[it.lane]||[]).push([it.lo,it.end]); });
+    // sloupce: přidělují se postupně podle začátku; každá kategorie se snaží
+    // pokračovat ve „svém“ sloupci (králové jeden za druhým), jinak první volný
+    const lives=items.filter(it=>it.type==="life"&&Number.isFinite(it.lo)&&Number.isFinite(it.end)).sort((x,y)=>x.lo-y.lo||x.row-y.row);
+    const groups=[], gcount={};
+    const lane=[];   // lane[k] = poslední položka ve sloupci
+    const fits=(k,it)=>{ const p=lane[k]; if(!p) return true;
+      return (it.kind==="reign" && p.kind==="reign" && p.cat===it.cat) ? p.end<=it.lo+0.01 : p.end < it.lo-2; };
+    const lastOf={};
+    lives.forEach(it=>{
+      const c=it.cat||"Ostatní"; if(!groups.includes(c)) groups.push(c);
+      it.gi=groups.indexOf(c); it.gidx=(gcount[c]=(gcount[c]||0)+1)-1;
+      let k = (lastOf[c]!=null && fits(lastOf[c],it)) ? lastOf[c] : -1;
+      if(k<0){ k=0; while(k<lane.length && !fits(k,it)) k++; }
+      lane[k]=it; it.lane=k; lastOf[c]=k;
     });
-    lanesCount=occ.length;
+    lanesCount=lane.length;
   }
 
   function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
@@ -419,10 +421,13 @@
   function layout(){
     const W=tl.clientWidth;
     const periodW=18, axisL=periodW+2, axisX=periodW+60;
-    let laneW=W<420?15:17, laneGap=3;
     const lanesX=axisX+10;
-    let lanesW=lanesCount*(laneW+laneGap);
-    if(W - (lanesX+lanesW) < 150 && lanesCount){ laneW=12; laneGap=2; lanesW=lanesCount*(laneW+laneGap); }
+    // šířka sloupců se přizpůsobí, aby vpravo zbylo aspoň 150 px na kartičky
+    let laneGap=lanesCount>10?2:3;
+    let laneW=Math.floor(Math.min(W<420?15:17, (W-lanesX-162)/Math.max(1,lanesCount)-laneGap));
+    laneW=Math.max(6,laneW);
+    const lanesW=lanesCount*(laneW+laneGap);
+    tl.classList.toggle("thin", laneW<12);
     const cardsX=lanesX+lanesW+(lanesCount?12:0);
     return { W, periodW, axisL, axisX, laneW, laneGap, lanesX, cardsX, cardsW: Math.min(360, Math.max(120, W-cardsX-2)) };
   }
