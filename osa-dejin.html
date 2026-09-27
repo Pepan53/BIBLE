@@ -26,6 +26,10 @@
   /* ---------- lepicí ovládání ---------- */
   .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
   /* Domů, Denní text a Vzhled jsou přímo v řádku s hledáním, takže jsou vždy vidět hned vedle něj */
+  .hdr-l,.hdr-r{position:absolute;top:8px;display:flex;gap:8px}
+  .hdr-l{left:0} .hdr-r{right:0}
+  .hdr-l .home-btn,.hdr-r .theme-toggle-btn,.hdr-r .daily-text-btn{position:static;flex:0 0 auto;width:36px;height:36px;font-size:1em}
+  @media (max-width:480px){ .hdr-l,.hdr-r{top:4px;gap:6px} .hdr-l .home-btn,.hdr-r .theme-toggle-btn,.hdr-r .daily-text-btn{width:34px;height:34px} }
   .controls .home-btn,.controls .theme-toggle-btn,.controls .daily-text-btn{position:static;flex:0 0 auto;width:36px;height:36px;font-size:1em}
   @media (max-width:480px){ .controls{padding-top:10px} .controls .row{gap:4px} .controls .zbtn{width:30px} .controls .search{padding:7px 7px;font-size:13px} .controls .home-btn,.controls .theme-toggle-btn,.controls .daily-text-btn{width:34px;height:34px} }
   .row{display:flex;gap:6px;align-items:center}
@@ -156,10 +160,12 @@
 
 <div class="wrap">
   <header>
+    <div class="hdr-l" id="hdrL"></div><div class="hdr-r" id="hdrR"></div>
     <h1>Osa dějin<span class="help-icon hint-icon" id="osHintIcon" tabindex="0" hidden>?<span class="tooltip" id="osHintTip"></span></span></h1>
     <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po (kartička je uprostřed možného rozmezí, po klepnutí se rozmezí vyznačí na ose). Klepni na cokoli pro podrobnosti.</p>
   </header>
 
+  <div id="ctlSentinel" style="height:1px;margin-bottom:-1px"></div>
   <div class="controls" id="controls">
     <div class="row">
       <a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
@@ -723,6 +729,20 @@
 
   let lastW=0;
   window.addEventListener("resize", ()=>{ setCtlVar(); if(tl.clientWidth!==lastW){ lastW=tl.clientWidth; render(); } });
+})();
+</script>
+<script>
+/* Tlačítka 🏠 📅 🌙: nahoře v záhlaví, při posunu dolů přeskočí k Hledat */
+(function(){
+  const home=document.getElementById("homeBtn"), daily=document.getElementById("dailyTextBtn"), theme=document.getElementById("themeToggle");
+  const row=document.querySelector("#controls .row"), search=document.getElementById("search");
+  const L=document.getElementById("hdrL"), R=document.getElementById("hdrR"), sen=document.getElementById("ctlSentinel");
+  let state=null;
+  function place(top){ if(top===state) return; state=top;
+    if(top){ L.append(home); R.append(daily, theme); }
+    else { row.insertBefore(home, search); row.append(daily, theme); } }
+  if("IntersectionObserver" in window) new IntersectionObserver(es=>place(es[0].isIntersecting || es[0].boundingClientRect.top>0)).observe(sen);
+  else place(false);
 })();
 </script>
 </body>
