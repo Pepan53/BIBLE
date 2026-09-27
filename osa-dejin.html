@@ -13,7 +13,7 @@
   :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
   .wrap{max-width:900px;margin:0 auto;padding:22px 12px 60px}
-  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+  /* Domů, Denní text a Vzhled zůstávají vždy viditelné (fixed z common.css); řádek s hledáním jim uhne */
 
   header{text-align:center;padding:44px 0 0;position:relative;z-index:150}
   h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
@@ -24,7 +24,10 @@
   h1 .hint-icon .tooltip::after{left:auto;right:18px;transform:none}
 
   /* ---------- lepicí ovládání ---------- */
-  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:10px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:19px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
+  .controls .row{margin:0 124px 0 50px}
+  @media (max-width:480px){ .controls{padding-top:11px} .controls .row{margin:0 96px 0 42px;gap:4px} .controls .zbtn{width:30px} .controls .search{padding:7px 7px;font-size:13px} }
+  @media (min-width:1180px){ .controls .row{margin:0} }
   .row{display:flex;gap:6px;align-items:center}
   .search{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;padding:7px 12px;font-size:.92em}
   .zbtn{flex:0 0 auto;width:36px;height:34px;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--maroon-dark);border-radius:10px;font-size:1.15em;cursor:pointer;line-height:1}
@@ -153,7 +156,7 @@
 
   <div class="controls" id="controls">
     <div class="row">
-      <input class="search" id="search" type="search" list="names" placeholder="🔍 Hledat postavu nebo událost…" autocomplete="off">
+      <input class="search" id="search" type="search" list="names" placeholder="🔍 Hledat" autocomplete="off">
       <datalist id="names"></datalist>
       <button class="zbtn" id="zoomOut" title="Oddálit" aria-label="Oddálit">−</button>
       <button class="zbtn" id="zoomIn" title="Přiblížit" aria-label="Přiblížit">+</button>
@@ -165,7 +168,7 @@
   <div id="tl"><div class="msg">Načítám časovou osu…</div></div>
 
   <footer>Aplikace nesbírá žádná data. Obsah osy se načítá z veřejné Google tabulky.<br>
-    <a id="editLink" href="#" target="_blank" rel="noopener">✏️ upravit tabulku</a></footer>
+    <a id="editLink" href="#" target="_blank" rel="noopener">👁️ Zobrazit zdrojovou tabulku</a></footer>
 </div>
 
 <div class="sheet-bg" id="sheetBg" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="sheet" id="sheet"></div></div>
@@ -654,7 +657,6 @@
     const cats=[...new Set(items.filter(it=>it.type!=="period").map(it=>it.cat||"Ostatní"))];
     const chips=[];
     if(items.some(it=>it.line)) chips.push(`<button class="chip star${onlyLine?" on":""}" data-line="1" title="Zobrazit jen Ježíšovu rodovou linii">★ Ježíšova linie</button>`);
-    items.filter(it=>it.type==="period").forEach(it=>chips.push(`<button class="chip era" data-era="${esc(it.id)}">↳ ${esc(it.name)}</button>`));
     cats.forEach(c=>chips.push(`<button class="chip${off.has(c)?"":" on"}" data-cat="${esc(c)}">${esc(c)}</button>`));
     document.getElementById("chips").innerHTML=chips.join("");
     document.getElementById("names").innerHTML=items.map(it=>`<option value="${esc(it.name)}">`).join("");
