@@ -41,6 +41,28 @@
   .chip{flex:0 0 auto;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:16px;padding:5px 11px;font-size:.8em;cursor:pointer;white-space:nowrap}
   .chip.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
   .chip.era{border-style:dashed}
+  .filters{display:flex;gap:6px;margin-top:8px}
+  .filters > *{flex:1 1 0;min-width:0}
+  .fsel,.dd > summary{display:flex;align-items:center;justify-content:space-between;gap:4px;height:34px;box-sizing:border-box;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:17px;padding:0 12px;font:inherit;font-size:.85em;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fsel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%238a7d68'/%3E%3C/svg%3E");background-position:right 12px center;background-size:9px 6px;background-repeat:no-repeat;padding-right:28px}
+  .fsel.on{border-color:var(--gold);background-color:var(--star-bg);font-weight:600}
+  .dd{position:relative}
+  .dd > summary{list-style:none}
+  .dd > summary::-webkit-details-marker{display:none}
+  .dd > summary::after{content:"▾";color:var(--ink-soft);flex:0 0 auto}
+  .dd > summary .lbl{overflow:hidden;text-overflow:ellipsis}
+  .dd > summary .cnt{font-size:.85em;color:var(--ink-soft);margin-left:auto}
+  .dd.part > summary{border-color:var(--maroon);color:var(--maroon-dark);font-weight:600}
+  .dd[open] > summary{border-color:var(--gold)}
+  .dd .panel{position:absolute;top:calc(100% + 4px);left:0;min-width:100%;width:max-content;max-width:min(300px,90vw);z-index:300;background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(30,22,10,.25);padding:6px 0}
+  .dd:last-child .panel{left:auto;right:0}
+  .dd .panel label{display:flex;align-items:center;gap:9px;padding:7px 14px;font-size:.88em;cursor:pointer;white-space:nowrap}
+  .dd .panel label:hover{background:var(--hover-tint,rgba(0,0,0,.05))}
+  .dd .panel input{accent-color:var(--maroon);width:16px;height:16px;margin:0}
+  .dd .panel .n{margin-left:auto;padding-left:12px;color:var(--ink-soft);font-size:.85em}
+  .dd .panel .all{display:flex;gap:6px;padding:4px 10px 6px;border-bottom:1px solid var(--border);margin-bottom:4px}
+  .dd .panel .all button{flex:1;border:1px solid var(--border);background:transparent;color:var(--ink);border-radius:10px;padding:4px 8px;font-size:.78em;cursor:pointer}
+  .filters.dim .dd{opacity:.45;pointer-events:none}
   .status{font-size:.75em;color:var(--ink-soft);margin-top:6px;min-height:1em}
 
   /* ---------- osa ---------- */
@@ -176,7 +198,7 @@
       <button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
       <button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
     </div>
-    <div class="chips" id="chips"></div>
+    <div class="filters" id="filters"></div>
     <div class="status" id="status">Načítám data…</div>
   </div>
 
@@ -681,22 +703,50 @@
   search.addEventListener("change", ()=>{ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } });
   search.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const it=findByName(search.value); if(it){ search.blur(); jumpTo(it,true); } } });
 
+  // Filtry: 3 výběrové seznamy – Zobrazit (vše / ★ linie), Události, Lidé
+  const PEOPLE=/^(patriarch|predkov|soudc|kral|prorok|jezis|osobnost|kněz|knez|apostol)/;
   function buildChips(){
     const cats=[...new Set(items.filter(it=>it.type!=="period").map(it=>it.cat||"Ostatní"))];
-    const chips=[];
-    if(items.some(it=>it.line)) chips.push(`<button class="chip star${onlyLine?" on":""}" data-line="1" title="Zobrazit jen Ježíšovu rodovou linii">★ Ježíšova linie</button>`);
-    cats.forEach(c=>chips.push(`<button class="chip${off.has(c)?"":" on"}" data-cat="${esc(c)}">${esc(c)}</button>`));
-    document.getElementById("chips").innerHTML=chips.join("");
+    const cnt={}; items.forEach(it=>{ if(it.type==="period") return; const c=it.cat||"Ostatní"; cnt[c]=(cnt[c]||0)+1; });
+    const isPeople=c=>{ if(PEOPLE.test(norm(c))) return true; const all=items.filter(it=>(it.cat||"Ostatní")===c); return all.filter(it=>it.type==="life").length*2>all.length; };
+    const groups=[["Události",cats.filter(c=>!isPeople(c))],["Lidé",cats.filter(isPeople)]].filter(g=>g[1].length);
+    const hasLine=items.some(it=>it.line);
+    let h="";
+    if(hasLine) h+=`<select class="fsel${onlyLine?" on":""}" id="fLine" aria-label="Co zobrazit"><option value="all">Zobrazit vše</option><option value="line"${onlyLine?" selected":""}>★ Ježíšova linie</option></select>`;
+    groups.forEach(([name,list],gi)=>{
+      h+=`<details class="dd" data-g="${gi}"><summary><span class="lbl">${name}</span><span class="cnt"></span></summary><div class="panel">
+        <div class="all"><button type="button" data-all="1">Vše</button><button type="button" data-all="0">Nic</button></div>
+        ${list.map(c=>`<label><input type="checkbox" data-cat="${esc(c)}"${off.has(c)?"":" checked"}> ${esc(c)}<span class="n">${cnt[c]||0}</span></label>`).join("")}
+      </div></details>`;
+    });
+    const f=document.getElementById("filters"); f.innerHTML=h;
+    syncFilters();
     document.getElementById("names").innerHTML=items.map(it=>`<option value="${esc(it.name)}">`).join("");
   }
-  document.getElementById("chips").addEventListener("click", e=>{
-    const b=e.target.closest(".chip"); if(!b) return;
-    if(b.dataset.era){ const it=byId[norm(b.dataset.era)]; if(it) jumpTo(it,false); return; }
-    if(b.dataset.line){ onlyLine=!onlyLine; b.classList.toggle("on",onlyLine);
-      document.querySelectorAll(".chip[data-cat]").forEach(x=>x.style.opacity=onlyLine?".45":""); render(); return; }
-    if(onlyLine) return;
-    const c=b.dataset.cat; off.has(c)?off.delete(c):off.add(c); b.classList.toggle("on",!off.has(c)); render();
+  function syncFilters(){
+    const f=document.getElementById("filters");
+    f.classList.toggle("dim", onlyLine);
+    const sel=document.getElementById("fLine"); if(sel) sel.classList.toggle("on", onlyLine);
+    f.querySelectorAll(".dd").forEach(d=>{
+      const boxes=[...d.querySelectorAll("input[data-cat]")], n=boxes.filter(x=>x.checked).length;
+      d.querySelector(".cnt").textContent = n===boxes.length ? "" : `${n}/${boxes.length}`;
+      d.classList.toggle("part", n<boxes.length);
+    });
+  }
+  const filtersEl=document.getElementById("filters");
+  filtersEl.addEventListener("change", e=>{
+    if(e.target.id==="fLine"){ onlyLine=e.target.value==="line"; filtersEl.querySelectorAll(".dd[open]").forEach(d=>d.open=false); syncFilters(); render(); return; }
+    const c=e.target.dataset.cat; if(c==null) return;
+    e.target.checked?off.delete(c):off.add(c); syncFilters(); render();
   });
+  filtersEl.addEventListener("click", e=>{
+    const b=e.target.closest("[data-all]"); if(!b) return;
+    const on=b.dataset.all==="1";
+    b.closest(".panel").querySelectorAll("input[data-cat]").forEach(x=>{ x.checked=on; on?off.delete(x.dataset.cat):off.add(x.dataset.cat); });
+    syncFilters(); render();
+  });
+  filtersEl.addEventListener("toggle", e=>{ if(e.target.open) filtersEl.querySelectorAll(".dd[open]").forEach(d=>{ if(d!==e.target) d.open=false; }); }, true);
+  document.addEventListener("click", e=>{ if(!e.target.closest(".dd")) filtersEl.querySelectorAll(".dd[open]").forEach(d=>d.open=false); });
 
   /* ---------- načtení dat ---------- */
   const status=document.getElementById("status");
