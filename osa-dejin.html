@@ -148,7 +148,7 @@
 <div class="wrap">
   <header>
     <h1>Osa dějin<span class="help-icon hint-icon" id="osHintIcon" tabindex="0" hidden>?<span class="tooltip" id="osHintTip"></span></span></h1>
-    <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po. Klepni na cokoli pro podrobnosti.</p>
+    <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po (kartička je uprostřed možného rozmezí, po klepnutí se rozmezí vyznačí na ose). Klepni na cokoli pro podrobnosti.</p>
   </header>
 
   <div class="controls" id="controls">
@@ -384,7 +384,8 @@
     if(it.openBot) hi=Math.min(domain.b, lo + span*0.05);
     it.dlo=lo; it.dhi=hi;
     const p=depth(it,"po",new Set()), q=depth(it,"pred",new Set());
-    it.est = lo + (hi-lo)*(p+1)/(p+q+2);
+    // bez přesného roku: vždy doprostřed rozmezí; pořadí v řetězci „po/před“ určuje it.dp
+    it.est = (lo+hi)/2; it.dp = p;
   }
 
   function whenText(it){
@@ -460,7 +461,7 @@
     if(!items.length) return;
     const g=layout(); geo=g;
     const H = TOP + (domain.b-domain.a)*ppy + BOTTOM;
-    const evs = items.filter(it=>it.type==="event" && visible(it) && Number.isFinite(it.est)).sort((x,y)=>x.est-y.est);
+    const evs = items.filter(it=>it.type==="event" && visible(it) && Number.isFinite(it.est)).sort((x,y)=>x.est-y.est || (x.dp||0)-(y.dp||0));
     measureCards(g, evs);
 
     // rozložení kartiček bez překrytí
@@ -511,9 +512,11 @@
     const lines=[];
     pos.forEach(p=>{
       const cy=p.top+p.h/2, x1=g.axisX, x2=g.cardsX-8;
-      const dash=p.it.rel?' stroke-dasharray="3 3"':'';
-      lines.push(`<polyline points="${x1},${p.y} ${x2-6},${p.y} ${x2},${cy} ${g.cardsX},${cy}" fill="none" stroke="var(--line)" stroke-width="1.2"${dash}/>`);
-      out.push(`<div class="dot${p.it.rel?" rel":p.it.approx?" approx":""}" data-id="${esc(p.it.id)}" style="left:${g.axisX}px;top:${p.y}px"></div>`);
+      // u událostí bez přesného roku žádná čára ani tečka na ose (střed rozmezí není skutečný rok)
+      if(!p.it.rel){
+        lines.push(`<polyline points="${x1},${p.y} ${x2-6},${p.y} ${x2},${cy} ${g.cardsX},${cy}" fill="none" stroke="var(--line)" stroke-width="1.2"/>`);
+        out.push(`<div class="dot${p.it.approx?" approx":""}" data-id="${esc(p.it.id)}" style="left:${g.axisX}px;top:${p.y}px"></div>`);
+      }
       out.push(cardHtml(p.it,p.top,g));
     });
     out.unshift(`<svg class="lines" width="${g.W}" height="${totalH}">${lines.join("")}</svg>`);
