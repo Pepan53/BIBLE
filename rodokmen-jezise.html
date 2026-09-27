@@ -19,7 +19,7 @@
   /* sdílená tlačítka z common.css necháme odjet se stránkou, aby nepřekrývala lepicí lištu */
   .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
 
-  header{text-align:center;padding:44px 0 0}
+  header{text-align:center;padding:10px 0 0}
   h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
   .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
   .lead a{color:var(--maroon)}
@@ -155,7 +155,7 @@
     .card{font-size:.76em;padding:7px 8px}
     .lanes .card,.lanes .ev{margin-left:3px;margin-right:3px}
   }
-  @media (max-width:560px){ .tools .search{flex:1 1 100%} .tools .chip{flex:1 1 0;padding:6px 4px;text-align:center} }
+  @media (max-width:560px){ .tools .search{flex:1 1 100%} .tools.nav-has .search{flex:1 1 calc(100% - 132px);min-width:0} .tools .chip{flex:1 1 0;padding:6px 4px;text-align:center} }
 </style>
 </head>
 <body>
@@ -905,5 +905,6 @@ pribuzni:`Ježíšovi příbuzní
   }
 })();
 </script>
+<script src="assets/nav-dock.js"></script>
 </body>
 </html>
