@@ -15,7 +15,7 @@
   .wrap{max-width:900px;margin:0 auto;padding:22px 12px 60px}
   /* Domů, Denní text a Vzhled zůstávají vždy viditelné (fixed z common.css); řádek s hledáním jim uhne */
 
-  header{text-align:center;padding:44px 0 0;position:relative;z-index:150}
+  header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
   h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
   .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
   h1 .hint-icon{margin-left:10px;vertical-align:middle;font-family:"Segoe UI",Verdana,Arial,sans-serif;font-size:.5em}
@@ -24,10 +24,10 @@
   h1 .hint-icon .tooltip::after{left:auto;right:18px;transform:none}
 
   /* ---------- lepicí ovládání ---------- */
-  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:19px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
-  .controls .row{margin:0 124px 0 50px}
-  @media (max-width:480px){ .controls{padding-top:11px} .controls .row{margin:0 96px 0 42px;gap:4px} .controls .zbtn{width:30px} .controls .search{padding:7px 7px;font-size:13px} }
-  @media (min-width:1180px){ .controls .row{margin:0} }
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 8px;margin-top:14px;border-bottom:1px solid var(--border)}
+  /* Domů, Denní text a Vzhled jsou přímo v řádku s hledáním, takže jsou vždy vidět hned vedle něj */
+  .controls .home-btn,.controls .theme-toggle-btn,.controls .daily-text-btn{position:static;flex:0 0 auto;width:36px;height:36px;font-size:1em}
+  @media (max-width:480px){ .controls{padding-top:10px} .controls .row{gap:4px} .controls .zbtn{width:30px} .controls .search{padding:7px 7px;font-size:13px} .controls .home-btn,.controls .theme-toggle-btn,.controls .daily-text-btn{width:34px;height:34px} }
   .row{display:flex;gap:6px;align-items:center}
   .search{flex:1;min-width:0;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:18px;padding:7px 12px;font-size:.92em}
   .zbtn{flex:0 0 auto;width:36px;height:34px;border:1.5px solid var(--border);background:var(--bg-panel);color:var(--maroon-dark);border-radius:10px;font-size:1.15em;cursor:pointer;line-height:1}
@@ -122,9 +122,6 @@
 </style>
 </head>
 <body>
-<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
-<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
-<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
 
 <div class="modal-overlay daily-text-modal" id="dailyTextModal">
   <div class="modal-box">
@@ -161,10 +158,13 @@
 
   <div class="controls" id="controls">
     <div class="row">
+      <a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
       <input class="search" id="search" type="search" list="names" placeholder="🔍 Hledat" autocomplete="off">
       <datalist id="names"></datalist>
       <button class="zbtn" id="zoomOut" title="Oddálit" aria-label="Oddálit">−</button>
       <button class="zbtn" id="zoomIn" title="Přiblížit" aria-label="Přiblížit">+</button>
+      <button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+      <button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
     </div>
     <div class="chips" id="chips"></div>
     <div class="status" id="status">Načítám data…</div>
