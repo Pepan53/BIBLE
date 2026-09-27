@@ -98,6 +98,10 @@
   .sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .sheet h3{margin:0;font-family:var(--heading-font);color:var(--maroon-dark);font-size:1.35em}
   .sheet .when{color:var(--gold-dark);font-size:.92em;margin-top:3px}
+  .sheet .info-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:6px;border-radius:50%;border:1px solid var(--gold);background:transparent;color:var(--gold-dark);font:italic 700 12px Georgia,serif;cursor:pointer;vertical-align:1px;padding:0}
+  .sheet .info-btn[aria-expanded="true"]{background:var(--gold);color:#fff}
+  .sheet .dateinfo{display:none;margin:8px 0 0;padding:8px 11px;border-left:3px solid var(--gold);background:var(--star-bg);border-radius:6px;font-size:.88em;color:var(--ink-soft);line-height:1.45}
+  .sheet .dateinfo.show{display:block}
   .x{background:none;border:none;font-size:1.2em;color:var(--ink-soft);cursor:pointer;padding:4px 8px;border-radius:6px}
   .x:hover{background:var(--hover-tint)}
   dl.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0;font-size:.9em}
@@ -620,13 +624,26 @@
     });
     const refs = it.verses.map(v=>`<a href="${verseUrl(v)}" target="_blank" rel="noopener">📖 ${esc(v)}</a>`)
       .concat(it.links.map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
-    sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${esc(it.name)}</h3><div class="when">${esc(whenText(it))}</div></div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
+    // Vysvětlení datace (odhady, zdroj dat) patří do ikonky ⓘ u data, ne do textu
+    const DATING=/^odhad|odhad\b|přibližn|podle časové osy|podle grafu|v knize (je|jsou)|sloučen|přesn[ýé] (rok|datum)|bible (rok|přesné|neuvádí)/i;
+    let noteMain=it.note, noteDate="";
+    if(it.note){
+      if(it.kind==="est" || /^odhad/i.test(it.note.trim())){ noteDate=it.note; noteMain=""; }
+      else {
+        const sents=it.note.match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g)||[it.note];
+        const d=[], m=[]; sents.forEach(x=>{ const t=x.trim(); if(t) (DATING.test(t)?d:m).push(t); });
+        if(d.length){ noteDate=d.join(" "); noteMain=m.join(" "); }
+      }
+    }
+    sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${esc(it.name)}</h3><div class="when">${esc(whenText(it))}${noteDate?`<button class="info-btn" type="button" aria-expanded="false" aria-label="Jak je datum určeno" title="Jak je datum určeno">i</button>`:""}</div>${noteDate?`<div class="dateinfo">${esc(noteDate)}</div>`:""}</div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
       ${media.length?`<div class="media">${media.join("")}</div>`:""}
-      ${it.note?`<p>${esc(it.note)}</p>`:""}
+      ${noteMain?`<p>${esc(noteMain)}</p>`:""}
       ${rows.length?`<dl class="facts">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl>`:""}
       ${refs.length?`<div class="refs">${refs.join("")}</div>`:""}`;
     bg.classList.add("show");
     sheet.querySelector(".x").onclick=closeSheet;
+    const ib=sheet.querySelector(".info-btn");
+    if(ib) ib.onclick=()=>{ const open=ib.getAttribute("aria-expanded")!=="true"; ib.setAttribute("aria-expanded",open); sheet.querySelector(".dateinfo").classList.toggle("show",open); };
   }
   function closeSheet(){ bg.classList.remove("show"); sheet.innerHTML=""; }
   bg.addEventListener("click", e=>{
