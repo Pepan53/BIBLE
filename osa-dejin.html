@@ -601,6 +601,8 @@
     inn.style.width=(g.W+g.x0)+"px"; inn.style.height=fullH+"px";
     inn.style.transform=`translateX(${bkShift-g.x0}px)`;
     inn.innerHTML=out.join("");
+    // prvky, na kterých leží prsty při zoomu, musí zůstat v dokumentu – jinak prohlížeč přestane posílat dotyky
+    if(pinch && pinch.ghosts) pinch.ghosts.forEach(n=>{ if(n && n.nodeType===1 && !n.isConnected){ n.style.visibility="hidden"; n.style.pointerEvents="none"; inn.appendChild(n); } });
     document.getElementById("bkTab").innerHTML=`📖<br>${bkShift>g.x0/2?"‹":"›"}`;
     if(selected) showRange(selected);
   }
@@ -847,13 +849,14 @@
 
   let pinch=null, raf=0, suppressClick=0;
   const dist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
-  tl.addEventListener("touchstart", e=>{
-    if(e.touches.length===2){
+  // posluchače na dokumentu: prvky pod prsty se při zoomu překreslují (a odpojí z osy), dotyk by se jinak ztratil
+  document.addEventListener("touchstart", e=>{
+    if(e.touches.length===2 && [...e.touches].every(t=>t.target && t.target.closest && t.target.closest("#tl"))){
       const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
-      pinch={ d0:dist(e.touches), p0:ppy, yr:yearAt(cy - tl.getBoundingClientRect().top) };
+      pinch={ d0:dist(e.touches), p0:ppy, yr:yearAt(cy - tl.getBoundingClientRect().top), ghosts:[...e.touches].map(t=>t.target) };
     }
   }, {passive:true});
-  tl.addEventListener("touchmove", e=>{
+  document.addEventListener("touchmove", e=>{
     if(!pinch || e.touches.length!==2) return;
     e.preventDefault();
     const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
@@ -861,9 +864,11 @@
     cancelAnimationFrame(raf);
     const yr=pinch.yr; raf=requestAnimationFrame(()=>{ ppy=p; render(); window.scrollTo(0, docTopOfTl() + yOf(yr) - cy); });
   }, {passive:false});
-  tl.addEventListener("touchend", e=>{
-    if(pinch && e.touches.length<2){ pinch=null; suppressClick=Date.now(); try{ localStorage.setItem(ZOOM_KEY,String(ppy)); }catch(err){} }
-  });
+  const pinchEnd=e=>{
+    if(pinch && e.touches.length<2){ const gh=pinch.ghosts||[]; pinch=null; setTimeout(()=>gh.forEach(n=>{ if(n && n.style && n.style.visibility==='hidden' && n.parentNode) n.remove(); }),0); suppressClick=Date.now(); try{ localStorage.setItem(ZOOM_KEY,String(ppy)); }catch(err){} }
+  };
+  document.addEventListener("touchend", pinchEnd);
+  document.addEventListener("touchcancel", pinchEnd);
 
   /* ---------- klepnutí → detail ---------- */
   tl.addEventListener("click", e=>{
