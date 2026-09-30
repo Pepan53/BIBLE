@@ -591,7 +591,17 @@
     out.unshift(`<svg class="lines" width="${g.W+g.x0}" height="${fullH}">${lines.join("")}</svg>`);
     out.push(`<div id="rangeHost"></div>`);
     tl.style.height=fullH+"px";
-    tl.innerHTML=`<div class="bk-tab"><button type="button" id="bkTab" title="Kdy byly napsány biblické knihy" aria-label="Kdy byly napsány biblické knihy">📖<br>${bkShift>0?"‹":"›"}</button></div><div id="tlIn" style="width:${g.W+g.x0}px;height:${fullH}px;transform:translateX(${bkShift-g.x0}px)">${out.join("")}</div>`;
+    // #tlIn a záložka zůstávají stejné prvky (dotyk během zoomu prsty nesmí ztratit svůj cíl)
+    let inn=document.getElementById("tlIn");
+    if(!inn){
+      tl.innerHTML=`<div class="bk-tab"><button type="button" id="bkTab" title="Kdy byly napsány biblické knihy" aria-label="Kdy byly napsány biblické knihy"></button></div><div id="tlIn"></div>`;
+      inn=document.getElementById("tlIn");
+    }
+    inn.classList.remove("anim");
+    inn.style.width=(g.W+g.x0)+"px"; inn.style.height=fullH+"px";
+    inn.style.transform=`translateX(${bkShift-g.x0}px)`;
+    inn.innerHTML=out.join("");
+    document.getElementById("bkTab").innerHTML=`📖<br>${bkShift>g.x0/2?"‹":"›"}`;
     if(selected) showRange(selected);
   }
 
@@ -678,7 +688,8 @@
     if(a>0) return a===b? `${a} n. l.` : `${a}–${b} n. l.`;
     return `${1-a} př. n. l. – ${b} n. l.`;
   }
-  let bkShift=0;                               // kolik px sloupce s knihami je odkryto (0 = skryto)
+  let bkShift=0;
+  const bkH=new Map();                         // uložené výšky kartiček knih (rychlejší překreslení při zoomu)                               // kolik px sloupce s knihami je odkryto (0 = skryto)
   function bkWidth(W){ return Math.round(Math.max(250, Math.min(440, W*0.86))); }
 
   function renderBooks(g, totalH, lines){
@@ -702,7 +713,10 @@
       const lo=Math.min(...cl.gs.map(g=>g.w1)), hi=Math.max(...cl.gs.map(g=>g.w2));
       return `<div class="d">asi ${esc(bkRange(lo,hi))}</div><div class="t">${esc(cl.gs.flatMap(g=>g.list.map(b=>BK_ABBR[b.i])).join(", "))}</div>`;
     };
-    const measure=cl=>{ meas.innerHTML=`<div class="bk-card" style="position:relative;width:${cardW}px">${cardInner(cl)}</div>`; return meas.firstChild.offsetHeight; };
+    const measure=cl=>{ const inner=cardInner(cl), key=cardW+"|"+inner;
+      if(bkH.has(key)) return bkH.get(key);
+      meas.innerHTML=`<div class="bk-card" style="position:relative;width:${cardW}px">${inner}</div>`;
+      const h=meas.firstChild.offsetHeight; bkH.set(key,h); return h; };
     const cls=[];
     groups.forEach(gr=>{
       const y=(yOf(gr.w1)+yOf(gr.w2))/2;
@@ -845,7 +859,7 @@
     const cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
     const p=Math.min(MAXP,Math.max(MINP, pinch.p0*dist(e.touches)/pinch.d0));
     cancelAnimationFrame(raf);
-    raf=requestAnimationFrame(()=>{ ppy=p; render(); window.scrollTo(0, docTopOfTl() + yOf(pinch.yr) - cy); });
+    const yr=pinch.yr; raf=requestAnimationFrame(()=>{ ppy=p; render(); window.scrollTo(0, docTopOfTl() + yOf(yr) - cy); });
   }, {passive:false});
   tl.addEventListener("touchend", e=>{
     if(pinch && e.touches.length<2){ pinch=null; suppressClick=Date.now(); try{ localStorage.setItem(ZOOM_KEY,String(ppy)); }catch(err){} }
