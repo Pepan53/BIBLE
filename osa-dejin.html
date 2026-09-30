@@ -78,6 +78,8 @@
   .bk-legend u{display:inline-block;width:7px;height:12px;border-radius:3px;background:var(--bk-c);vertical-align:-2px;margin-right:4px;text-decoration:none}
   .bk-cov{position:absolute;border-radius:6px;background:var(--bk-c);cursor:pointer;overflow:clip;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
   .bk-cov.open-top{border-top-left-radius:0;border-top-right-radius:0;-webkit-mask-image:linear-gradient(transparent,#000 50px);mask-image:linear-gradient(transparent,#000 50px)}
+  /* jen rozmezí, ve kterém popisované období leží (např. Job: „přes 140 let mezi 1657 a 1473“) */
+  .bk-cov.vague{background:repeating-linear-gradient(180deg,color-mix(in srgb,var(--bk-c) 45%,transparent) 0 6px,transparent 6px 10px);box-shadow:inset 0 0 0 1.5px var(--bk-c)}
   .bk-cov span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;font-size:10px;font-weight:600;color:var(--bk-c-ink);padding:5px 0;white-space:nowrap;margin:0 auto;width:12px;line-height:12px}
   .bk-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--bk-w);transform:translate(-50%,-50%);cursor:pointer}
   .bk-span{position:absolute;width:5px;border-radius:3px;background:var(--bk-w);transform:translateX(-50%);opacity:.75}
@@ -683,7 +685,8 @@
   ];
   const astro = y => y<0 ? y+1 : y;           // −1513 (př. n. l.) → astronomický rok −1512
   const books = BK.map((r,i)=>({ i, name:r[0], writer:r[1], wText:r[2], w1:astro(r[3]), w2:astro(r[4]),
-    cText:r[5], c1:r[6]==null?null:astro(r[6]), c2:r[7]==null?null:astro(r[7]), fromStart:r[6]==null&&r[7]!=null }));
+    cText:r[5], c1:r[6]==null?null:astro(r[6]), c2:r[7]==null?null:astro(r[7]), fromStart:r[6]==null&&r[7]!=null,
+    vague:/^přes\b/.test(r[5]) }));             // „přes 140 let mezi…“ = známe jen rozmezí
   const BK_ABBR=["1Mo","2Mo","3Mo","4Mo","5Mo","Joz","Sd","Rut","1Sa","2Sa","1Kr","2Kr","1Pa","2Pa","Ezr","Ne","Es","Job","Ža","Př","Ka","Pís","Iz","Jer","Ná","Eze","Da","Oz","Joe","Am","Ob","Jon","Mi","Na","Hab","Sef","Ag","Ze","Mal","Mt","Mr","Lk","Jan","Sk","Ří","1Ko","2Ko","Ga","Ef","Flp","Kol","1Te","2Te","1Ti","2Ti","Tit","Flm","Heb","Jk","1Pe","2Pe","1Ja","2Ja","3Ja","Juda","Zj"];
   function bkRange(a,b){ // astronomické roky
     if(b<=0) return a===b? `${1-a} př. n. l.` : `${1-a}–${1-b} př. n. l.`;
@@ -740,10 +743,10 @@
       bottom=Math.max(bottom, cl.top+cl.h);
       return {cl, ys, y1:Math.min(...cl.gs.map(g=>yOf(g.w1))), y2:Math.max(...cl.gs.map(g=>yOf(g.w2))), top:cl.top, h:cl.h};
     });
-    out.push(`<div class="bk-bg" style="width:${BW}px;height:${Math.max(totalH,bottom+40)}px"><div class="bk-legend" style="width:${Math.max(120,cardW-20)}px"><b>Biblické knihy</b><br><i></i>kdy byla kniha napsána<br><u></u>období, které popisuje</div></div>`);
+    out.push(`<div class="bk-bg" style="width:${BW}px;height:${Math.max(totalH,bottom+40)}px"><div class="bk-legend" style="width:${Math.max(120,cardW-20)}px"><b>Biblické knihy</b><br><i></i>kdy byla kniha napsána<br><u></u>období, které popisuje<br><u style="background:transparent;box-shadow:inset 0 0 0 1.5px var(--bk-c)"></u>jen rozmezí (přesně nevíme)</div></div>`);
     cov.forEach(c=>{
       const y1=yOf(c.lo), h=Math.max(8,yOf(c.hi)-y1), x=lanesR-(c.lane+1)*(LW+LG)+LG;
-      out.push(`<div class="bk-cov${c.b.fromStart?" open-top":""}" data-bk="${c.b.i}" title="${esc(c.b.name+" popisuje: "+c.b.cText)}" style="left:${x}px;width:${LW}px;top:${y1}px;height:${h}px"><span>${esc(c.b.name)}</span></div>`);
+      out.push(`<div class="bk-cov${c.b.fromStart?" open-top":""}${c.b.vague?" vague":""}" data-bk="${c.b.i}" title="${esc(c.b.name+" popisuje: "+c.b.cText)}" style="left:${x}px;width:${LW}px;top:${y1}px;height:${h}px"><span>${esc(c.b.name)}</span></div>`);
     });
     out.push(`<div class="axisline" style="left:${wx-1}px;top:${TOP-6}px;height:${totalH-TOP-BOTTOM+12}px;background:var(--bk-w-soft)"></div>`);
     cards.forEach(c=>{
@@ -762,7 +765,7 @@
     const one=b=>`<div class="bk-item"><h3 style="margin:14px 0 4px">${esc(b.name)}</h3><dl class="facts">
         <dt>Pisatel</dt><dd>${esc(b.writer)}</dd>
         <dt>Napsání dokončeno</dt><dd>${esc(b.wText)}</dd>
-        ${b.cText?`<dt>Popisované období</dt><dd>${esc(b.cText)}</dd>`:""}
+        ${b.cText?`<dt>Popisované období</dt><dd>${esc(b.cText)}${b.vague?`<br><small style="color:var(--ink-soft)">Přesný začátek a konec neznáme – pruh na ose ukazuje jen rozmezí, ve kterém toto období leží.</small>`:""}</dd>`:""}
       </dl><div class="refs"><a href="${verseUrl(b.name+" 1")}" target="_blank" rel="noopener">📖 Číst ${esc(b.name)}</a></div></div>`;
     sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${list.length>1?"Biblické knihy":esc(list[0].name)}</h3><div class="when">✍ ${esc(new Set(list.map(b=>b.wText)).size===1 ? list[0].wText : "asi "+bkRange(Math.min(...list.map(b=>b.w1)),Math.max(...list.map(b=>b.w2))))}</div></div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
       ${list.length>1?list.map(one).join(""):one(list[0]).replace(/<h3[^>]*>.*?<\/h3>/,"")}
