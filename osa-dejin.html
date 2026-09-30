@@ -68,6 +68,27 @@
   /* ---------- osa ---------- */
   #tl{position:relative;margin-top:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;overflow-x:clip}
   #tl svg.lines{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+  #tlIn{position:relative;will-change:transform}
+  #tlIn.anim{transition:transform .28s ease}
+  /* levý sloupec: kdy byly knihy napsány + jaké období popisují (odkryje se posunem doprava) */
+  .bk-bg{position:absolute;left:0;top:0;background:linear-gradient(90deg,var(--bk-bg) 0,var(--bk-bg) calc(100% - 20px),transparent);border-right:1px dashed var(--border)}
+  .bk-legend{position:sticky;top:calc(var(--ctl-h) + 6px);z-index:3;margin:6px 8px 0;padding:6px 9px;border-radius:9px;background:var(--bg-panel);border:1px solid var(--border);font-size:11px;line-height:1.5;color:var(--ink-soft);box-shadow:var(--shadow)}
+  .bk-legend b{color:var(--ink);font-size:12px}
+  .bk-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--bk-w);vertical-align:-1px;margin-right:4px}
+  .bk-legend u{display:inline-block;width:7px;height:12px;border-radius:3px;background:var(--bk-c);vertical-align:-2px;margin-right:4px;text-decoration:none}
+  .bk-cov{position:absolute;border-radius:6px;background:var(--bk-c);cursor:pointer;overflow:clip;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+  .bk-cov.open-top{border-top-left-radius:0;border-top-right-radius:0;-webkit-mask-image:linear-gradient(transparent,#000 50px);mask-image:linear-gradient(transparent,#000 50px)}
+  .bk-cov span{position:sticky;top:calc(var(--ctl-h) + 6px);display:block;writing-mode:vertical-rl;font-size:10px;font-weight:600;color:var(--bk-c-ink);padding:5px 0;white-space:nowrap;margin:0 auto;width:12px;line-height:12px}
+  .bk-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--bk-w);transform:translate(-50%,-50%);cursor:pointer}
+  .bk-span{position:absolute;width:5px;border-radius:3px;background:var(--bk-w);transform:translateX(-50%);opacity:.75}
+  .bk-card{position:absolute;background:var(--bg-panel);border:1.5px solid var(--bk-w-soft);border-left:4px solid var(--bk-w);border-radius:8px;padding:3px 7px 4px;cursor:pointer;box-shadow:var(--shadow);font-size:12px;line-height:1.3}
+  .bk-card .d{font-size:10px;color:var(--bk-w)}
+  .bk-card .t{color:var(--ink);font-weight:600}
+  .bk-card .t::before{content:"✍ ";font-weight:400}
+  .bk-tab{position:sticky;top:calc(50vh + var(--ctl-h)/2 - 26px);height:0;z-index:20}
+  .bk-tab button{position:absolute;left:0;top:0;width:26px;height:52px;border:1.5px solid var(--bk-w-soft);border-left:none;border-radius:0 12px 12px 0;background:var(--bg-panel);color:var(--bk-w);font-size:13px;line-height:1.1;cursor:pointer;box-shadow:var(--shadow);padding:0;opacity:.92}
+  :root{--bk-bg:rgba(120,90,160,.07);--bk-w:#6d4b93;--bk-w-soft:#cbbde0;--bk-c:hsl(170 38% 68%);--bk-c-ink:#1f4d46}
+  [data-theme="dark"]{--bk-bg:rgba(170,140,220,.08);--bk-w:#b99be0;--bk-w-soft:#5d4a78;--bk-c:hsl(170 30% 34%);--bk-c-ink:#d6f0ea}
   .band{position:absolute;background:hsl(var(--h) var(--band-s) var(--band-l));display:flex;align-items:center;justify-content:center;overflow:hidden}
   .band span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;color:var(--ink-soft);white-space:nowrap;letter-spacing:.3px}
   .period{position:absolute;border-radius:6px;background:hsl(var(--h) var(--band-s) calc(var(--band-l) - 8%));cursor:pointer}
@@ -188,7 +209,7 @@
   <header>
     <div class="hdr-l" id="hdrL"></div><div class="hdr-r" id="hdrR"></div>
     <h1>Osa dějin<span class="help-icon hint-icon" id="osHintIcon" tabindex="0" hidden>?<span class="tooltip" id="osHintTip"></span></span></h1>
-    <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po (kartička je uprostřed možného rozmezí, po klepnutí se rozmezí vyznačí na ose). Klepni na cokoli pro podrobnosti.</p>
+    <p class="lead" id="osHint">Biblické dějiny na jedné svislé ose. Přibližuj roztažením prstů nebo tlačítky +/−. Plná tečka = přesný rok, prázdná = přibližný (~), přerušovaný rámeček = přesný rok neznáme, jen víme, co bylo před a po (kartička je uprostřed možného rozmezí, po klepnutí se rozmezí vyznačí na ose). Klepni na cokoli pro podrobnosti. Posunutím osy doprava (nebo tlačítkem 📖 vlevo) zobrazíš, kdy byly napsány biblické knihy a jaké období popisují.</p>
   </header>
 
   <div id="ctlSentinel" style="height:1px;margin-bottom:-1px"></div>
@@ -465,16 +486,17 @@
 
   function layout(){
     const W=tl.clientWidth;
-    const periodW=18, axisL=periodW+2, axisX=periodW+60;
+    const x0=bkWidth(W);                       // šířka skrytého sloupce s knihami
+    const periodW=18, axisL=x0+periodW+2, axisX=x0+periodW+60;
     const lanesX=axisX+10;
     // šířka sloupců se přizpůsobí, aby vpravo zbylo aspoň 150 px na kartičky
     let laneGap=lanesCount>10?2:3;
-    let laneW=Math.floor(Math.min(W<420?15:17, (W-lanesX-162)/Math.max(1,lanesCount)-laneGap));
+    let laneW=Math.floor(Math.min(W<420?15:17, (W-(lanesX-x0)-162)/Math.max(1,lanesCount)-laneGap));
     laneW=Math.max(6,laneW);
     const lanesW=lanesCount*(laneW+laneGap);
     tl.classList.toggle("thin", laneW<12);
     const cardsX=lanesX+lanesW+(lanesCount?12:0);
-    return { W, periodW, axisL, axisX, laneW, laneGap, lanesX, cardsX, cardsW: Math.min(360, Math.max(120, W-cardsX-2)) };
+    return { W, x0, periodW, axisL, axisX, laneW, laneGap, lanesX, cardsX, cardsW: Math.min(360, Math.max(120, W-(cardsX-x0)-2)) };
   }
 
   function measureCards(g, evs){
@@ -531,7 +553,7 @@
     // období
     items.filter(it=>it.type==="period"&&visible(it)&&Number.isFinite(it.lo)&&Number.isFinite(it.end)).forEach((it,i)=>{
       const y1=yOf(it.lo), h=Math.max(8,yOf(it.end)-y1);
-      out.push(`<div class="period" data-id="${esc(it.id)}" style="left:0;width:${g.periodW}px;top:${y1}px;height:${h}px;--h:${catHue(it.name)}"><span>${esc(it.name)}</span></div>`);
+      out.push(`<div class="period" data-id="${esc(it.id)}" style="left:${g.x0}px;width:${g.periodW}px;top:${y1}px;height:${h}px;--h:${catHue(it.name)}"><span>${esc(it.name)}</span></div>`);
     });
     // osa + dílky
     out.push(`<div class="axisline" style="left:${g.axisX-1}px;top:${TOP-6}px;height:${totalH-TOP-BOTTOM+12}px"></div>`);
@@ -563,12 +585,222 @@
       }
       out.push(cardHtml(p.it,p.top,g));
     });
-    out.unshift(`<svg class="lines" width="${g.W}" height="${totalH}">${lines.join("")}</svg>`);
+    const bk=renderBooks(g, totalH, lines);
+    const fullH=Math.max(totalH, bk.bottom);
+    out.unshift(bk.html);
+    out.unshift(`<svg class="lines" width="${g.W+g.x0}" height="${fullH}">${lines.join("")}</svg>`);
     out.push(`<div id="rangeHost"></div>`);
-    tl.style.height=totalH+"px";
-    tl.innerHTML=out.join("");
+    tl.style.height=fullH+"px";
+    tl.innerHTML=`<div class="bk-tab"><button type="button" id="bkTab" title="Kdy byly napsány biblické knihy" aria-label="Kdy byly napsány biblické knihy">📖<br>${bkShift>0?"‹":"›"}</button></div><div id="tlIn" style="width:${g.W+g.x0}px;height:${fullH}px;transform:translateX(${bkShift-g.x0}px)">${out.join("")}</div>`;
     if(selected) showRange(selected);
   }
+
+  /* =========================================================
+     KNIHY BIBLE – kdy byly napsány a jaké období popisují
+     (podle přehledu biblických knih na jw.org; stejná data jako v aplikaci Pořadí biblických knih)
+     Roky: záporné číslo = př. n. l. (−1513 = 1513 př. n. l.), kladné = n. l.
+     [název, pisatel, dokončeno (text), napsáno od, napsáno do, popisované období (text), období od, období do]
+     ========================================================= */
+  const BK=[
+    ["1. Mojžíšova","Mojžíš","asi 1513 př. n. l.",-1513,-1513,"od „počátku“ do 1657 př. n. l.",null,-1657],
+    ["2. Mojžíšova","Mojžíš","asi 1512 př. n. l.",-1512,-1512,"1657–1512 př. n. l.",-1657,-1512],
+    ["3. Mojžíšova","Mojžíš","asi 1512 př. n. l.",-1512,-1512,"1 měsíc (1512 př. n. l.)",-1512,-1512],
+    ["4. Mojžíšova","Mojžíš","asi 1473 př. n. l.",-1473,-1473,"1512–1473 př. n. l.",-1512,-1473],
+    ["5. Mojžíšova","Mojžíš","asi 1473 př. n. l.",-1473,-1473,"2 měsíce (1473 př. n. l.)",-1473,-1473],
+    ["Jozue","Jozue","asi 1450 př. n. l.",-1450,-1450,"1473 – asi 1450 př. n. l.",-1473,-1450],
+    ["Soudci","Samuel","asi 1100 př. n. l.",-1100,-1100,"asi 1450 – asi 1120 př. n. l.",-1450,-1120],
+    ["Rut","Samuel","asi 1090 př. n. l.",-1090,-1090,"11 let za vlády soudců",null,null],
+    ["1. Samuelova","Samuel, Gad, Natan","asi 1078 př. n. l.",-1078,-1078,"asi 1180–1078 př. n. l.",-1180,-1078],
+    ["2. Samuelova","Gad, Natan","asi 1040 př. n. l.",-1040,-1040,"1077 – asi 1040 př. n. l.",-1077,-1040],
+    ["1. Královská","Jeremjáš","580 př. n. l.",-580,-580,"asi 1040–911 př. n. l.",-1040,-911],
+    ["2. Královská","Jeremjáš","580 př. n. l.",-580,-580,"asi 920–580 př. n. l.",-920,-580],
+    ["1. Paralipomenon","Ezra","asi 460 př. n. l.",-460,-460,"asi 1077–1037 př. n. l.",-1077,-1037],
+    ["2. Paralipomenon","Ezra","asi 460 př. n. l.",-460,-460,"asi 1037–537 př. n. l.",-1037,-537],
+    ["Ezra","Ezra","asi 460 př. n. l.",-460,-460,"537 – asi 467 př. n. l.",-537,-467],
+    ["Nehemjáš","Nehemjáš","po 443 př. n. l.",-443,-443,"456 – po 443 př. n. l.",-456,-443],
+    ["Ester","Mordekai","asi 475 př. n. l.",-475,-475,"493 – asi 475 př. n. l.",-493,-475],
+    ["Job","Mojžíš","asi 1473 př. n. l.",-1473,-1473,"přes 140 let mezi lety 1657 a 1473 př. n. l.",-1657,-1473],
+    ["Žalmy","David a další","asi 460 př. n. l.",-460,-460,"",null,null],
+    ["Přísloví","Šalomoun, Agur, Lemuel","asi 717 př. n. l.",-717,-717,"",null,null],
+    ["Kazatel","Šalomoun","před 1000 př. n. l.",-1000,-1000,"",null,null],
+    ["Šalomounova píseň","Šalomoun","asi 1020 př. n. l.",-1020,-1020,"",null,null],
+    ["Izajáš","Izajáš","po 732 př. n. l.",-732,-732,"asi 778 – po 732 př. n. l.",-778,-732],
+    ["Jeremjáš","Jeremjáš","580 př. n. l.",-580,-580,"647–580 př. n. l.",-647,-580],
+    ["Nářky","Jeremjáš","607 př. n. l.",-607,-607,"",null,null],
+    ["Ezekiel","Ezekiel","asi 591 př. n. l.",-591,-591,"613 – asi 591 př. n. l.",-613,-591],
+    ["Daniel","Daniel","asi 536 př. n. l.",-536,-536,"618 – asi 536 př. n. l.",-618,-536],
+    ["Ozeáš","Ozeáš","po 745 př. n. l.",-745,-745,"před 804 – po 745 př. n. l.",-804,-745],
+    ["Joel","Joel","asi 820 př. n. l. (?)",-820,-820,"",null,null],
+    ["Amos","Amos","asi 804 př. n. l.",-804,-804,"",null,null],
+    ["Obadjáš","Obadjáš","asi 607 př. n. l.",-607,-607,"",null,null],
+    ["Jonáš","Jonáš","asi 844 př. n. l.",-844,-844,"",null,null],
+    ["Micheáš","Micheáš","před 717 př. n. l.",-717,-717,"asi 777–717 př. n. l.",-777,-717],
+    ["Nahum","Nahum","před 632 př. n. l.",-632,-632,"",null,null],
+    ["Habakuk","Habakuk","asi 628 př. n. l. (?)",-628,-628,"",null,null],
+    ["Sefanjáš","Sefanjáš","před 648 př. n. l.",-648,-648,"",null,null],
+    ["Ageus","Ageus","520 př. n. l.",-520,-520,"112 dní (520 př. n. l.)",-520,-520],
+    ["Zecharjáš","Zecharjáš","518 př. n. l.",-518,-518,"520–518 př. n. l.",-520,-518],
+    ["Malachiáš","Malachiáš","po 443 př. n. l.",-443,-443,"",null,null],
+    ["Matouš","Matouš","asi 41 n. l.",41,41,"2 př. n. l. – 33 n. l.",-2,33],
+    ["Marek","Marek","asi 60–65 n. l.",60,65,"29–33 n. l.",29,33],
+    ["Lukáš","Lukáš","asi 56–58 n. l.",56,58,"3 př. n. l. – 33 n. l.",-3,33],
+    ["Jan","apoštol Jan","asi 98 n. l.",98,98,"kromě úvodu 29–33 n. l.",29,33],
+    ["Skutky","Lukáš","asi 61 n. l.",61,61,"33 – asi 61 n. l.",33,61],
+    ["Římanům","Pavel","asi 56 n. l.",56,56,"",null,null],
+    ["1. Korinťanům","Pavel","asi 55 n. l.",55,55,"",null,null],
+    ["2. Korinťanům","Pavel","asi 55 n. l.",55,55,"",null,null],
+    ["Galaťanům","Pavel","asi 50–52 n. l.",50,52,"",null,null],
+    ["Efezanům","Pavel","asi 60–61 n. l.",60,61,"",null,null],
+    ["Filipanům","Pavel","asi 60–61 n. l.",60,61,"",null,null],
+    ["Kolosanům","Pavel","asi 60–61 n. l.",60,61,"",null,null],
+    ["1. Tesaloničanům","Pavel","asi 50 n. l.",50,50,"",null,null],
+    ["2. Tesaloničanům","Pavel","asi 51 n. l.",51,51,"",null,null],
+    ["1. Timoteovi","Pavel","asi 61–64 n. l.",61,64,"",null,null],
+    ["2. Timoteovi","Pavel","asi 65 n. l.",65,65,"",null,null],
+    ["Titovi","Pavel","asi 61–64 n. l.",61,64,"",null,null],
+    ["Filemonovi","Pavel","asi 60–61 n. l.",60,61,"",null,null],
+    ["Hebrejcům","Pavel","asi 61 n. l.",61,61,"",null,null],
+    ["Jakub","Jakub (Ježíšův bratr)","před 62 n. l.",62,62,"",null,null],
+    ["1. Petra","Petr","asi 62–64 n. l.",62,64,"",null,null],
+    ["2. Petra","Petr","asi 64 n. l.",64,64,"",null,null],
+    ["1. Jana","apoštol Jan","asi 98 n. l.",98,98,"",null,null],
+    ["2. Jana","apoštol Jan","asi 98 n. l.",98,98,"",null,null],
+    ["3. Jana","apoštol Jan","asi 98 n. l.",98,98,"",null,null],
+    ["Juda","Juda (Ježíšův bratr)","asi 65 n. l.",65,65,"",null,null],
+    ["Zjevení","apoštol Jan","asi 96 n. l.",96,96,"",null,null]
+  ];
+  const astro = y => y<0 ? y+1 : y;           // −1513 (př. n. l.) → astronomický rok −1512
+  const books = BK.map((r,i)=>({ i, name:r[0], writer:r[1], wText:r[2], w1:astro(r[3]), w2:astro(r[4]),
+    cText:r[5], c1:r[6]==null?null:astro(r[6]), c2:r[7]==null?null:astro(r[7]), fromStart:r[6]==null&&r[7]!=null }));
+  const BK_ABBR=["1Mo","2Mo","3Mo","4Mo","5Mo","Joz","Sd","Rut","1Sa","2Sa","1Kr","2Kr","1Pa","2Pa","Ezr","Ne","Es","Job","Ža","Př","Ka","Pís","Iz","Jer","Ná","Eze","Da","Oz","Joe","Am","Ob","Jon","Mi","Na","Hab","Sef","Ag","Ze","Mal","Mt","Mr","Lk","Jan","Sk","Ří","1Ko","2Ko","Ga","Ef","Flp","Kol","1Te","2Te","1Ti","2Ti","Tit","Flm","Heb","Jk","1Pe","2Pe","1Ja","2Ja","3Ja","Juda","Zj"];
+  function bkRange(a,b){ // astronomické roky
+    if(b<=0) return a===b? `${1-a} př. n. l.` : `${1-a}–${1-b} př. n. l.`;
+    if(a>0) return a===b? `${a} n. l.` : `${a}–${b} n. l.`;
+    return `${1-a} př. n. l. – ${b} n. l.`;
+  }
+  let bkShift=0;                               // kolik px sloupce s knihami je odkryto (0 = skryto)
+  function bkWidth(W){ return Math.round(Math.max(250, Math.min(440, W*0.86))); }
+
+  function renderBooks(g, totalH, lines){
+    const BW=g.x0, out=[];
+    // sloupce „popisované období“ – co nejblíž k ose
+    const cov=books.filter(b=>b.c2!=null).map(b=>({b, lo:b.c1==null?domain.a:b.c1, hi:b.c2})).sort((x,y)=>x.lo-y.lo);
+    const lanes=[]; cov.forEach(c=>{ let k=lanes.findIndex(end=>end < c.lo-3); if(k<0){ k=lanes.length; lanes.push(0); } lanes[k]=c.hi; c.lane=k; });
+    const LW=13, LG=3, lanesW=lanes.length*(LW+LG);
+    const lanesR=BW-10;                        // pravý okraj sloupců
+    const wx=lanesR-lanesW-8;                  // svislá linka se značkami napsání
+    const cardR=wx-10, cardL=6, cardW=Math.max(110,cardR-cardL);
+    // napsání – seskupit knihy se stejnou dobou
+    const groups=[]; books.forEach(b=>{ const k=b.wText; let gr=groups.find(x=>x.k===k); if(!gr){ gr={k, w1:b.w1, w2:b.w2, list:[]}; groups.push(gr); } gr.list.push(b); });
+    groups.sort((x,y)=>(x.w1+x.w2)-(y.w1+y.w2));
+    // kartičky: když se nevejdou k svému roku, sloučí se se sousední (zkratky knih)
+    const meas=document.createElement("div");
+    meas.style.cssText=`position:absolute;visibility:hidden;left:0;top:0;width:${cardW}px`;
+    tl.appendChild(meas);
+    const cardInner=cl=>{
+      if(cl.gs.length===1) return `<div class="d">${esc(cl.gs[0].k)}</div><div class="t">${esc(cl.gs[0].list.map(b=>b.name).join(", "))}</div>`;
+      const lo=Math.min(...cl.gs.map(g=>g.w1)), hi=Math.max(...cl.gs.map(g=>g.w2));
+      return `<div class="d">asi ${esc(bkRange(lo,hi))}</div><div class="t">${esc(cl.gs.flatMap(g=>g.list.map(b=>BK_ABBR[b.i])).join(", "))}</div>`;
+    };
+    const measure=cl=>{ meas.innerHTML=`<div class="bk-card" style="position:relative;width:${cardW}px">${cardInner(cl)}</div>`; return meas.firstChild.offsetHeight; };
+    const cls=[];
+    groups.forEach(gr=>{
+      const y=(yOf(gr.w1)+yOf(gr.w2))/2;
+      const last=cls[cls.length-1];
+      const cl={gs:[gr]}; cl.h=measure(cl);
+      const top=Math.max(y-cl.h/2, last? last.top+last.h+5 : -Infinity);
+      if(last && top>y+4){                     // odsunuté → sloučit s předchozí
+        last.gs.push(gr); last.h=measure(last);
+        // sloučená kartička se vystředí na své období (ale ne přes předchozí)
+        const ys=last.gs.map(g=>(yOf(g.w1)+yOf(g.w2))/2), mid=(Math.min(...ys)+Math.max(...ys))/2;
+        const pl=cls[cls.length-2];
+        last.top=Math.max(mid-last.h/2, pl? pl.top+pl.h+5 : -Infinity);
+      } else { cl.top=top; cls.push(cl); }
+    });
+    meas.remove();
+    let bottom=0;
+    const cards=cls.map(cl=>{
+      const ys=cl.gs.map(g=>(yOf(g.w1)+yOf(g.w2))/2);
+      bottom=Math.max(bottom, cl.top+cl.h);
+      return {cl, ys, y1:Math.min(...cl.gs.map(g=>yOf(g.w1))), y2:Math.max(...cl.gs.map(g=>yOf(g.w2))), top:cl.top, h:cl.h};
+    });
+    out.push(`<div class="bk-bg" style="width:${BW}px;height:${Math.max(totalH,bottom+40)}px"><div class="bk-legend" style="width:${Math.max(120,cardW-20)}px"><b>Biblické knihy</b><br><i></i>kdy byla kniha napsána<br><u></u>období, které popisuje</div></div>`);
+    cov.forEach(c=>{
+      const y1=yOf(c.lo), h=Math.max(8,yOf(c.hi)-y1), x=lanesR-(c.lane+1)*(LW+LG)+LG;
+      out.push(`<div class="bk-cov${c.b.fromStart?" open-top":""}" data-bk="${c.b.i}" title="${esc(c.b.name+" popisuje: "+c.b.cText)}" style="left:${x}px;width:${LW}px;top:${y1}px;height:${h}px"><span>${esc(c.b.name)}</span></div>`);
+    });
+    out.push(`<div class="axisline" style="left:${wx-1}px;top:${TOP-6}px;height:${totalH-TOP-BOTTOM+12}px;background:var(--bk-w-soft)"></div>`);
+    cards.forEach(c=>{
+      const cy=c.top+c.h/2, ly=Math.min(Math.max(cy, c.y1), c.y2);
+      lines.push(`<polyline points="${wx},${ly} ${cardR+14},${ly} ${cardR+6},${cy} ${cardR},${cy}" fill="none" stroke="var(--bk-w-soft)" stroke-width="1.2"/>`);
+      if(c.y2-c.y1>3) out.push(`<div class="bk-span" style="left:${wx}px;top:${c.y1}px;height:${c.y2-c.y1}px"></div>`);
+      c.cl.gs.forEach((g,k)=>out.push(`<div class="bk-dot" data-bkg="${esc(g.k)}" style="left:${wx}px;top:${c.ys[k]}px"></div>`));
+      const keys=c.cl.gs.map(g=>g.k).join("|");
+      out.push(`<div class="bk-card" data-bkg="${esc(keys)}" style="left:${cardL}px;top:${c.top}px;width:${cardW}px">${cardInner(c.cl)}</div>`);
+    });
+    return { html: out.join(""), bottom: bottom+BOTTOM };
+  }
+
+  function openBooks(list){
+    selected=null; showRange({type:"none"});
+    const one=b=>`<div class="bk-item"><h3 style="margin:14px 0 4px">${esc(b.name)}</h3><dl class="facts">
+        <dt>Pisatel</dt><dd>${esc(b.writer)}</dd>
+        <dt>Napsání dokončeno</dt><dd>${esc(b.wText)}</dd>
+        ${b.cText?`<dt>Popisované období</dt><dd>${esc(b.cText)}</dd>`:""}
+      </dl><div class="refs"><a href="${verseUrl(b.name+" 1")}" target="_blank" rel="noopener">📖 Číst ${esc(b.name)}</a></div></div>`;
+    sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${list.length>1?"Biblické knihy":esc(list[0].name)}</h3><div class="when">✍ ${esc(new Set(list.map(b=>b.wText)).size===1 ? list[0].wText : "asi "+bkRange(Math.min(...list.map(b=>b.w1)),Math.max(...list.map(b=>b.w2))))}</div></div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
+      ${list.length>1?list.map(one).join(""):one(list[0]).replace(/<h3[^>]*>.*?<\/h3>/,"")}
+      <p style="font-size:.8em;color:var(--ink-soft);margin-top:14px">Podle přehledu biblických knih na jw.org.</p>`;
+    bg.classList.add("show");
+    sheet.querySelector(".x").onclick=closeSheet;
+  }
+
+  /* ---------- horizontální posun: odkrytí sloupce s knihami ---------- */
+  function setShift(v, anim){
+    if(!geo) return;
+    bkShift=Math.max(0, Math.min(geo.x0, v));
+    const inn=document.getElementById("tlIn"); if(!inn) return;
+    inn.classList.toggle("anim", !!anim);
+    inn.style.transform=`translateX(${bkShift-geo.x0}px)`;
+    const t=document.getElementById("bkTab"); if(t) t.innerHTML=`📖<br>${bkShift>geo.x0/2?"‹":"›"}`;
+  }
+  let hdrag=null;
+  tl.addEventListener("pointerdown", e=>{
+    if(e.pointerType==="mouse" && e.button!==0) return;
+    if(e.target.closest("#bkTab")) return;
+    hdrag={ id:e.pointerId, x0:e.clientX, y0:e.clientY, s0:bkShift, on:false, n:0, t:Date.now() };
+  });
+  tl.addEventListener("pointermove", e=>{
+    if(!hdrag || e.pointerId!==hdrag.id || pinch) return;
+    const dx=e.clientX-hdrag.x0, dy=e.clientY-hdrag.y0;
+    if(!hdrag.on){
+      if(Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.3){ hdrag.on=true; try{ tl.setPointerCapture(e.pointerId); }catch(err){} }
+      else if(Math.abs(dy)>12){ hdrag=null; return; }
+      else return;
+    }
+    hdrag.v=dx/Math.max(1,Date.now()-hdrag.t);
+    setShift(hdrag.s0+dx, false);
+  });
+  const endDrag=e=>{
+    if(!hdrag || e.pointerId!==hdrag.id) return;
+    if(hdrag.on){
+      suppressClick=Date.now();
+      const dx=e.clientX-hdrag.x0, x0=geo?geo.x0:0;
+      const open = Math.abs(dx)>40 ? dx>0 : bkShift>x0/2;
+      setShift(open? x0 : 0, true);
+    }
+    hdrag=null;
+  };
+  tl.addEventListener("pointerup", endDrag);
+  tl.addEventListener("pointercancel", e=>{ if(hdrag && hdrag.on) endDrag(e); else hdrag=null; });
+  tl.addEventListener("wheel", e=>{
+    if(e.ctrlKey) return;
+    const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX;
+    if(Math.abs(dx)<1 || Math.abs(dx)<Math.abs(e.deltaY)*(e.shiftKey?0:1)) return;
+    e.preventDefault();
+    setShift(bkShift-dx, false);
+    clearTimeout(tl._wt); tl._wt=setTimeout(()=>setShift(bkShift>geo.x0/2?geo.x0:0,true),160);
+  }, {passive:false});
 
   // zvýraznění rozsahu u položky bez přesného roku
   let selected=null;
@@ -621,7 +853,10 @@
 
   /* ---------- klepnutí → detail ---------- */
   tl.addEventListener("click", e=>{
+    if(e.target.closest("#bkTab")){ setShift(bkShift>0?0:geo.x0, true); return; }
     if(Date.now()-suppressClick<350) return;
+    const bkEl=e.target.closest("[data-bk],[data-bkg]");
+    if(bkEl){ const keys = bkEl.dataset.bkg!=null ? bkEl.dataset.bkg.split("|") : null; const list = keys ? books.filter(b=>keys.includes(b.wText)) : [books[+bkEl.dataset.bk]]; openBooks(list); return; }
     const el=e.target.closest("[data-id]"); if(!el) return;
     const it=byId[norm(el.dataset.id)]; if(it) openItem(it);
   });
