@@ -693,6 +693,16 @@
     if(a>0) return a===b? `${a} n. l.` : `${a}–${b} n. l.`;
     return `${1-a} př. n. l. – ${b} n. l.`;
   }
+  // Videa „Úvod k …“ z jw.org (kategorie Biblické knihy): číslo obrázku = 1001071000 + hodnota, délka v sekundách
+  const BK_VID_IMG=[883,886,889,892,895,898,901,904,907,910,913,916,919,922,925,928,931,934,937,940,943,946,949,952,955,958,961,964,967,970,973,976,979,982,985,988,991,994,997,801,805,808,811,814,817,820,823,826,829,832,835,838,841,844,847,850,853,856,859,862,865,868,871,874,877,880];
+  const BK_VID_DUR=[391,335,277,290,321,306,306,238,331,323,303,316,290,338,153,195,207,237,262,217,158,197,295,319,166,251,345,197,144,184,153,203,212,188,167,147,196,201,165,175,198,300,290,346,256,230,259,209,246,211,222,184,183,223,215,195,160,284,228,197,175,184,149,151,166,354];
+  const jwVideoUrl = key => `https://www.jw.org/cs/knihovna/videa/#cs/mediaitems/BibleBooks/pub-nwtsv_${key}_VIDEO`;
+  const jwImg = id => `https://cms-imgp.jw-cdn.org/img/p/${id}/univ/art/${id}_univ_wss_sm.jpg`;
+  const mmss = t => `${Math.floor(t/60)}:${String(t%60).padStart(2,"0")}`;
+  function bookVideo(b){
+    const id=1001071000+BK_VID_IMG[b.i];
+    return `<div class="media" style="grid-template-columns:minmax(0,320px)"><a href="${jwVideoUrl((b.i+1)*10)}" target="_blank" rel="noopener" title="Přehrát na jw.org"><img src="${jwImg(id)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'🎬'}))"><div class="play">▶</div><div class="cap">Video: Úvod ke knize ${esc(b.name)} · ${mmss(BK_VID_DUR[b.i])}</div></a></div>`;
+  }
   let bkShift=0;
   const bkH=new Map();                         // uložené výšky kartiček knih (rychlejší překreslení při zoomu)                               // kolik px sloupce s knihami je odkryto (0 = skryto)
   function bkWidth(W){ return Math.round(Math.max(250, Math.min(440, W*0.86))); }
@@ -766,10 +776,10 @@
         <dt>Pisatel</dt><dd>${esc(b.writer)}</dd>
         <dt>Napsání dokončeno</dt><dd>${esc(b.wText)}</dd>
         ${b.cText?`<dt>Popisované období</dt><dd>${esc(b.cText)}${b.vague?`<br><small style="color:var(--ink-soft)">Přesný začátek a konec neznáme – pruh na ose ukazuje jen rozmezí, ve kterém toto období leží.</small>`:""}</dd>`:""}
-      </dl><div class="refs"><a href="${verseUrl(b.name+" 1")}" target="_blank" rel="noopener">📖 Číst ${esc(b.name)}</a></div></div>`;
+      </dl>${bookVideo(b)}<div class="refs"><a href="${verseUrl(b.name+" 1")}" target="_blank" rel="noopener">📖 Číst ${esc(b.name)}</a><a href="${jwVideoUrl((b.i+1)*10)}" target="_blank" rel="noopener">🎬 Video úvod</a></div></div>`;
     sheet.innerHTML=`<div class="sheet-h"><div><h3 id="sheetTitle">${list.length>1?"Biblické knihy":esc(list[0].name)}</h3><div class="when">✍ ${esc(new Set(list.map(b=>b.wText)).size===1 ? list[0].wText : "asi "+bkRange(Math.min(...list.map(b=>b.w1)),Math.max(...list.map(b=>b.w2))))}</div></div><button class="x" type="button" aria-label="Zavřít">✕</button></div>
       ${list.length>1?list.map(one).join(""):one(list[0]).replace(/<h3[^>]*>.*?<\/h3>/,"")}
-      <p style="font-size:.8em;color:var(--ink-soft);margin-top:14px">Podle přehledu biblických knih na jw.org.</p>`;
+      <p style="font-size:.8em;color:var(--ink-soft);margin-top:14px">Podle přehledu biblických knih na jw.org. Videa: jw.org → Videa → Biblické knihy. <a href="${jwVideoUrl(1)}" target="_blank" rel="noopener" style="color:var(--maroon)">🎬 Úvod k Bibli</a></p>`;
     bg.classList.add("show");
     sheet.querySelector(".x").onclick=closeSheet;
   }
