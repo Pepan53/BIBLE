@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Celosvětová zpráva — přehled podle zemí</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌍</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  :root{ --row-bg:#fffdf8; --row-alt:#fbf7ee; --sel-bg:#f6e9cf; --up:#3c7a3c; --down:#b0433a; --chart-line:#7a2e2e; --chart-area:rgba(122,46,46,.10); --grid:#e7dcc4; }
+  :root[data-theme="dark"]{ --row-bg:#241f16; --row-alt:#211c14; --sel-bg:#3a2f1a; --up:#6fcf8f; --down:#ef7b6c; --chart-line:#d9a441; --chart-area:rgba(217,164,65,.14); --grid:#3a3226; }
+  *{box-sizing:border-box}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 14px 60px}
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+
+  header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
+  .lead a{color:var(--maroon)}
+  h1 .hint-icon{margin-left:10px;vertical-align:middle;font-family:"Segoe UI",Verdana,Arial,sans-serif;font-size:.5em}
+  h1 .hint-icon[hidden]{display:none}
+  h1 .hint-icon .tooltip{font-weight:400;line-height:1.45;font-size:14px;left:auto;right:-14px;transform:none;width:min(290px,88vw)}
+  h1 .hint-icon .tooltip::after{left:auto;right:18px;transform:none}
+  h1 .hint-icon .tooltip a{color:#f0cf87}
+
+  /* výběr země */
+  .picker{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 10px;margin-top:12px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center}
+  .picker label{font-weight:600;color:var(--ink-soft);font-size:.9em;white-space:nowrap}
+  .picker select{flex:1 1 auto;min-width:0;font:inherit;font-size:1em;padding:9px 34px 9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-panel);color:var(--ink);
+    appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 55%,calc(100% - 12px) 55%;background-size:6px 6px;background-repeat:no-repeat}
+  .picker select:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .quick{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0 0}
+  .quick button{font:inherit;font-size:.82em;border:1px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:999px;padding:4px 11px;cursor:pointer}
+  .quick button[aria-pressed="true"]{background:var(--maroon);border-color:var(--maroon);color:#fff}
+
+  /* přehled */
+  .card{background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-top:16px;overflow:hidden}
+  .card-head{padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+  .card-head h2{margin:0;font-family:var(--heading-font);color:var(--maroon-dark);font-size:1.3em;line-height:1.2}
+  .card-head .sub{color:var(--ink-soft);font-size:.85em;margin-top:3px}
+  .card-head .note{margin-top:8px;font-size:.85em;color:var(--red);background:var(--red-bg);border-radius:8px;padding:6px 10px}
+  table.ov{width:100%;border-collapse:collapse;font-size:.95em}
+  table.ov th{font-size:.75em;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;text-align:right;padding:8px 14px 6px;background:var(--row-alt)}
+  table.ov th:first-child{text-align:left}
+  table.ov td{padding:11px 14px;border-top:1px solid var(--border);vertical-align:middle}
+  table.ov td.lbl{color:var(--ink)}
+  table.ov td.lbl small{display:block;color:var(--ink-soft);font-size:.78em;margin-top:2px}
+  table.ov td.val{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  table.ov td.chg{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:.86em;width:1%}
+  table.ov tbody tr{cursor:pointer;transition:background .15s}
+  table.ov tbody tr:hover{background:var(--hover-tint)}
+  table.ov tbody tr.sel{background:var(--sel-bg)}
+  table.ov tbody tr.sel td.lbl{font-weight:600;color:var(--maroon-dark)}
+  table.ov tbody tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--maroon)}
+  table.ov tbody tr:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--ink-soft)}
+  .chev{color:var(--ink-soft);font-size:.8em;margin-left:4px}
+  tr.sel .chev{color:var(--maroon)}
+
+  /* graf */
+  .chart-card .card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .chart-sum{font-size:.88em;color:var(--ink-soft);margin-top:4px}
+  .chart-sum b{font-variant-numeric:tabular-nums}
+  .chart-box{padding:8px 8px 4px;position:relative}
+  .chart-box svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart-box .axis{fill:var(--ink-soft);font-size:11px;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .chart-box .grid{stroke:var(--grid);stroke-width:1}
+  .chart-box .line{fill:none;stroke:var(--chart-line);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+  .chart-box .gap{fill:none;stroke:var(--chart-line);stroke-width:1.5;stroke-dasharray:4 4;opacity:.6}
+  .chart-box .area{fill:var(--chart-area)}
+  .chart-box .pt{fill:var(--bg-panel);stroke:var(--chart-line);stroke-width:2.5}
+  .chart-box .pt.last{fill:var(--chart-line)}
+  .chart-box .vlab{fill:var(--ink);font-size:10.5px;font-weight:600;font-family:"Segoe UI",Verdana,Arial,sans-serif}
+  .chart-box .hit{fill:transparent;cursor:pointer}
+  .chart-box .hl{stroke:var(--gold);stroke-width:1;stroke-dasharray:3 3}
+  .yoy{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;padding:2px 12px 12px}
+  .yoy div{text-align:center;font-size:.72em;border-radius:6px;padding:4px 0;background:var(--row-alt);font-variant-numeric:tabular-nums;line-height:1.25}
+  .yoy div span{display:block;color:var(--ink-soft);font-size:.92em}
+  .yoy div.up{background:var(--green-bg)} .yoy div.down{background:var(--red-bg)}
+  .tip{position:absolute;pointer-events:none;background:var(--tooltip-bg);color:#fff;font-size:.8em;padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);opacity:0;transition:opacity .12s;z-index:5}
+  .tip.show{opacity:1}
+  .empty{padding:24px 16px;text-align:center;color:var(--ink-soft)}
+
+  .src{margin-top:18px;font-size:.82em;color:var(--ink-soft);line-height:1.6;text-align:center}
+  .src a{color:var(--maroon)}
+  footer{text-align:center;color:var(--ink-soft);font-size:.82em;margin-top:24px}
+
+  @media (max-width:480px){
+    h1{font-size:1.5em}
+    table.ov td{padding:10px 10px}
+    table.ov th{padding:7px 10px 5px}
+    table.ov{font-size:.9em}
+    .picker label{display:none}
+    .yoy{grid-template-columns:repeat(5,1fr);gap:4px;padding:2px 8px 10px}
+    .yoy div{font-size:.7em}
+  }
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a2e2e">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="assets/pwa.js" defer></script>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Celosvětová zpráva<span class="help-icon hint-icon" id="czHintIcon" tabindex="0" hidden>?<span class="tooltip">Vyber zemi a uvidíš přehled za služební rok 2025 (září 2024 – srpen 2025). Klepni na řádek přehledu a dole se ukáže, jak se údaj vyvíjel od roku 2016.</span></span></h1>
+    <p class="lead" id="czHint">Vyber zemi a uvidíš přehled za služební rok 2025 (září 2024 – srpen 2025). Klepni na řádek přehledu a dole se ukáže, jak se údaj vyvíjel od roku 2016.</p>
+  </header>
+
+  <div class="picker">
+    <label for="country">Země</label>
+    <select id="country" aria-label="Vyber zemi"></select>
+  </div>
+  <div class="quick" id="quick"></div>
+
+  <section class="card" id="overview" aria-live="polite"></section>
+  <section class="card chart-card" id="chart"></section>
+
+  <p class="src" id="src"></p>
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
+</div>
+
+<script src="assets/common.js"></script>
+<script src="assets/celosvetova-zprava-data.js"></script>
+<script>
+(function(){
+  /* ---------- nápověda: při prvním otevření text, pak už jen ikonka „?“ ---------- */
+  (function(){
+    const KEY="zpravaHintSeen", hint=document.getElementById("czHint"), icon=document.getElementById("czHintIcon");
+    let seen=false;
+    try{ seen=localStorage.getItem(KEY)==="1"; localStorage.setItem(KEY,"1"); }catch(e){}
+    if(seen){ hint.hidden=true; icon.hidden=false; }
+    icon.addEventListener("click",e=>{ if(e.target.closest("a")) return; e.stopPropagation(); icon.classList.toggle("tooltip-open"); });
+    document.addEventListener("click",()=>icon.classList.remove("tooltip-open"));
+  })();
+
+  /* ---------- data ---------- */
+  const Z=window.ZPRAVA, YEARS=Z.YEARS, LAST=YEARS[YEARS.length-1];
+  const FIELDS=["pop","peak","avg","bapt","pion","cong","stud","mem"];
+  const DATA={};
+  Z.RAW.trim().split("\n").forEach(line=>{
+    const parts=line.split("|"), name=parts[0], o={};
+    FIELDS.forEach((f,i)=>{
+      const vals=(parts[i+1]||"").split(",");
+      o[f]=YEARS.map((_,k)=>{ const s=(vals[k]||"").trim(); if(s==="") return null; return s.endsWith("k") ? Math.round(parseFloat(s)*1000) : +s; });
+    });
+    /* odvozené řady: poměr obyvatel na zvěstovatele a meziroční vzrůst průměrného počtu zvěstovatelů */
+    o.ratio=YEARS.map((_,k)=> o.pop[k] && o.peak[k] ? Math.round(o.pop[k]/o.peak[k]) : null);
+    o.growth=YEARS.map((_,k)=> k>0 && o.avg[k]!=null && o.avg[k-1] ? (o.avg[k]/o.avg[k-1]-1)*100 : null);
+    DATA[name]=o;
+  });
+  const WORLD="Celý svět";
+  const NAMES=Object.keys(DATA).filter(n=>n!==WORLD).sort((a,b)=>a.localeCompare(b,"cs"));
+
+  const ROWS=[
+    {k:"peak",  lbl:"Vrcholný počet zvěstovatelů", sub:"nejvyšší počet v jednom měsíci"},
+    {k:"avg",   lbl:"Průměrný počet zvěstovatelů"},
+    {k:"growth",lbl:"Vzrůst oproti předchozímu roku", sub:"podle průměrného počtu zvěstovatelů", pct:true},
+    {k:"bapt",  lbl:"Počet pokřtěných"},
+    {k:"pion",  lbl:"Průkopníci", sub:"průměr pravidelných a zvláštních"},
+    {k:"cong",  lbl:"Počet sborů"},
+    {k:"stud",  lbl:"Biblická studia", sub:"průměrný počet za měsíc"},
+    {k:"mem",   lbl:"Účast na Památné slavnosti"},
+    {k:"pop",   lbl:"Počet obyvatel"},
+    {k:"ratio", lbl:"Obyvatel na 1 zvěstovatele", sub:"čím méně, tím víc zvěstovatelů", inverse:true}
+  ];
+
+  /* ---------- formátování ---------- */
+  const NF=new Intl.NumberFormat("cs-CZ");
+  const fmt=v=> v==null ? "–" : NF.format(Math.round(v));
+  const fmtPct=(v,d=1)=> v==null ? "–" : (v>0?"+":v<0?"−":"")+Math.abs(v).toLocaleString("cs-CZ",{minimumFractionDigits:d,maximumFractionDigits:d})+" %";
+  const fmtVal=(row,v)=> row.pct ? fmtPct(v) : fmt(v);
+  const short=v=>{ const a=Math.abs(v);
+    if(a>=1e9) return (v/1e9).toLocaleString("cs-CZ",{maximumFractionDigits:1})+" mld.";
+    if(a>=1e6) return (v/1e6).toLocaleString("cs-CZ",{maximumFractionDigits:a>=1e8?0:a>=1e7?1:2})+" mil.";
+    if(a>=1e4) return (v/1e3).toLocaleString("cs-CZ",{maximumFractionDigits:0})+" tis.";
+    return NF.format(Math.round(v)); };
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  /* změna proti předchozímu roku pro tabulku */
+  function change(row,arr,k){
+    if(k<1 || arr[k]==null || arr[k-1]==null) return null;
+    if(row.pct) return {abs:arr[k]-arr[k-1], txt:(arr[k]-arr[k-1]>0?"+":arr[k]-arr[k-1]<0?"−":"")+Math.abs(arr[k]-arr[k-1]).toLocaleString("cs-CZ",{maximumFractionDigits:1})+" b."};
+    if(!arr[k-1]) return null;
+    const p=(arr[k]/arr[k-1]-1)*100; return {abs:p, txt:fmtPct(p)};
+  }
+  const cls=(row,v)=>{ if(v==null||Math.abs(v)<0.05) return "flat"; const good=row.inverse ? v<0 : v>0; return good?"up":"down"; };
+
+  /* ---------- stav ---------- */
+  const LS_C="zpravaCountry", LS_R="zpravaRow";
+  let country=WORLD, rowKey="peak";
+  try{ const c=localStorage.getItem(LS_C); if(c && DATA[c]) country=c; const r=localStorage.getItem(LS_R); if(r && ROWS.some(x=>x.k===r)) rowKey=r; }catch(e){}
+
+  /* ---------- výběr země ---------- */
+  const sel=document.getElementById("country");
+  sel.innerHTML=`<option value="${WORLD}">🌍 ${WORLD}</option>`+NAMES.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  sel.value=country;
+  sel.addEventListener("change",()=>{ setCountry(sel.value); });
+  const QUICK=[WORLD,"Česká republika","Slovensko"];
+  const quick=document.getElementById("quick");
+  function renderQuick(){
+    quick.innerHTML=QUICK.map(n=>`<button type="button" data-c="${esc(n)}" aria-pressed="${n===country}">${n===WORLD?"🌍 ":""}${esc(n)}</button>`).join("");
+  }
+  quick.addEventListener("click",e=>{ const b=e.target.closest("button[data-c]"); if(b) setCountry(b.dataset.c); });
+
+  function setCountry(c){
+    country=c; sel.value=c;
+    try{ localStorage.setItem(LS_C,c); }catch(e){}
+    renderQuick(); renderOverview(); renderChart();
+  }
+
+  /* ---------- přehled ---------- */
+  const ov=document.getElementById("overview");
+  function lastIdx(o){ for(let k=YEARS.length-1;k>=0;k--) if(o.peak[k]!=null) return k; return -1; }
+
+  function renderOverview(){
+    const o=DATA[country], k=lastIdx(o), y=YEARS[k];
+    const note= y!==LAST ? `<div class="note">Za rok ${LAST} tato země ve zprávě samostatně uvedena není. Zobrazuje se poslední dostupný rok ${y}.</div>` : "";
+    const body=ROWS.map(r=>{
+      const arr=o[r.k], v=arr[k];
+      const ch=change(r,arr,k);
+      const chHtml= ch ? `<span class="${cls(r,ch.abs)}">${ch.abs>0.05?"▲":ch.abs<-0.05?"▼":"●"} ${ch.txt}</span>` : `<span class="flat">–</span>`;
+      const valHtml= r.pct ? `<span class="${cls(r,v)}">${fmtVal(r,v)}</span>` : fmtVal(r,v);
+      return `<tr data-k="${r.k}" tabindex="0" class="${r.k===rowKey?"sel":""}" aria-selected="${r.k===rowKey}">
+        <td class="lbl">${r.lbl}${r.sub?`<small>${r.sub}</small>`:""}</td>
+        <td class="val">${valHtml}</td>
+        <td class="chg">${chHtml}<span class="chev">›</span></td></tr>`;
+    }).join("");
+    ov.innerHTML=`<div class="card-head"><h2>${country===WORLD?"🌍 ":""}${esc(country)}</h2>
+      <div class="sub">Služební rok ${y} · září ${y-1} – srpen ${y}</div>${note}</div>
+      <table class="ov"><thead><tr><th>Údaj</th><th>${y}</th><th>proti ${y-1}</th></tr></thead><tbody>${body}</tbody></table>`;
+  }
+  function pickRow(k, scroll){
+    rowKey=k; try{ localStorage.setItem(LS_R,k); }catch(e){}
+    ov.querySelectorAll("tbody tr").forEach(tr=>{ const on=tr.dataset.k===k; tr.classList.toggle("sel",on); tr.setAttribute("aria-selected",on); });
+    renderChart();
+    if(scroll){ const c=document.getElementById("chart"), r=c.getBoundingClientRect();
+      if(r.bottom>window.innerHeight || r.top<70) c.scrollIntoView({behavior:"smooth",block:"end"}); }
+  }
+  ov.addEventListener("click",e=>{ const tr=e.target.closest("tbody tr"); if(tr) pickRow(tr.dataset.k,true); });
+  ov.addEventListener("keydown",e=>{ const tr=e.target.closest("tbody tr"); if(!tr) return;
+    if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickRow(tr.dataset.k,true); }
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); const n=e.key==="ArrowDown"?tr.nextElementSibling:tr.previousElementSibling; if(n){ n.focus(); pickRow(n.dataset.k,false); } } });
+
+  /* ---------- graf ---------- */
+  const chartEl=document.getElementById("chart");
+  function niceStep(span,n){ const raw=span/n, p=Math.pow(10,Math.floor(Math.log10(raw))), f=raw/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+
+  function renderChart(){
+    const o=DATA[country], r=ROWS.find(x=>x.k===rowKey), arr=o[r.k];
+    const pts=YEARS.map((y,k)=>({y,k,v:arr[k]})).filter(p=>p.v!=null);
+    const head=`<div class="card-head"><div><h2>${r.lbl}</h2><div class="chart-sum" id="chartSum"></div></div></div>`;
+    if(pts.length<2){
+      chartEl.innerHTML=head+`<div class="empty">Pro tuto zemi a údaj ${pts.length? "je k dispozici jen jeden rok – graf vývoje nelze nakreslit." : "nejsou k dispozici žádná data."}</div>`;
+      document.getElementById("chartSum").textContent=esc(country);
+      return;
+    }
+    /* souhrn za celé období */
+    const a=pts[0], b=pts[pts.length-1];
+    let sum;
+    if(r.pct){
+      const avg=pts.reduce((s,p)=>s+p.v,0)/pts.length;
+      sum=`${esc(country)} · ${a.y}–${b.y}: průměrně <b class="${cls(r,avg)}">${fmtPct(avg)}</b> ročně`;
+    }else{
+      const p=a.v? (b.v/a.v-1)*100 : null;
+      sum=`${esc(country)} · ${a.y}–${b.y}: <b>${fmt(a.v)}</b> → <b>${fmt(b.v)}</b>${p!=null?` <b class="${cls(r,p)}">(${fmtPct(p)})</b>`:""}`;
+    }
+
+    /* rozměry */
+    const W=Math.round(Math.max(300, Math.min(740, (chartEl.clientWidth||640)-16)));
+    const H=W<480?240:280, L=W<480?48:60, R=W<480?10:18, T=26, B=30, iw=W-L-R, ih=H-T-B;
+    let min=Math.min(...pts.map(p=>p.v)), max=Math.max(...pts.map(p=>p.v));
+    if(r.pct){ min=Math.min(min,0); max=Math.max(max,0); }
+    if(min===max){ const d=Math.abs(min)*0.1||1; min-=d; max+=d; }
+    const pad=(max-min)*0.12; let lo=min-pad, hi=max+pad;
+    if(!r.pct && lo<0) lo=0;
+    const step=niceStep(hi-lo,4); lo=Math.floor(lo/step)*step; hi=Math.ceil(hi/step)*step;
+    const X=k=> L+ (iw*k/(YEARS.length-1));
+    const Yv=v=> T+ih-(v-lo)/(hi-lo)*ih;
+
+    let g="";
+    for(let v=lo; v<=hi+step/2; v+=step){
+      const yy=Yv(v).toFixed(1);
+      g+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}"${r.pct&&Math.abs(v)<step/1000?' style="stroke:var(--ink-soft);stroke-width:1.2"':""}/>`;
+      g+=`<text class="axis" x="${L-8}" y="${(+yy+4).toFixed(1)}" text-anchor="end">${r.pct?fmtPct(v,0).replace(" %","%"):short(v)}</text>`;
+    }
+    const narrow=window.innerWidth<520;
+    YEARS.forEach((y,k)=>{ g+=`<text class="axis" x="${X(k).toFixed(1)}" y="${H-8}" text-anchor="middle">${narrow ? "’"+String(y).slice(-2) : y}</text>`; });
+
+    /* čára: souvislé úseky plnou, mezery (chybějící roky) přerušovaně */
+    let solid="", gaps="", area="";
+    for(let i=1;i<pts.length;i++){
+      const p=pts[i-1], q=pts[i], seg=`M${X(p.k).toFixed(1)},${Yv(p.v).toFixed(1)}L${X(q.k).toFixed(1)},${Yv(q.v).toFixed(1)}`;
+      if(q.k-p.k===1) solid+=seg; else gaps+=seg;
+    }
+    if(!r.pct){
+      const base=Yv(lo).toFixed(1);
+      area=`M${X(pts[0].k).toFixed(1)},${base}`+pts.map(p=>`L${X(p.k).toFixed(1)},${Yv(p.v).toFixed(1)}`).join("")+`L${X(b.k).toFixed(1)},${base}Z`;
+    }
+    const dense=window.innerWidth<520;
+    let dots="", labs="", hits="";
+    pts.forEach((p,i)=>{
+      const x=X(p.k), y=Yv(p.v), isLast=i===pts.length-1;
+      dots+=`<circle class="pt${isLast?" last":""}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${isLast?5:4}"/>`;
+      if(!dense || (pts.length-1-i)%2===0){
+        const nb=[pts[i-1],pts[i+1]].filter(Boolean);
+        const above = !nb.every(n=>n.v>p.v);
+        labs+=`<text class="vlab" x="${x.toFixed(1)}" y="${(above?y-10:y+18).toFixed(1)}" text-anchor="${i===0?"start":isLast?"end":"middle"}">${r.pct?fmtPct(p.v):short(p.v)}</text>`;
+      }
+    });
+    YEARS.forEach((y,k)=>{ const x0=X(k)-iw/(YEARS.length-1)/2; hits+=`<rect class="hit" data-k="${k}" x="${x0.toFixed(1)}" y="${T-10}" width="${(iw/(YEARS.length-1)).toFixed(1)}" height="${ih+20}"/>`; });
+
+    const svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(r.lbl)} – ${esc(country)}, vývoj ${a.y}–${b.y}">
+      ${g}${area?`<path class="area" d="${area}"/>`:""}<path class="gap" d="${gaps}"/><path class="line" d="${solid}"/>
+      <line class="hl" id="hl" x1="0" x2="0" y1="${T-6}" y2="${T+ih}" visibility="hidden"/>
+      ${dots}${labs}${hits}</svg>`;
+
+    /* meziroční změny pod grafem */
+    const yoy=YEARS.map((y,k)=>{
+      const ch=change(r,arr,k);
+      const c=ch?cls(r,ch.abs):"";
+      return `<div class="${c}"><span>${y}</span>${ch?ch.txt.replace(" %","%").replace(" b.","b"):"–"}</div>`;
+    }).join("");
+
+    chartEl.innerHTML=head+`<div class="chart-box" id="cbox">${svg}<div class="tip" id="tip"></div></div><div class="yoy" title="Změna proti předchozímu roku">${yoy}</div>`;
+    document.getElementById("chartSum").innerHTML=sum;
+
+    /* tooltip */
+    const box=document.getElementById("cbox"), tip=document.getElementById("tip"), hl=box.querySelector("#hl"), svgEl=box.querySelector("svg");
+    function show(k){
+      const v=arr[k]; const ch=change(r,arr,k);
+      const sx=svgEl.getBoundingClientRect().width/W;
+      hl.setAttribute("x1",X(k)); hl.setAttribute("x2",X(k)); hl.setAttribute("visibility","visible");
+      tip.innerHTML=`<b>${YEARS[k]}</b>: ${fmtVal(r,v)}${ch?` <span style="opacity:.8">(${ch.txt})</span>`:""}`;
+      const ty = v!=null ? Yv(v) : T+ih/2;
+      let left=X(k)*sx+8; const w=box.clientWidth;
+      tip.style.left=Math.min(Math.max(left,70),w-70)+"px"; tip.style.top=(ty*sx+8)+"px"; tip.classList.add("show");
+    }
+    function hide(){ tip.classList.remove("show"); hl.setAttribute("visibility","hidden"); }
+    box.querySelectorAll(".hit").forEach(h=>{
+      h.addEventListener("mouseenter",()=>show(+h.dataset.k));
+      h.addEventListener("click",e=>{ e.stopPropagation(); show(+h.dataset.k); });
+    });
+    svgEl.addEventListener("mouseleave",hide);
+    document.addEventListener("click",hide,{once:true});
+  }
+
+  /* ---------- zdroje ---------- */
+  document.getElementById("src").innerHTML="Zdroj: Celosvětová zpráva svědků Jehovových na wol.jw.org – služební roky "+
+    YEARS.map(y=>`<a href="https://wol.jw.org/cs/wol/d/r29/lp-b/${Z.SRC[y]}" target="_blank" rel="noopener">${y}</a>`).join(", ")+
+    ".<br>Chybějící údaje (např. průměrný počet zvěstovatelů 2017–2018 a biblická studia 2017–2020) zpráva v daném roce neuváděla.";
+
+  let rz; window.addEventListener("resize",()=>{ clearTimeout(rz); rz=setTimeout(renderChart,200); });
+
+  renderQuick(); renderOverview(); renderChart();
+})();
+</script>
+<script src="assets/nav-dock.js"></script>
+</body>
+</html>
