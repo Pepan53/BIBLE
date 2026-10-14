@@ -166,6 +166,10 @@
   .njv a:first-of-type{border-top:none}
   .njv a::before{content:"📘";flex:0 0 auto}
   .njv a:hover{text-decoration:underline}
+  .njv.wcg{background:linear-gradient(135deg,rgba(60,120,170,.10),var(--bg-panel));border-color:#5b8db8}
+  .njv.wcg .njv-h{color:#2f5f88}
+  .njv.wcg a::before{content:"🛡️"}
+  [data-theme="dark"] .njv.wcg .njv-h{color:#8fbfe6}
   .media{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:12px 0}
   .media a,.media .vid{display:block;position:relative;border-radius:9px;overflow:hidden;background:var(--list-bg);aspect-ratio:16/10;border:1px solid var(--border);cursor:pointer}
   .media img{width:100%;height:100%;object-fit:cover;display:block}
@@ -324,6 +328,10 @@
   const njvTitle = u => { try{ const x=new URL(u); if(!/jw\.org$/.test(x.hostname)) return null; const p=x.pathname.replace(/\/?$/,"/");
       if(NJV_TITLES[p]) return NJV_TITLES[p];
       if(/\/(prava-vira|muzi-zeny-bible)\//.test(p) || /#napodobujte/.test(u)) return "Článek z rubriky Napodobujte jejich víru"; }catch(e){} return null; };
+  // Kapitoly knihy „Odvážně choď s Bohem“ (wcg, 2025) podle čísla dokumentu na wol.jw.org
+  const WCG_TITLES = {"1102025901": "1. Enoch: Chodil s Bohem", "1102025902": "2. Noe: Odsoudil svět", "1102025903": "3. Sára: Neohlížela se zpátky", "1102025904": "4. Abraham: První muž, který vedl spravedlivou válku", "1102025905": "5. Abraham: Stál před nejtěžší situací svého života", "1102025906": "6. Rebeka: Nebála se vydat do neznáma", "1102025907": "7. Jákob: Chránil svoji rodinu tváří v tvář nebezpečí", "1102025908": "8. Josef: Nenechal se zlákat", "1102025909": "9. Šifra, Pua, Amram, Jokebed a Miriam: Díky víře zachránili Mojžíše", "1102025910": "10. Mojžíš: Udělal zásadní rozhodnutí", "1102025911": "11. Mojžíš: „Jdi za faraonem“", "1102025912": "12. Kaleb: Věrně bojoval za svého Boha", "1102025913": "13. Jozue: Řídil se neobvyklými pokyny", "1102025914": "14. Raab: Dala přednost Jehovovi před svým vlastním lidem", "1102025915": "15. Noemi a Rut: V těžkých chvílích držely při sobě", "1102025916": "16. Barak a Debora: „Půjdu s tebou“", "1102025917": "17. Jael: „Nejpožehnanější mezi ženami“", "1102025918": "18. Gideon: Odvážný a opatrný", "1102025919": "19. Jefta a jeho dcera: Splnili slib, i když to nebylo lehké", "1102025920": "20. Samson: Ztratil sílu, ale našel v sobě odvahu", "1102025921": "21. Samuel: Malý chlapec v roli Jehovova mluvčího", "1102025922": "22. Jonatan: Jeho věrnost se neobešla bez odvahy", "1102025923": "23. David: Vyrazil proti obrovi", "1102025924": "24. Abigail: Musela si poradit se dvěma rozčílenými muži", "1102025925": "25. David: Odvážně se řídil svým svědomím", "1102025926": "26. Natan: Pomohl králi, aby si uvědomil svoje chyby", "1102025927": "27. Mefibošet: Nezahořkl", "1102025928": "28. Asa: Celý život byl úplně oddaný Jehovovi", "1102025929": "29. Elijáš: „Můj Bůh je Jehova“", "1102025930": "30. Vdova z Carefatu: V zoufalé situaci byla odvážná", "1102025931": "31. Izraelská holčička: Zajatá dívka odvážně promluvila", "1102025932": "32. Eliša: „Jehovo, otevři mu prosím oči“", "1102025933": "33. Jehojada: Bránil královský trůn", "1102025934": "34. Ezekjáš: „Pevně se držel Jehovy“", "1102025935": "35. Manasse: Měl odvahu se změnit", "1102025936": "36. Josijáš: Pomáhal lidem vrátit se k Jehovovi", "1102025937": "37. Daniel: „Rozhodl se, že se neznečistí“", "1102025938": "38. Tři Hebrejci: Překonali sílu ohně", "1102025939": "39. Ester: „Když zahynu, tak zahynu“", "1102025940": "40. Nehemjáš: Znovu postavil hradby", "1102025941": "41. Zecharjáš a Alžběta: „Žili tak, jak je to v Božích očích správné“", "1102025942": "42. Marie: Ochotně udělala, co po ní Jehova chtěl", "1102025943": "43. Josef: Přijal velkou odpovědnost", "1102025944": "44. Jan Křtitel: „Není nikdo větší“", "1102025945": "45. Petr: „Jsem hříšný člověk“", "1102025946": "46. Marie Magdaléna: „Viděla jsem Pána!“", "1102025947": "47. Marie, Lazarova sestra: „Udělala, co mohla“", "1102025948": "48. Štěpán: „Muž plný víry a svatého ducha“", "1102025949": "49. Petr: Stal se z něj muž pevný jako skála", "1102025950": "50. Saul z Tarsu: Začal přemýšlet úplně jinak", "1102025951": "51. Barnabáš: „Syn útěchy“", "1102025952": "52. Marek: „Je mi … velkou pomocí“", "1102025953": "53. Pavel: V bouři zachránil život druhým", "1102025954": "54. Apoštol Jan: Odvážný i v temné době", "1102025962": "Časová osa k 1. části", "1102025964": "Časová osa k 2. části", "1102025966": "Časová osa k 3. části"};
+  const wcgTitle = u => { const m=String(u).match(/\/(11020259\d\d)(?:[^\d]|$)/); if(m && WCG_TITLES[m[1]]) return WCG_TITLES[m[1]];
+      return /\/odvazne-chod-s-bohem\//.test(u) ? "Kapitola z knihy Odvážně choď s Bohem" : null; };
   const splitUrls = s => String(s||"").split(/[\s;,]+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
   // obrázky: celý odkaz, nebo jen název souboru ze složky assets/osa/ (např. „noe-archa.jpg“)
   const IMG_DIR = "assets/osa/";
@@ -938,8 +946,10 @@
     });
     const njvL = it.links.filter(u=>njvTitle(u));
     const njvHtml = njvL.length ? `<div class="njv"><div class="njv-h">✨ Napodobujte jejich víru</div>${njvL.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(njvTitle(u))}</a>`).join("")}</div>` : "";
+    const wcgL = it.links.filter(u=>!njvTitle(u) && wcgTitle(u)).sort((a,b)=>wcgTitle(a).localeCompare(wcgTitle(b),"cs",{numeric:true}));
+    const wcgHtml = wcgL.length ? `<div class="njv wcg"><div class="njv-h">🛡️ Odvážně choď s Bohem</div>${wcgL.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(wcgTitle(u))}</a>`).join("")}</div>` : "";
     const refs = it.verses.map(v=>`<a href="${verseUrl(v)}" target="_blank" rel="noopener">📖 ${esc(v)}</a>`)
-      .concat(it.links.filter(u=>!njvTitle(u)).map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
+      .concat(it.links.filter(u=>!njvTitle(u)&&!wcgTitle(u)).map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
     // Vysvětlení datace (odhady, zdroj dat) patří do ikonky ⓘ u data, ne do textu
     const DATING=/^odhad|odhad\b|přibližn|podle časové osy|podle grafu|v knize (je|jsou)|sloučen|přesn[ýé] (rok|datum)|bible (rok|přesné|neuvádí)/i;
     let noteMain=it.note, noteDate="";
@@ -955,7 +965,7 @@
       ${media.length?`<div class="media">${media.join("")}</div>`:""}
       ${noteMain?`<p>${esc(noteMain)}</p>`:""}
       ${rows.length?`<dl class="facts">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl>`:""}
-      ${njvHtml}
+      ${njvHtml}${wcgHtml}
       ${refs.length?`<div class="refs">${refs.join("")}</div>`:""}`;
     bg.classList.add("show");
     sheet.querySelector(".x").onclick=closeSheet;
