@@ -116,7 +116,10 @@
   .life.est span{color:var(--ink-soft);font-weight:500}
   .life.est.line{box-shadow:none;border-color:#b89a55}
   .life.est.line span::before{color:#b89a55}
-  .life.hl,.card.hl{outline:3px solid var(--gold);outline-offset:1px}
+  /* vybraná / vyhledaná položka: sytě červený obrys, záře a krátké pulzování */
+  .life.hl,.card.hl,.life.line.hl,.life.est.hl{outline:3px solid var(--hl,#d8141c);outline-offset:2px;box-shadow:0 0 0 2px #fff,0 0 16px 3px rgba(216,20,28,.55);z-index:6;animation:hlPulse 1.1s ease-out 3}
+  @keyframes hlPulse{0%{box-shadow:0 0 0 2px #fff,0 0 0 0 rgba(216,20,28,.75)}70%{box-shadow:0 0 0 2px #fff,0 0 0 14px rgba(216,20,28,0)}100%{box-shadow:0 0 0 2px #fff,0 0 16px 3px rgba(216,20,28,.55)}}
+  [data-theme="dark"] .life.hl,[data-theme="dark"] .card.hl{--hl:#ff4d4d;box-shadow:0 0 0 2px #000,0 0 16px 3px rgba(255,77,77,.55)}
 
   .card{position:absolute;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:9px;padding:4px 8px 5px;cursor:pointer;display:flex;gap:7px;align-items:center;box-shadow:var(--shadow);transition:outline-color .2s}
   .card.rel{border-style:dashed;border-color:var(--gold)}
