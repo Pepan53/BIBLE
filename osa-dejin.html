@@ -157,6 +157,12 @@
   dl.facts dt{color:var(--ink-soft)} dl.facts dd{margin:0}
   dl.facts a{color:var(--maroon);cursor:pointer;text-decoration:underline dotted}
   .sheet p{line-height:1.55;margin:10px 0;white-space:pre-line}
+  .njv{margin:12px 0;padding:9px 12px 10px;border-radius:12px;background:linear-gradient(135deg,var(--star-bg),var(--bg-panel));border:1.5px solid var(--gold)}
+  .njv-h{font-family:var(--heading-font);font-weight:700;color:var(--gold-dark);font-size:.95em;margin-bottom:6px;letter-spacing:.2px}
+  .njv a{display:flex;gap:8px;align-items:baseline;padding:5px 0;color:var(--maroon-dark);text-decoration:none;font-size:.92em;line-height:1.35;border-top:1px dashed var(--border)}
+  .njv a:first-of-type{border-top:none}
+  .njv a::before{content:"📘";flex:0 0 auto}
+  .njv a:hover{text-decoration:underline}
   .media{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:12px 0}
   .media a,.media .vid{display:block;position:relative;border-radius:9px;overflow:hidden;background:var(--list-bg);aspect-ratio:16/10;border:1px solid var(--border);cursor:pointer}
   .media img{width:100%;height:100%;object-fit:cover;display:block}
@@ -310,6 +316,11 @@
   // odkazy na verše (více oddělených středníkem)
   const verseUrl = v => "https://wol.jw.org/cs/wol/l/r29/lp-b?q="+encodeURIComponent(v.replace(/–/g,"-")).replace(/%20/g,"+");
   const splitList = s => String(s||"").split(/\s*[;\n]\s*/).map(x=>x.trim()).filter(Boolean);
+  // Články z rubriky/knihy „Napodobujte jejich víru“ (jw.org) – odkazy na ně se v detailu zvýrazní
+  const NJV_TITLES = {"/cs/knihovna/knihy/prava-vira/abel-v-bibli/": "Abel: Ačkoli zemřel, přece mluví", "/cs/knihovna/casopisy/strazna-vez-cislo1-2017-leden/enoch-chodil-s-bohem/": "Enoch: „Měl svědectví, že se líbí Bohu“", "/cs/knihovna/knihy/prava-vira/noe-bible/": "Noe: „Chodil s pravým Bohem“", "/cs/knihovna/casopisy/wp20130801/noe-a-jeho-rodina-v-bezpeci/": "Noe: Bůh ho „zachoval v bezpečí se sedmi jinými“", "/cs/knihovna/knihy/prava-vira/abraham-vzor-viry/": "Abraham: Otec všech, kdo mají víru", "/cs/knihovna/casopisy/strazna-vez-cislo3-2017-kveten/sara-bible/": "Sára: „Jsi žena krásného vzhledu“", "/cs/knihovna/casopisy/strazna-vez-cislo5-2017-zari/sara-knezna/": "Sára: Bůh ji nazval kněžnou", "/cs/knihovna/casopisy/strazna-vez-cislo3-2016-kveten/rebeka-z-bible/": "Rebeka: „Jsem ochotná jít“", "/cs/knihovna/casopisy/wp20140801/josef-a-jeho-bratri/": "Josef: „Naslouchejte, prosím, tomuto snu“", "/cs/knihovna/casopisy/wp20141101/josef-bible/": "Josef: „Jak bych se mohl dopustit tak velké špatnosti?“", "/cs/knihovna/casopisy/wp20150201/josef-sen/": "Josef: „Nepatří výklady Bohu?“", "/cs/knihovna/casopisy/wp20150501/josef-prvni-mojzisova/": "Josef: „Cožpak jsem na místě Boha?“", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/pribeh-joba-oddany/": "Job: Byl rozhodnutý zůstat oddaný Bohu", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/jobovi-buh-vsechno-vynahradil/": "Job: Jehova mu všechno vynahradil", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/miriam-prorokyne-pisen/": "Miriam: „Zpívejte Jehovovi“", "/cs/knihovna/casopisy/wp20131101/biblicka-postava-raab/": "Raab: Byla „prohlášena za spravedlivou skutky“", "/cs/knihovna/casopisy/wp20150801/debora-matka-v-izraeli/": "Debora: Povstala „jako matka v Izraeli“", "/cs/knihovna/knihy/prava-vira/rut-a-noemi/": "Rut: „Kam jdeš ty, půjdu já“", "/cs/knihovna/knihy/prava-vira/rut-a-boaz/": "Rut: „Znamenitá žena“", "/cs/knihovna/knihy/prava-vira/modlitba-hany/": "Hana: Otevřela Bohu své srdce", "/cs/knihovna/knihy/prava-vira/maly-samuel-ve-svatostanku/": "Samuel: „Dále rostl u Jehovy“", "/cs/knihovna/knihy/prava-vira/prorok-samuel-vytrval/": "Samuel: Vytrval navzdory skličujícím situacím", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/jonatan-bible/": "Jonatan: Pro Jehovu neexistují překážky", "/cs/knihovna/casopisy/strazna-vez-cislo5-2016-zari/david-a-goliat-bitva/": "David: „Bitva patří Jehovovi“", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/david-jonatan-pratelstvi/": "David a Jonatan: Spojovalo je pevné přátelství", "/cs/knihovna/knihy/prava-vira/biblicka-zprava-o-abigail/": "Abigail: Rozvážná a moudrá žena", "/cs/knihovna/knihy/prava-vira/prorok-elijas-prave-uctivani/": "Elijáš: Zastával se pravého uctívání", "/cs/knihovna/knihy/prava-vira/prorok-elijas-se-modli/": "Elijáš: Byl bdělý a čekal na Jehovu", "/cs/knihovna/knihy/prava-vira/prorok-elijas-prijal-utechu/": "Elijáš: Přijal od Boha útěchu a povzbuzení", "/cs/knihovna/casopisy/wp20140201/prorok-elijas-vytrvaval-kral-achab/": "Elijáš: Vytrvával navzdory bezpráví", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/elijas-a-elisa/": "Elijáš: Vytrval až do konce", "/cs/knihovna/knihy/prava-vira/prorok-jonas-chyby/": "Jonáš: Poučil se ze svých chyb", "/cs/knihovna/knihy/prava-vira/jonas-se-naucil-byt-milosrdny/": "Jonáš: Naučil se být milosrdný", "/cs/knihovna/knihy/prava-vira/kralovna-ester-vira/": "Ester: Zastala se Božího lidu", "/cs/knihovna/knihy/prava-vira/kralovna-ester-jednala-moudre/": "Ester: Jednala moudře, odvážně a nesobecky", "/cs/knihovna/knihy/prava-vira/andel-gabriel-navstevuje-marii/": "Marie: „Pohleď! Jehovova otrokyně!“", "/cs/knihovna/knihy/prava-vira/marie-josef-betlem-jezisovo-narozeni/": "Marie: „V srdci si dělala závěry“", "/cs/knihovna/casopisy/wp20140501/jezisova-matka-marie/": "Marie: Překonala hluboký zármutek", "/cs/knihovna/knihy/prava-vira/josef-chranil-svou-rodinu/": "Josef: Chránil svou rodinu a pečoval o ni", "/cs/knihovna/knihy/prava-vira/marta-vira-odmenit/": "Marta: „Uvěřila jsem“", "/cs/co-rika-bible/vira-v-boha/muzi-zeny-bible/videla-jsem-pana/": "Marie Magdaléna: „Viděla jsem Pána!“", "/cs/knihovna/knihy/prava-vira/petr-bojoval-se-strachem-pochybnostmi/": "Petr: Bojoval se strachem a pochybnostmi", "/cs/knihovna/knihy/prava-vira/apostol-petr-verny-jezisovi/": "Petr: Zůstal věrný navzdory zkouškám", "/cs/knihovna/knihy/prava-vira/petr-se-od-jezise-naucil-odpoustet/": "Petr: Od svého Pána se naučil odpouštět", "/cs/knihovna/casopisy/wp20151101/timoteus-bible-priklad/": "Timoteus: „Nemám nikoho jiného s takovou povahou, jako je on“"};
+  const njvTitle = u => { try{ const x=new URL(u); if(!/jw\.org$/.test(x.hostname)) return null; const p=x.pathname.replace(/\/?$/,"/");
+      if(NJV_TITLES[p]) return NJV_TITLES[p];
+      if(/\/(prava-vira|muzi-zeny-bible)\//.test(p) || /#napodobujte/.test(u)) return "Článek z rubriky Napodobujte jejich víru"; }catch(e){} return null; };
   const splitUrls = s => String(s||"").split(/[\s;,]+/).map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x));
   // obrázky: celý odkaz, nebo jen název souboru ze složky assets/osa/ (např. „noe-archa.jpg“)
   const IMG_DIR = "assets/osa/";
@@ -320,6 +331,7 @@
   function imageThumb(u){
     let m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]+)/);
     if(m) return { thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`, full:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w2000` };
+    if(/cms-imgp\.jw-cdn\.org\/.*_lg\.jpg$/.test(u)) return { thumb:u.replace(/_lg\.jpg$/,"_sm.jpg"), full:u };   // menší náhled z jw.org
     return { thumb:u, full:u };
   }
   function videoInfo(u){
@@ -921,8 +933,10 @@
       if(v.kind==="yt") media.push(`<div class="vid" data-yt="${esc(v.id)}"><img src="${esc(v.thumb)}" alt="" loading="lazy"><div class="play">▶</div></div>`);
       else media.push(`<a href="${esc(v.url)}" target="_blank" rel="noopener">${v.thumb?`<img src="${esc(v.thumb)}" alt="" loading="lazy">`:`<div class="noimg">🎬</div>`}<div class="play">${v.thumb?"▶":""}</div><div class="cap">${esc(v.host||"video")}</div></a>`);
     });
+    const njvL = it.links.filter(u=>njvTitle(u));
+    const njvHtml = njvL.length ? `<div class="njv"><div class="njv-h">✨ Napodobujte jejich víru</div>${njvL.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(njvTitle(u))}</a>`).join("")}</div>` : "";
     const refs = it.verses.map(v=>`<a href="${verseUrl(v)}" target="_blank" rel="noopener">📖 ${esc(v)}</a>`)
-      .concat(it.links.map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
+      .concat(it.links.filter(u=>!njvTitle(u)).map(u=>{ let h=u; try{ h=new URL(u).hostname.replace(/^www\./,""); }catch(e){} return `<a href="${esc(u)}" target="_blank" rel="noopener">🔗 ${esc(h)}</a>`; }));
     // Vysvětlení datace (odhady, zdroj dat) patří do ikonky ⓘ u data, ne do textu
     const DATING=/^odhad|odhad\b|přibližn|podle časové osy|podle grafu|v knize (je|jsou)|sloučen|přesn[ýé] (rok|datum)|bible (rok|přesné|neuvádí)/i;
     let noteMain=it.note, noteDate="";
@@ -938,6 +952,7 @@
       ${media.length?`<div class="media">${media.join("")}</div>`:""}
       ${noteMain?`<p>${esc(noteMain)}</p>`:""}
       ${rows.length?`<dl class="facts">${rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join("")}</dl>`:""}
+      ${njvHtml}
       ${refs.length?`<div class="refs">${refs.join("")}</div>`:""}`;
     bg.classList.add("show");
     sheet.querySelector(".x").onclick=closeSheet;
