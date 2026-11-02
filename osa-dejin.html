@@ -975,7 +975,7 @@
         const pre=kl.est?"asi ":"", t=kl.est?" (odhad)":"";
         if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
         rows.push(["Narozen"+(kl.est?" asi (odhad)":""), ((kl.est||it.approx)?"~":"")+fmtYear(kl.b)]);
-        rows.push(["Zemřel"+(kl.est?" asi (odhad)":""), ((it.to&&it.to.approx)?"~":"")+fmtYear(kl.d)+(kl.est?"":" (na konci vlády)")]);
+        rows.push(["Zemřel", ((it.to&&it.to.approx)?"~":"")+fmtYear(kl.d)+" (na konci vlády)"]);   // rok smrti = konec vlády, odhad je jen narození a věk
         rows.push(["Věk"+t, `${pre}${kl.d-kl.b} let`]);
       }
     }
