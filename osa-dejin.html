@@ -117,6 +117,9 @@
   .life.est.line{box-shadow:none;border-color:#b89a55}
   .life.est.line span::before{color:#b89a55}
   /* vybraná / vyhledaná položka: sytě červený obrys, záře a krátké pulzování */
+  /* králové: tenká linka = délka života (plná = podle Bible, přerušovaná = odhad 60 let) */
+  .kline{position:absolute;width:3px;border-radius:2px;background:var(--ink-soft);opacity:.85;cursor:pointer}
+  .kline.est{background:repeating-linear-gradient(180deg,#9a8f7c 0 4px,transparent 4px 7px);opacity:1}
   .life.hl,.card.hl,.life.line.hl,.life.est.hl{outline:3px solid var(--hl,#d8141c);outline-offset:2px;box-shadow:0 0 0 2px #fff,0 0 16px 3px rgba(216,20,28,.55);z-index:6;animation:hlPulse 1.1s ease-out 3}
   @keyframes hlPulse{0%{box-shadow:0 0 0 2px #fff,0 0 0 0 rgba(216,20,28,.75)}70%{box-shadow:0 0 0 2px #fff,0 0 0 14px rgba(216,20,28,0)}100%{box-shadow:0 0 0 2px #fff,0 0 16px 3px rgba(216,20,28,.55)}}
   [data-theme="dark"] .life.hl,[data-theme="dark"] .card.hl{--hl:#ff4d4d;box-shadow:0 0 0 2px #000,0 0 16px 3px rgba(255,77,77,.55)}
@@ -391,7 +394,8 @@
         after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
         cat: r["kategorie"]||"", verses: splitList(r["vers"]),
         images: splitImgs(r["obrazek"]), videos: splitUrls(r["video"]), links: parseLinks(r["odkaz"]), njv: parseLinks(r["napodobujte"]||r["napodobujte jejich viru"]), wcg: parseLinks(r["odvaha"]||r["odvazne chod s bohem"]),
-        note: r["poznamka"]||"", line: r["linie"]||"", row: i+2
+        note: r["poznamka"]||"", line: r["linie"]||"", row: i+2,
+        ageAcc: parseAge(r["vek pri nastupu"]||r["vek"])
       };
       items.push(it); byId[norm(it.id)]=it;
     });
@@ -415,17 +419,28 @@
     const lane=[];   // lane[k] = poslední položka ve sloupci
     const fits=(k,it)=>{ const p=lane[k]; if(!p) return true;
       return (it.kind==="reign" && p.kind==="reign" && p.cat===it.cat) ? p.end<=it.lo+0.01 : p.end < it.lo-2; };
-    const lastOf={};
+    const lastOf={}, laneKings={};
     lives.forEach(it=>{
       const c=it.cat||"Ostatní"; if(!groups.includes(c)) groups.push(c);
       it.gi=groups.indexOf(c); it.gidx=(gcount[c]=(gcount[c]||0)+1)-1;
       let k = (lastOf[c]!=null && fits(lastOf[c],it)) ? lastOf[c] : -1;
       if(k<0){ k=0; while(k<lane.length && !fits(k,it)) k++; }
       lane[k]=it; it.lane=k; lastOf[c]=k;
+      it.klife=kingLife(it);
+      if(it.klife){ laneKings[k]=(laneKings[k]||0)+1; it.kside=laneKings[k]%2; }   // linka života střídavě vlevo/vpravo
     });
     lanesCount=lane.length;
   }
 
+  // „věk při nástupu“: např. „41 (1. Královská 14:21)“; „-“ = délku života nekreslit; prázdné = odhad
+  function parseAge(v){ v=String(v||"").trim(); if(!v) return null; if(/^[-–]/.test(v)) return {none:true};
+    const m=v.match(/\d+/); const ref=(v.match(/\(([^)]+)\)/)||[])[1]||""; return m ? {age:+m[0], ref:ref.trim()} : null; }
+  // život krále: z věku při nástupu (Bible), jinak odhad – 60 let, zemřel na konci vlády
+  function kingLife(it){
+    if(it.kind!=="reign" || !Number.isFinite(it.lo) || !Number.isFinite(it.end) || (it.ageAcc&&it.ageAcc.none)) return null;
+    if(it.ageAcc && it.ageAcc.age!=null) return { b: it.lo-it.ageAcc.age, d: it.end, est:false };
+    return { b: Math.min(it.end-60, it.lo-16), d: it.end, est:true };
+  }
   function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
 
   /* Odkazy v „po“/„před“: id, id.konec (konec života/období), nebo rovnou rok.
@@ -614,7 +629,13 @@
     // životy
     items.filter(it=>it.type==="life"&&visible(it)&&it.lane!=null).forEach(it=>{
       const y1=yOf(it.lo), h=Math.max(10,yOf(it.end)-y1);
-      out.push(`<div class="life${it.line?" line":""}${it.kind==="est"?" est":""}" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${g.lanesX+it.lane*(g.laneW+g.laneGap)}px;width:${g.laneW}px;top:${y1}px;height:${h}px;--h:${GH[it.gi%GH.length]+(it.gidx%3)*9}"${it.gidx%2?' data-alt':''}><span>${esc(it.name)}</span></div>`);
+      const lx=g.lanesX+it.lane*(g.laneW+g.laneGap); let bx=lx, bw=g.laneW;
+      if(it.klife){                                    // král: tenká linka života u kraje sloupce, pruh vlády vedle ní
+        const gut=g.laneW>=12?4:3; bw=g.laneW-gut; if(it.kside===0) bx=lx+gut;
+        const ly1=yOf(it.klife.b), ly2=yOf(it.klife.d);
+        out.push(`<div class="kline${it.klife.est?" est":""}" data-id="${esc(it.id)}" title="${esc(it.name+" – "+(it.klife.est?"odhad délky života":"délka života"))}" style="left:${it.kside===0?lx:lx+g.laneW-3}px;top:${ly1}px;height:${Math.max(4,ly2-ly1)}px"></div>`);
+      }
+      out.push(`<div class="life${it.line?" line":""}${it.kind==="est"?" est":""}" data-id="${esc(it.id)}" title="${esc(it.name+" · "+whenText(it))}" style="left:${bx}px;width:${bw}px;top:${y1}px;height:${h}px;--h:${GH[it.gi%GH.length]+(it.gidx%3)*9}"${it.gidx%2?' data-alt':''}><span>${esc(it.name)}</span></div>`);
     });
     // spojnice (SVG) + tečky + kartičky
     const lines=[];
@@ -947,6 +968,14 @@
       rows.push([L[0], (it.approx?"~":"")+fmtYear(it.lo)]);
       rows.push([L[1], ((it.to&&it.to.approx)?"~":"")+fmtYear(it.end)]);
       if(it.end-it.lo>=1) rows.push([L[2], `${ap}${it.end-it.lo} let`]);
+      const kl=it.klife||kingLife(it);
+      if(kl){
+        const pre=kl.est?"asi ":"", t=kl.est?" (odhad)":"";
+        if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
+        rows.push(["Narozen"+(kl.est?" asi (odhad)":""), ((kl.est||it.approx)?"~":"")+fmtYear(kl.b)]);
+        rows.push(["Zemřel"+(kl.est?" asi (odhad)":""), ((it.to&&it.to.approx)?"~":"")+fmtYear(kl.d)+(kl.est?"":" (na konci vlády)")]);
+        rows.push(["Věk"+t, `${pre}${kl.d-kl.b} let`]);
+      }
     }
     if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", `${it.end-it.lo} let`]);
     if(it.rel){
