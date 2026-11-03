@@ -976,7 +976,10 @@
     if(it.type==="life" && Number.isFinite(it.lo) && Number.isFinite(it.end)){
       const lab={life:"Délka života", reign:"Délka vlády", work:"Délka působení", est:"Délka života"}[it.kind]||"Trvání";
       const apB=!!(it.to&&it.to.approx);
-      rows.push([lab, span(it.lo, it.end, it.approx||it.kind==="est"||it.kind==="work", apB||it.kind==="est"||it.kind==="work")]);
+      // délka vlády podle Bible (z poznámky „Vládl 17 let“, „Vládl 3 měsíce, 10 dní“…), jinak rozdíl roků
+      const bibLen = it.kind==="reign" && (String(it.note).match(/[Vv]ládl[ai]?\s+(?:jen\s+)?(\d+\s+(?:let|roky|rok|měsíců|měsíce|měsíc|dní|dny|den)(?:,\s*\d+\s+(?:dní|dny|den))?)/)||[])[1];
+      if(bibLen) rows.push([lab, it.lo===it.end ? `${bibLen} (${yr(it.lo,it.approx||apB)})` : `${bibLen} (od ${yr(it.lo,it.approx)} do ${yr(it.end,apB)})`]);
+      else rows.push([lab, span(it.lo, it.end, it.approx||it.kind==="est"||it.kind==="work", apB||it.kind==="est"||it.kind==="work")]);
       const kl=it.klife||kingLife(it);
       if(kl){
         if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
