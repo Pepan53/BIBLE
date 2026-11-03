@@ -964,22 +964,23 @@
   function openItem(it){
     selected=it; showRange(it);
     const rows=[];
+    // jeden řádek „Délka …: asi N let (od ~X do Y)“ místo samostatných řádků od / do
+    const yr=(y,ap)=>(ap?"~":"")+fmtYear(y);
+    const span=(a,b,apA,apB,extra)=>{ const n=b-a, ap=apA||apB;
+      const len = n>=1 ? `${ap?"asi ":""}${n} ${n===1?"rok":n<5?"roky":"let"}` : "méně než rok";
+      return a===b ? `${len} (${yr(a,apA||apB)}${extra||""})` : `${len} (od ${yr(a,apA)} do ${yr(b,apB)}${extra||""})`; };
     if(it.type==="life" && Number.isFinite(it.lo) && Number.isFinite(it.end)){
-      const L={life:["Narozen","Zemřel","Věk"], reign:["Začátek vlády","Konec vlády","Délka vlády"], work:["Působil asi od","Působil asi do","Délka působení"], est:["Narozen asi (odhad)","Zemřel asi (odhad)","Odhadovaná délka života"]}[it.kind]||["Od","Do","Trvání"];
-      const ap=(it.approx||(it.to&&it.to.approx))?"asi ":"";
-      rows.push([L[0], (it.approx?"~":"")+fmtYear(it.lo)]);
-      rows.push([L[1], ((it.to&&it.to.approx)?"~":"")+fmtYear(it.end)]);
-      if(it.end-it.lo>=1) rows.push([L[2], `${ap}${it.end-it.lo} let`]);
+      const lab={life:"Délka života", reign:"Délka vlády", work:"Délka působení", est:"Délka života (odhad)"}[it.kind]||"Trvání";
+      const apB=!!(it.to&&it.to.approx);
+      rows.push([lab, span(it.lo, it.end, it.approx||it.kind==="est"||it.kind==="work", apB||it.kind==="est"||it.kind==="work")]);
       const kl=it.klife||kingLife(it);
       if(kl){
-        const pre=kl.est?"asi ":"", t=kl.est?" (odhad)":"";
         if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
-        rows.push(["Narozen"+(kl.est?" asi (odhad)":""), ((kl.est||it.approx)?"~":"")+fmtYear(kl.b)]);
-        rows.push(["Zemřel", ((it.to&&it.to.approx)?"~":"")+fmtYear(kl.d)+" (na konci vlády)"]);   // rok smrti = konec vlády, odhad je jen narození a věk
-        rows.push(["Věk"+t, `${pre}${kl.d-kl.b} let`]);
+        // rok smrti = konec vlády; u odhadu je nejisté jen narození a tím i věk
+        rows.push([kl.est?"Délka života (odhad)":"Délka života", span(kl.b, kl.d, kl.est||it.approx, apB, ", zemřel na konci vlády").replace(/^(\d)/, kl.est?"asi $1":"$1")]);
       }
     }
-    if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", `${it.end-it.lo} let`]);
+    if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", span(it.lo, it.end, it.approx, !!(it.to&&it.to.approx))]);
     if(it.rel){
       if(it.afterR&&it.afterR.length) rows.push(["Stalo se po", it.afterR.map(nameLink).join(", ")]);
       if(it.beforeR&&it.beforeR.length) rows.push(["Stalo se před", it.beforeR.map(nameLink).join(", ")]);
