@@ -398,7 +398,7 @@
         cats: splitCats(r["kategorie"]), verses: splitList(r["vers"]),
         images: splitImgs(r["obrazek"]), videos: splitUrls(r["video"]), links: parseLinks(r["odkaz"]), njv: parseLinks(r["napodobujte"]||r["napodobujte jejich viru"]), wcg: parseLinks(r["odvaha"]||r["odvazne chod s bohem"]),
         note: r["poznamka"]||"", line: r["linie"]||"", row: i+2,
-        ageAcc: parseAge(r["vek pri nastupu"]||r["vek"])
+        ageAcc: parseAge(r["vek pri nastupu"]||r["vek"]), reignTxt: r["vlada"]||""
       };
       it.cat=it.cats[0]||"";   // první kategorie určuje sloupec a barvu
       items.push(it); byId[norm(it.id)]=it;
@@ -447,6 +447,11 @@
   }
   // kategorie: může jich být víc, oddělené čárkou (např. „Králové sjednoceného Izraele, Králové Judska“)
   function splitCats(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
+  // sloupec „vláda“ u osob typu život (např. David): „1077–1037 př. n. l.“
+  function parseSpan(v){ v=String(v||"").trim(); if(!v) return null;
+    const parts=v.split(/\s*[–—-]\s*(?=~?\d)/); if(parts.length<2) return null;
+    let a=parts[0], b=parts[1]; if(!/n\.\s*l\./.test(a)) a+=" "+(b.match(/(př\.\s*)?n\.\s*l\./)||["př. n. l."])[0];
+    const A=parseYear(a), B=parseYear(b); return (A&&B) ? {a:A.y, b:B.y, apA:A.approx, apB:B.approx} : null; }
   function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
 
   /* Odkazy v „po“/„před“: id, id.konec (konec života/období), nebo rovnou rok.
@@ -980,6 +985,12 @@
       const bibLen = it.kind==="reign" && (String(it.note).match(/[Vv]ládl[ai]?\s+(?:jen\s+)?(\d+\s+(?:let|roky|rok|měsíců|měsíce|měsíc|dní|dny|den)(?:,\s*\d+\s+(?:dní|dny|den))?)/)||[])[1];
       if(bibLen) rows.push([lab, it.lo===it.end ? `${bibLen} (${yr(it.lo,it.approx||apB)})` : `${bibLen} (od ${yr(it.lo,it.approx)} do ${yr(it.end,apB)})`]);
       else rows.push([lab, span(it.lo, it.end, it.approx||it.kind==="est"||it.kind==="work", apB||it.kind==="est"||it.kind==="work")]);
+      // osoba typu život, která byla i králem (sloupec „vláda“)
+      const rs = it.kind!=="reign" ? parseSpan(it.reignTxt) : null;
+      if(rs){
+        const bl=(String(it.note).match(/(?:[Vv]ládl[ai]?|[Kk]rálem byl[ai]?)\s+(?:jen\s+)?(\d+\s+(?:let|roky|rok|měsíců|měsíce|měsíc|dní|dny|den))/)||[])[1];
+        rows.push(["Délka vlády", bl ? `${bl} (od ${yr(rs.a,rs.apA)} do ${yr(rs.b,rs.apB)})` : span(rs.a, rs.b, rs.apA, rs.apB)]);
+      }
       const kl=it.klife||kingLife(it);
       if(kl){
         if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
