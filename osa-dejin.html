@@ -118,6 +118,7 @@
   .life.est.line span::before{color:#b89a55}
   /* vybraná / vyhledaná položka: sytě červený obrys, záře a krátké pulzování */
   /* králové: tenká linka = délka života (plná = podle Bible, přerušovaná = odhad 60 let) */
+  dl.facts small.sub{font-size:.8em;color:var(--ink-soft);white-space:nowrap}
   .klife{position:absolute;border:2.5px solid #d8141c;border-radius:9px;background:rgba(216,20,28,.06);pointer-events:none;z-index:5}
   .klife.est{border-style:dashed}
   .klife span{position:sticky;top:calc(var(--ctl-h) + 4px);display:block;margin:-11px auto 0;width:max-content;font-size:10px;font-weight:700;color:#fff;background:#d8141c;border-radius:8px;padding:1px 6px;white-space:nowrap}
@@ -394,11 +395,12 @@
         id: r["id"] || ("r"+(i+2)), name, type: typeOf(r["typ"]), kind: kindOf(r["typ"]),
         from: parseYear(r["od"]), to: parseYear(r["do"]),
         after: splitRefs(r["po"]), before: splitRefs(r["pred"]),
-        cat: r["kategorie"]||"", verses: splitList(r["vers"]),
+        cats: splitCats(r["kategorie"]), verses: splitList(r["vers"]),
         images: splitImgs(r["obrazek"]), videos: splitUrls(r["video"]), links: parseLinks(r["odkaz"]), njv: parseLinks(r["napodobujte"]||r["napodobujte jejich viru"]), wcg: parseLinks(r["odvaha"]||r["odvazne chod s bohem"]),
         note: r["poznamka"]||"", line: r["linie"]||"", row: i+2,
         ageAcc: parseAge(r["vek pri nastupu"]||r["vek"])
       };
+      it.cat=it.cats[0]||"";   // první kategorie určuje sloupec a barvu
       items.push(it); byId[norm(it.id)]=it;
     });
     // spočítat rozsah (lo..hi) pro každou položku
@@ -443,6 +445,8 @@
     if(it.ageAcc && it.ageAcc.age!=null) return { b: it.lo-it.ageAcc.age, d: it.end, est:false };
     return { b: Math.min(it.end-60, it.lo-16), d: it.end, est:true };
   }
+  // kategorie: může jich být víc, oddělené čárkou (např. „Králové sjednoceného Izraele, Králové Judska“)
+  function splitCats(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
   function splitRefs(s){ return String(s||"").split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean); }
 
   /* Odkazy v „po“/„před“: id, id.konec (konec života/období), nebo rovnou rok.
@@ -535,7 +539,7 @@
   let geo=null, cardH={};      // výšky kartiček (měří se jen při změně šířky)
 
   let onlyLine=false;   // filtr „jen Ježíšova rodová linie“
-  const visible = it => onlyLine ? !!it.line : !off.has(it.cat||"Ostatní");
+  const visible = it => onlyLine ? !!it.line : (it.cats.length ? it.cats.some(c=>!off.has(c)) : !off.has("Ostatní"));
   const yOf = a => TOP + (a-domain.a)*ppy;
   const yearAt = y => domain.a + (y-TOP)/ppy;
 
@@ -970,14 +974,14 @@
       const len = n>=1 ? `${ap?"asi ":""}${n} ${n===1?"rok":n<5?"roky":"let"}` : "méně než rok";
       return a===b ? `${len} (${yr(a,apA||apB)}${extra||""})` : `${len} (od ${yr(a,apA)} do ${yr(b,apB)}${extra||""})`; };
     if(it.type==="life" && Number.isFinite(it.lo) && Number.isFinite(it.end)){
-      const lab={life:"Délka života", reign:"Délka vlády", work:"Délka působení", est:"Délka života (odhad)"}[it.kind]||"Trvání";
+      const lab={life:"Délka života", reign:"Délka vlády", work:"Délka působení", est:"Délka života"}[it.kind]||"Trvání";
       const apB=!!(it.to&&it.to.approx);
       rows.push([lab, span(it.lo, it.end, it.approx||it.kind==="est"||it.kind==="work", apB||it.kind==="est"||it.kind==="work")]);
       const kl=it.klife||kingLife(it);
       if(kl){
         if(it.ageAcc && it.ageAcc.age!=null) rows.push(["Věk při nástupu", `${it.ageAcc.age} let${it.ageAcc.ref?` (<a href="${verseUrl(it.ageAcc.ref)}" target="_blank" rel="noopener">${esc(it.ageAcc.ref)}</a>)`:""}`]);
         // rok smrti = konec vlády; u odhadu je nejisté jen narození a tím i věk
-        rows.push([kl.est?"Délka života (odhad)":"Délka života", span(kl.b, kl.d, kl.est||it.approx, apB, ", zemřel na konci vlády").replace(/^(\d)/, kl.est?"asi $1":"$1")]);
+        rows.push(["Délka života", span(kl.b, kl.d, kl.est||it.approx, apB) + ` <small class="sub">zemřel na konci vlády</small>`]);
       }
     }
     if(it.type==="period" && Number.isFinite(it.end)) rows.push(["Trvání", span(it.lo, it.end, it.approx, !!(it.to&&it.to.approx))]);
@@ -986,7 +990,7 @@
       if(it.beforeR&&it.beforeR.length) rows.push(["Stalo se před", it.beforeR.map(nameLink).join(", ")]);
     }
     if(it.line) rows.push(["★ Ježíšova rodová linie", esc(/^(ano|x|✓|1)$/i.test(it.line)?"ano":it.line)]);
-    if(it.cat) rows.push(["Kategorie", esc(it.cat)]);
+    if(it.cats.length) rows.push([it.cats.length>1?"Kategorie":"Kategorie", esc(it.cats.join(", "))]);
     const media=[];
     it.images.forEach(u=>{ const im=imageThumb(u); media.push(`<a data-full="${esc(im.full)}"><img src="${esc(im.thumb)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'noimg',textContent:'🖼️'}))"></a>`); });
     it.videos.forEach(u=>{ const v=videoInfo(u);
@@ -1060,9 +1064,10 @@
   // Filtry: 3 výběrové seznamy – Zobrazit (vše / ★ linie), Události, Lidé
   const PEOPLE=/^(patriarch|predkov|soudc|kral|prorok|jezis|osobnost|kněz|knez|apostol)/;
   function buildChips(){
-    const cats=[...new Set(items.filter(it=>it.type!=="period").map(it=>it.cat||"Ostatní"))];
-    const cnt={}; items.forEach(it=>{ if(it.type==="period") return; const c=it.cat||"Ostatní"; cnt[c]=(cnt[c]||0)+1; });
-    const isPeople=c=>{ if(PEOPLE.test(norm(c))) return true; const all=items.filter(it=>(it.cat||"Ostatní")===c); return all.filter(it=>it.type==="life").length*2>all.length; };
+    const catsOf=it=>it.cats.length?it.cats:["Ostatní"];
+    const cats=[...new Set(items.filter(it=>it.type!=="period").flatMap(catsOf))];
+    const cnt={}; items.forEach(it=>{ if(it.type==="period") return; catsOf(it).forEach(c=>{ cnt[c]=(cnt[c]||0)+1; }); });
+    const isPeople=c=>{ if(PEOPLE.test(norm(c))) return true; const all=items.filter(it=>catsOf(it).includes(c)); return all.filter(it=>it.type==="life").length*2>all.length; };
     const groups=[["Události",cats.filter(c=>!isPeople(c))],["Lidé",cats.filter(isPeople)]].filter(g=>g[1].length);
     const hasLine=items.some(it=>it.line);
     let h="";
