@@ -262,6 +262,8 @@
         </div>
         <div class="acts">
           <button class="btn" id="saveBtn" disabled>💾 Uložit novou zálohu</button>
+          <button class="btn secondary" id="mergeBtn" title="Přidat do této zálohy obsah jiné zálohy">🔀 Sloučit s jinou zálohou</button>
+          <input type="file" id="mergeFile" accept=".jwlibrary,application/zip,application/octet-stream" hidden>
           <button class="btn secondary" id="closeBtn">Zavřít</button>
         </div>
       </div>
@@ -318,7 +320,7 @@
   const S = {
     SQL:null, db:null, zip:null, fileName:"", manifest:null, origBytes:null, hdr:[2,2],
     schema:0, writable:false, dirty:false, tab:"notes", data:null, defLang:"B",
-    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), moveItem:null
+    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), added:new Map(), moveItem:null
   };
 
   /* ---------- pomocné ---------- */
@@ -379,7 +381,8 @@
     S.db = new S.SQL.Database(b);
     S.schema = q("PRAGMA user_version")[0].user_version;
     S.writable = WRITE_SCHEMAS.includes(S.schema);
-    S.dirty = false; S.removed = new Set();
+    S.dirty = false; S.removed = new Set(); S.added = new Map();
+    $("dirtyText").textContent = "Máš neuložené změny.";
     readAll();
     renderHead();
     renderTabs();
@@ -504,6 +507,7 @@
     $("fname").textContent = S.fileName;
     $("fmeta").textContent = [m.deviceName, m.lastModifiedDate ? "upraveno " + fmtDate(m.lastModifiedDate) : "", "schéma " + S.schema].filter(Boolean).join(" · ");
     $("roWarn").hidden = S.writable;
+    $("mergeBtn").hidden = !S.writable;
     $("roWarn").innerHTML = S.writable ? "" : "⚠️ Tato záloha má verzi databáze <strong>" + S.schema + "</strong>, kterou zatím nemám ověřenou. Můžeš ji prohlížet a exportovat, ale <strong>úpravy a ukládání jsou vypnuté</strong>, aby se záloha nepoškodila.";
     updateDirty();
   }
@@ -673,6 +677,7 @@
   async function loadThumbs(){
     for(const img of document.querySelectorAll("img[data-thumb]")){
       const p = img.dataset.thumb; if(!p) continue;
+      if(!thumbCache[p] && S.added.has(p)) thumbCache[p] = URL.createObjectURL(new Blob([S.added.get(p)], { type: "image/jpeg" }));
       if(!thumbCache[p]){ const f = S.zip.file(p); if(!f) continue; thumbCache[p] = URL.createObjectURL(new Blob([await f.async("uint8array")], { type: "image/jpeg" })); }
       img.src = thumbCache[p];
     }
@@ -893,6 +898,160 @@
     closePl(); changed(target !== m.tag ? "Položka přesunuta" : "Položka upravena");
   };
 
+  /* ---------- slučování záloh ----------
+     Do otevřené (hlavní) zálohy se přidá obsah druhé zálohy. Při shodě má přednost hlavní záloha:
+     stejné poznámky/zvýraznění (podle GUID), překrývající se zvýraznění, obsazené záložky a vyplněná pole se přeskočí.
+     Playlisty se stejným názvem se spojí, stejné položky se nepřidají podruhé. */
+  $("mergeBtn").onclick = () => $("mergeFile").click();
+  $("mergeFile").onchange = async () => {
+    const f = $("mergeFile").files[0]; $("mergeFile").value = ""; if(!f) return;
+    try{ const st = await mergeFrom(f); changed(); $("dirtyText").textContent = st; toast("Sloučeno – zkontroluj výsledek a ulož novou zálohu."); }
+    catch(e){ console.error(e); toast("Sloučení se nepovedlo: " + (e.message || e)); }
+  };
+  async function mergeFrom(file){
+    if(!S.writable) throw new Error("tuto zálohu nelze upravovat");
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const dbf = zip.file(DB_NAME); if(!dbf || !zip.file("manifest.json")) throw new Error("soubor není záloha z JW Library");
+    const b = new Uint8Array(await dbf.async("uint8array")); b[18] = 1; b[19] = 1;
+    const B = new S.SQL.Database(b);
+    const bq = (sql, p) => { const st = B.prepare(sql); if(p) st.bind(p); const r = []; while(st.step()) r.push(st.getAsObject()); st.free(); return r; };
+    const bSchema = bq("PRAGMA user_version")[0].user_version;
+    if(bSchema !== S.schema){ B.close(); throw new Error("druhá záloha má jinou verzi databáze (" + bSchema + ")"); }
+    const C = { hl:0, hlSkip:0, note:0, noteSkip:0, bm:0, bmSkip:0, field:0, fieldSkip:0, fav:0, pl:0, plSkip:0 };
+    const one = (sql, p) => q(sql, p)[0];
+    const lastId = () => one("SELECT last_insert_rowid() AS id").id;
+
+    const locMap = {};
+    function mapLoc(id){
+      if(id == null) return null;
+      if(locMap[id] != null) return locMap[id];
+      const l = bq("SELECT * FROM Location WHERE LocationId = ?", [id])[0]; if(!l) return null;
+      const where = "BookNumber IS ? AND ChapterNumber IS ? AND DocumentId IS ? AND Track IS ? AND IssueTagNumber = ? AND KeySymbol IS ? AND MepsLanguage IS ? AND Type = ? AND COALESCE(Specialty,'') = ? AND COALESCE(Edition,'') = ?";
+      const vals = [l.BookNumber, l.ChapterNumber, l.DocumentId, l.Track, l.IssueTagNumber || 0, l.KeySymbol, l.MepsLanguage, l.Type, l.Specialty || "", l.Edition || ""];
+      let a = one("SELECT LocationId FROM Location WHERE " + where, vals);
+      if(!a){
+        try{ run("INSERT INTO Location (BookNumber, ChapterNumber, DocumentId, Track, IssueTagNumber, KeySymbol, MepsLanguage, Type, Title, Specialty, Edition) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+              [l.BookNumber, l.ChapterNumber, l.DocumentId, l.Track, l.IssueTagNumber || 0, l.KeySymbol, l.MepsLanguage, l.Type, l.Title || "", l.Specialty, l.Edition]); a = { LocationId: lastId() }; }
+        catch(e){ a = one("SELECT LocationId FROM Location WHERE BookNumber IS ? AND ChapterNumber IS ? AND KeySymbol IS ? AND MepsLanguage IS ? AND Type = ?", [l.BookNumber, l.ChapterNumber, l.KeySymbol, l.MepsLanguage, l.Type]); if(!a) throw e; }
+      }
+      return (locMap[id] = a.LocationId);
+    }
+    const tagMap = {};
+    function mapTag(id){
+      if(tagMap[id] != null) return tagMap[id];
+      const t = bq("SELECT * FROM Tag WHERE TagId = ?", [id])[0];
+      let a = one("SELECT TagId FROM Tag WHERE Type = ? AND Name = ?", [t.Type, t.Name]);
+      if(!a){ run("INSERT INTO Tag (Type, Name) VALUES (?, ?)", [t.Type, t.Name]); a = { TagId: lastId() }; }
+      return (tagMap[id] = a.TagId);
+    }
+    const nextPos = tagId => one("SELECT COALESCE(MAX(Position), -1) + 1 AS p FROM TagMap WHERE TagId = ?", [tagId]).p;
+    const extOf = p => { const m = /\.[A-Za-z0-9]{1,5}$/.exec(p); return m ? m[0] : ""; };
+    const mediaMap = {};
+    async function mapMedia(filePath){
+      if(!filePath) return null;
+      if(mediaMap[filePath]) return mediaMap[filePath];
+      const m = bq("SELECT * FROM IndependentMedia WHERE FilePath = ?", [filePath])[0];
+      if(!m){ return null; }
+      let a = one("SELECT IndependentMediaId, FilePath FROM IndependentMedia WHERE Hash = ?", [m.Hash]);
+      if(!a){
+        const src = zip.file(m.FilePath); if(!src) throw new Error("v druhé záloze chybí soubor " + m.FilePath);
+        let path = m.FilePath;
+        if(one("SELECT 1 AS x FROM IndependentMedia WHERE FilePath = ?", [path]) || S.zip.file(path) || S.added.has(path)) path = uuid() + extOf(path);
+        run("INSERT INTO IndependentMedia (OriginalFilename, FilePath, MimeType, Hash) VALUES (?, ?, ?, ?)", [m.OriginalFilename, path, m.MimeType, m.Hash]);
+        a = { IndependentMediaId: lastId(), FilePath: path };
+        S.added.set(path, await src.async("uint8array")); S.removed.delete(path);
+      }
+      return (mediaMap[filePath] = a);
+    }
+
+    run("BEGIN");
+    try{
+      /* zvýraznění */
+      const umMap = {};
+      for(const um of bq("SELECT * FROM UserMark")){
+        const same = one("SELECT UserMarkId FROM UserMark WHERE UserMarkGuid = ?", [um.UserMarkGuid]);
+        if(same){ umMap[um.UserMarkId] = same.UserMarkId; C.hlSkip++; continue; }
+        const loc = mapLoc(um.LocationId);
+        const ranges = bq("SELECT * FROM BlockRange WHERE UserMarkId = ?", [um.UserMarkId]);
+        let overlap = null;
+        for(const r of ranges){
+          overlap = one(`SELECT u.UserMarkId FROM BlockRange r JOIN UserMark u USING (UserMarkId) WHERE u.LocationId = ? AND r.BlockType = ? AND r.Identifier = ?
+                         AND COALESCE(r.StartToken, 0) <= ? AND COALESCE(r.EndToken, 999999) >= ?`, [loc, r.BlockType, r.Identifier, r.EndToken == null ? 999999 : r.EndToken, r.StartToken || 0]);
+          if(overlap) break;
+        }
+        if(overlap){ umMap[um.UserMarkId] = overlap.UserMarkId; C.hlSkip++; continue; }
+        run("INSERT INTO UserMark (ColorIndex, LocationId, StyleIndex, UserMarkGuid, Version) VALUES (?, ?, ?, ?, ?)", [um.ColorIndex, loc, um.StyleIndex, um.UserMarkGuid, um.Version]);
+        const nid = lastId(); umMap[um.UserMarkId] = nid;
+        ranges.forEach(r => run("INSERT INTO BlockRange (BlockType, Identifier, StartToken, EndToken, UserMarkId) VALUES (?, ?, ?, ?, ?)", [r.BlockType, r.Identifier, r.StartToken, r.EndToken, nid]));
+        if(ranges.length) C.hl++;
+      }
+      /* poznámky a jejich štítky */
+      for(const n of bq("SELECT * FROM Note")){
+        if(one("SELECT 1 AS x FROM Note WHERE Guid = ?", [n.Guid])){ C.noteSkip++; continue; }
+        run("INSERT INTO Note (Guid, UserMarkId, LocationId, Title, Content, LastModified, Created, BlockType, BlockIdentifier) VALUES (?,?,?,?,?,?,?,?,?)",
+          [n.Guid, n.UserMarkId != null ? (umMap[n.UserMarkId] ?? null) : null, mapLoc(n.LocationId), n.Title, n.Content, n.LastModified, n.Created, n.BlockType, n.BlockIdentifier]);
+        const nid = lastId(); C.note++;
+        for(const tm of bq("SELECT TagId FROM TagMap WHERE NoteId = ? ORDER BY Position", [n.NoteId])){
+          const t = mapTag(tm.TagId); run("INSERT OR IGNORE INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (NULL, NULL, ?, ?, ?)", [nid, t, nextPos(t)]);
+        }
+      }
+      /* oblíbené */
+      for(const tm of bq("SELECT m.* FROM TagMap m JOIN Tag t USING (TagId) WHERE m.LocationId IS NOT NULL AND t.Type = 0 ORDER BY m.Position")){
+        const t = mapTag(tm.TagId), loc = mapLoc(tm.LocationId);
+        if(one("SELECT 1 AS x FROM TagMap WHERE TagId = ? AND LocationId = ?", [t, loc])) continue;
+        run("INSERT INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (NULL, ?, NULL, ?, ?)", [loc, t, nextPos(t)]); C.fav++;
+      }
+      /* záložky */
+      for(const bm of bq("SELECT * FROM Bookmark")){
+        const pub = mapLoc(bm.PublicationLocationId), loc = mapLoc(bm.LocationId);
+        if(one("SELECT 1 AS x FROM Bookmark WHERE PublicationLocationId = ? AND Slot = ?", [pub, bm.Slot])){ C.bmSkip++; continue; }
+        run("INSERT INTO Bookmark (LocationId, PublicationLocationId, Slot, Title, Snippet, BlockType, BlockIdentifier) VALUES (?,?,?,?,?,?,?)", [loc, pub, bm.Slot, bm.Title, bm.Snippet, bm.BlockType, bm.BlockIdentifier]); C.bm++;
+      }
+      /* odpovědi */
+      for(const fl of bq("SELECT * FROM InputField")){
+        const loc = mapLoc(fl.LocationId);
+        if(one("SELECT 1 AS x FROM InputField WHERE LocationId = ? AND TextTag = ?", [loc, fl.TextTag])){ C.fieldSkip++; continue; }
+        run("INSERT INTO InputField (LocationId, TextTag, Value) VALUES (?, ?, ?)", [loc, fl.TextTag, fl.Value]); C.field++;
+      }
+      /* playlisty */
+      for(const pt of bq("SELECT * FROM Tag WHERE Type = 2")){
+        const at = mapTag(pt.TagId);
+        for(const it of bq("SELECT p.*, m.Position FROM TagMap m JOIN PlaylistItem p USING (PlaylistItemId) WHERE m.TagId = ? ORDER BY m.Position", [pt.TagId])){
+          const lm = bq("SELECT * FROM PlaylistItemLocationMap WHERE PlaylistItemId = ?", [it.PlaylistItemId]);
+          const im = bq("SELECT x.DurationTicks, i.FilePath, i.Hash FROM PlaylistItemIndependentMediaMap x JOIN IndependentMedia i USING (IndependentMediaId) WHERE x.PlaylistItemId = ?", [it.PlaylistItemId]);
+          // stejná položka už v playlistu je?
+          const cands = q("SELECT p.PlaylistItemId FROM TagMap m JOIN PlaylistItem p USING (PlaylistItemId) WHERE m.TagId = ? AND p.Label = ?", [at, it.Label]);
+          const dup = cands.some(c => {
+            const aLoc = q("SELECT LocationId FROM PlaylistItemLocationMap WHERE PlaylistItemId = ?", [c.PlaylistItemId]).map(r => r.LocationId).sort().join(",");
+            const aHash = q("SELECT i.Hash FROM PlaylistItemIndependentMediaMap x JOIN IndependentMedia i USING (IndependentMediaId) WHERE x.PlaylistItemId = ?", [c.PlaylistItemId]).map(r => r.Hash).sort().join(",");
+            return aLoc === lm.map(r => mapLoc(r.LocationId)).sort().join(",") && aHash === im.map(r => r.Hash).sort().join(",");
+          });
+          if(dup){ C.plSkip++; continue; }
+          const th = await mapMedia(it.ThumbnailFilePath);
+          run("INSERT INTO PlaylistItem (Label, StartTrimOffsetTicks, EndTrimOffsetTicks, Accuracy, EndAction, ThumbnailFilePath) VALUES (?,?,?,?,?,?)",
+            [it.Label, it.StartTrimOffsetTicks, it.EndTrimOffsetTicks, it.Accuracy, it.EndAction, th ? th.FilePath : null]);
+          const pid = lastId();
+          lm.forEach(r => run("INSERT INTO PlaylistItemLocationMap (PlaylistItemId, LocationId, MajorMultimediaType, BaseDurationTicks) VALUES (?,?,?,?)", [pid, mapLoc(r.LocationId), r.MajorMultimediaType, r.BaseDurationTicks]));
+          for(const r of im){ const md = await mapMedia(r.FilePath); run("INSERT INTO PlaylistItemIndependentMediaMap (PlaylistItemId, IndependentMediaId, DurationTicks) VALUES (?,?,?)", [pid, md.IndependentMediaId, r.DurationTicks]); }
+          for(const mk of bq("SELECT * FROM PlaylistItemMarker WHERE PlaylistItemId = ?", [it.PlaylistItemId])){
+            run("INSERT INTO PlaylistItemMarker (PlaylistItemId, Label, StartTimeTicks, DurationTicks, EndTransitionDurationTicks) VALUES (?,?,?,?,?)", [pid, mk.Label, mk.StartTimeTicks, mk.DurationTicks, mk.EndTransitionDurationTicks]);
+            const mid = lastId();
+            bq("SELECT VerseId FROM PlaylistItemMarkerBibleVerseMap WHERE PlaylistItemMarkerId = ?", [mk.PlaylistItemMarkerId]).forEach(v => run("INSERT INTO PlaylistItemMarkerBibleVerseMap (PlaylistItemMarkerId, VerseId) VALUES (?, ?)", [mid, v.VerseId]));
+            bq("SELECT * FROM PlaylistItemMarkerParagraphMap WHERE PlaylistItemMarkerId = ?", [mk.PlaylistItemMarkerId]).forEach(v => run("INSERT INTO PlaylistItemMarkerParagraphMap (PlaylistItemMarkerId, MepsDocumentId, ParagraphIndex, MarkerIndexWithinParagraph) VALUES (?,?,?,?)", [mid, v.MepsDocumentId, v.ParagraphIndex, v.MarkerIndexWithinParagraph]));
+          }
+          run("INSERT INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (?, NULL, NULL, ?, ?)", [pid, at, nextPos(at)]); C.pl++;
+        }
+      }
+      run("COMMIT");
+    }catch(e){ try{ run("ROLLBACK"); }catch(x){} B.close(); throw e; }
+    B.close();
+    const part = (n, a, b, c) => n ? n + " " + (n === 1 ? a : n < 5 ? b : c) : "";
+    const added = [part(C.note, "poznámka", "poznámky", "poznámek"), part(C.hl, "zvýraznění", "zvýraznění", "zvýraznění"), part(C.bm, "záložka", "záložky", "záložek"),
+      part(C.field, "odpověď", "odpovědi", "odpovědí"), part(C.fav, "oblíbená položka", "oblíbené položky", "oblíbených položek"), part(C.pl, "položka playlistu", "položky playlistu", "položek playlistu")].filter(Boolean).join(", ") || "nic nového";
+    const skipped = C.noteSkip + C.hlSkip + C.bmSkip + C.fieldSkip + C.plSkip;
+    return "Sloučeno se zálohou " + file.name + ": přidáno: " + added + (skipped ? "; přeskočeno " + skipped + " (už v záloze bylo nebo by se překrývalo)" : "") + ". Neuloženo.";
+  }
+
   /* ---------- export ---------- */
   $("expBtn").onclick = e => { e.stopPropagation(); $("expMenu").classList.toggle("open"); };
   document.addEventListener("click", e => { if(!e.target.closest("#expMenu")) $("expMenu").classList.remove("open"); });
@@ -983,6 +1142,7 @@
       if(f.dir || SKIP_FILES.test(path) || S.removed.has(path) || path === DB_NAME || path === "manifest.json") continue;
       out.file(path, await f.async("uint8array"));
     }
+    for(const [path, data] of S.added){ if(!S.removed.has(path)) out.file(path, data); }
     out.file(DB_NAME, bytes);
     out.file("manifest.json", JSON.stringify(m));
     const blob = await out.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
@@ -1009,6 +1169,7 @@
       S.manifest = r.manifest; S.fileName = r.name; S.origBytes = r.bytes;
       // nový základ: otevři uložený stav (odpovídá souboru)
       const z = new JSZip(); for(const [p, f] of Object.entries(S.zip.files)){ if(!f.dir && !SKIP_FILES.test(p) && !S.removed.has(p) && p !== DB_NAME && p !== "manifest.json") z.file(p, await f.async("uint8array")); }
+      for(const [path, data] of S.added){ if(!S.removed.has(path)) z.file(path, data); }
       z.file(DB_NAME, r.bytes); z.file("manifest.json", JSON.stringify(r.manifest)); S.zip = z;
       loadDb(r.bytes.slice());
       const file = new File([r.blob], r.name, { type: "application/octet-stream" });
