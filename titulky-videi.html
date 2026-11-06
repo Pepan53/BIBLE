@@ -165,8 +165,8 @@
         <div class="menu" id="linkMenu">
           <button class="ic" id="linkBtn" title="Odkaz" aria-label="Odkaz">🔗</button>
           <div class="pop">
-            <button id="lnkOpen">Otevřít video na JW.ORG / v JW Library</button>
-            <button id="lnkCopyJw">Kopírovat odkaz na JW.ORG</button>
+            <button id="lnkOpen">Otevřít v JW Library (vybraný úsek)</button>
+            <button id="lnkCopyJw">Kopírovat odkaz do JW Library (vybraný úsek)</button>
             <button id="lnkCopyHere">Kopírovat odkaz na tuto stránku (s vybraným úsekem)</button>
           </div>
         </div>
@@ -243,6 +243,13 @@
       key = p.get("lank") || p.get("item") || null;
       lang = p.get("wtlocale") || p.get("lang") || null;
       od = p.get("od"); doo = p.get("do");
+      const ts = p.get("ts");
+      if(ts && od == null){
+        const [a, b] = ts.split("-");
+        const sec = x => { const q = x.split(":").map(Number); return q.length === 3 ? q[0]*3600 + q[1]*60 + q[2] : q.length === 2 ? q[0]*60 + q[1] : q[0]; };
+        if(a && !isNaN(sec(a))) od = sec(a);
+        if(b && !isNaN(sec(b))) doo = sec(b);
+      }
       if(!key){
         const all = decodeURIComponent(u.pathname + u.hash);
         const km = all.match(/((?:pub|docid)-[A-Za-z0-9_-]+?_VIDEO)/);
@@ -572,7 +579,16 @@
   }
 
   /* ---------- odkazy ---------- */
-  function jwLink(){ return "https://www.jw.org/finder?srcid=share&wtlocale=" + encodeURIComponent(state.lang) + "&lank=" + encodeURIComponent(state.key); }
+  function tsTime(t){
+    t = Math.max(0, t); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), sec = (t % 60).toFixed(2);
+    return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0") + ":" + sec.padStart(5,"0");
+  }
+  function jwLink(withSel){
+    let u = "https://www.jw.org/finder?srcid=share&wtlocale=" + encodeURIComponent(state.lang) + "&lank=" + encodeURIComponent(state.key);
+    const r = withSel ? selRange() : null;
+    if(r){ u += "&ts=" + tsTime(state.cues[r[0]].s) + (state.selB >= 0 ? "-" + tsTime(state.cues[r[1]].e) : ""); }
+    return u;
+  }
   function hereLink(){
     const u = new URL(location.href.split("?")[0]);
     u.searchParams.set("lank", state.key); u.searchParams.set("wtlocale", state.lang);
@@ -627,7 +643,7 @@
 
   $("copyBtn").onclick = () => copyText(exportText());
   $("shareBtn").onclick = async () => {
-    const text = header() + "\n\n" + exportText() + "\n\n" + jwLink();
+    const text = header() + "\n\n" + exportText() + "\n\n" + jwLink(true);
     if(navigator.share){ try{ await navigator.share({ title: state.media.title, text }); }catch(e){} }
     else copyText(text);
   };
@@ -641,10 +657,18 @@
     toast(subs ? "Ukládám titulky (.vtt)" : "Ukládám přepis (.txt)");
   };
 
-  $("linkBtn").onclick = e => { e.stopPropagation(); $("linkMenu").classList.toggle("open"); };
+  $("linkBtn").onclick = e => {
+    e.stopPropagation();
+    const r = selRange();
+    const part = !r ? "celé video" : state.selB < 0 ? "od " + fmt(state.cues[r[0]].s) : fmt(state.cues[r[0]].s) + "–" + fmt(state.cues[r[1]].e);
+    $("lnkOpen").textContent = "Otevřít v JW Library (" + part + ")";
+    $("lnkCopyJw").textContent = "Kopírovat odkaz do JW Library (" + part + ")";
+    $("lnkCopyHere").textContent = "Kopírovat odkaz na tuto stránku (" + part + ")";
+    $("linkMenu").classList.toggle("open");
+  };
   document.addEventListener("click", e => { if(!e.target.closest("#linkMenu")) $("linkMenu").classList.remove("open"); });
-  $("lnkOpen").onclick = () => { window.open(jwLink(), "_blank", "noopener"); $("linkMenu").classList.remove("open"); };
-  $("lnkCopyJw").onclick = () => { copyText(jwLink()); $("linkMenu").classList.remove("open"); };
+  $("lnkOpen").onclick = () => { window.open(jwLink(true), "_blank", "noopener"); $("linkMenu").classList.remove("open"); };
+  $("lnkCopyJw").onclick = () => { copyText(jwLink(true)); $("linkMenu").classList.remove("open"); };
   $("lnkCopyHere").onclick = () => { copyText(hereLink()); $("linkMenu").classList.remove("open"); };
 
   $("lang").onchange = () => {
