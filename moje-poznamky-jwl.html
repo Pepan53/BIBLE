@@ -117,7 +117,8 @@
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tooltip-bg);color:#fff8ec;padding:9px 16px;border-radius:20px;font-size:.9em;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20000;max-width:90vw;text-align:center}
   .toast.show{opacity:1}
   .menu{position:relative}
-  .menu .pop{display:none;position:absolute;right:0;top:44px;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);min-width:210px;z-index:300;padding:6px}
+  .menu .pop{display:none;position:absolute;right:0;top:44px;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);min-width:270px;max-width:90vw;z-index:300;padding:6px}
+  .menu .pop .hint{white-space:nowrap}
   .menu.open .pop{display:block}
   .pop button{display:block;width:100%;text-align:left;background:none;border:none;padding:9px 10px;border-radius:7px;color:var(--ink);cursor:pointer;font-size:.9em}
   .pop button:hover{background:var(--hover-tint)}
@@ -321,10 +322,12 @@
       <div class="row">
         <input type="search" id="q" placeholder="Hledat…" aria-label="Hledat">
         <div class="menu" id="expMenu">
-          <button class="ic" id="expBtn" title="Export do souboru (záloha se nemění)" aria-label="Export">⬇️ <small>Export</small></button>
+          <button class="ic" id="expBtn" title="Export do souboru nebo import poznámek z tabulky" aria-label="Export a import">⇅ <small>Export / Import</small></button>
           <div class="pop">
+            <div class="hint" style="padding:4px 10px 2px;font-size:.75em;text-transform:uppercase;letter-spacing:.4px">Export (záloha se nemění)</div>
             <button id="expMd">Export do Markdownu (.md)</button>
             <button id="expCsv">Export do tabulky (.csv)</button>
+            <div class="hint" style="padding:8px 10px 2px;font-size:.75em;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid var(--border);margin-top:4px">Import</div>
             <button id="impCsv">Import poznámek z tabulky (.csv)…</button>
             <input type="file" id="impFile" accept=".csv,text/csv,text/plain" hidden>
           </div>
@@ -618,7 +621,8 @@
     $("addBtn").hidden = S.tab !== "notes" && S.tab !== "tags";
     $("addBtn").title = S.tab === "tags" ? "Nový štítek" : "Nová poznámka";
     $("addBtn").disabled = !S.writable;
-    $("expMenu").hidden = S.tab === "tags";
+    $("expMenu").hidden = false;
+    $("expMd").hidden = $("expCsv").hidden = S.tab === "tags";
   }
   $("filters").addEventListener("change", e => {
     const map = { fTag:"tag", fColor:"color", fKind:"kind", fSort:"sort", fBook:"book", fChap:"chap" };
