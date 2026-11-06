@@ -94,6 +94,12 @@
   .newtag{display:flex;gap:6px;margin-top:8px}
   .newtag input{flex:1}
   .mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .warnbox{text-align:center}
+  .warnbox svg{width:120px;height:106px;display:block;margin:4px auto 12px}
+  .warnbox p{font-size:1.08em;line-height:1.5;margin:0 0 10px}
+  .warnbox .red{color:var(--red);font-weight:700}
+  .warnbox .small{font-size:.88em;color:var(--ink-soft)}
+  .warnbox .mfoot{justify-content:center}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tooltip-bg);color:#fff8ec;padding:9px 16px;border-radius:20px;font-size:.9em;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20000;max-width:90vw;text-align:center}
   .toast.show{opacity:1}
   .menu{position:relative}
@@ -178,6 +184,23 @@
     <div class="mfoot">
       <button class="btn secondary" id="fieldCancel">Zrušit</button>
       <button class="btn" id="fieldSave">Uložit změny</button>
+    </div>
+  </div>
+</div>
+
+<!-- varování před uložením -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal-box warnbox" role="alertdialog" aria-labelledby="saveWarnText">
+    <svg viewBox="0 0 120 106" aria-hidden="true">
+      <path d="M60 6 L114 100 H6 Z" fill="#fff" stroke="#c8281e" stroke-width="10" stroke-linejoin="round"/>
+      <rect x="54" y="36" width="12" height="38" rx="5" fill="#1b1b1b"/>
+      <circle cx="60" cy="85" r="6.5" fill="#1b1b1b"/>
+    </svg>
+    <p id="saveWarnText" class="red">Před obnovením upravené zálohy si v JW Library vždy udělej čerstvou zálohu.</p>
+    <p class="small">Obnovení v JW Library nahradí všechna současná data – poznámky, zvýraznění, záložky i playlisty. Čerstvá záloha je tvoje pojistka, kdyby se něco nepovedlo.</p>
+    <div class="mfoot">
+      <button class="btn secondary" id="saveCancel">Zrušit</button>
+      <button class="btn" id="saveConfirm">Rozumím, uložit zálohu</button>
     </div>
   </div>
 </div>
@@ -854,7 +877,16 @@
     if(await sha256Hex(chkDb) !== hash) throw new Error("kontrolní součet nesouhlasí");
     return { blob, name, manifest: m, bytes };
   }
-  $("saveBtn").onclick = async () => {
+  $("saveBtn").onclick = () => {
+    if(!S.writable || !S.dirty) return;
+    $("saveModal").classList.add("show");
+    setTimeout(() => $("saveConfirm").focus(), 50);
+  };
+  const closeSave = () => $("saveModal").classList.remove("show");
+  $("saveCancel").onclick = closeSave;
+  $("saveModal").addEventListener("click", e => { if(e.target === $("saveModal")) closeSave(); });
+  $("saveConfirm").onclick = async () => {
+    closeSave();
     if(!S.writable || !S.dirty) return;
     $("saveBtn").disabled = true; toast("Připravuji zálohu…");
     try{
@@ -893,7 +925,7 @@
   ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) openFile(f); });
-  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); } });
+  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); } });
 
   // zpřístupnění pro testy
   window.__jwl = S;
