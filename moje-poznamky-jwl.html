@@ -239,6 +239,21 @@
   </div>
 </div>
 
+<!-- import CSV -->
+<div class="modal-overlay" id="impModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Import poznámek z tabulky</h3>
+      <button class="modal-close" id="impClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div id="impReport" style="font-size:.92em;line-height:1.5"></div>
+    <div class="mfoot">
+      <button class="btn secondary" id="impCancel">Zrušit</button>
+      <button class="btn" id="impOk">Importovat</button>
+    </div>
+  </div>
+</div>
+
 <!-- varování před uložením -->
 <div class="modal-overlay" id="saveModal">
   <div class="modal-box warnbox" role="alertdialog" aria-labelledby="saveWarnText">
@@ -310,6 +325,8 @@
           <div class="pop">
             <button id="expMd">Export do Markdownu (.md)</button>
             <button id="expCsv">Export do tabulky (.csv)</button>
+            <button id="impCsv">Import poznámek z tabulky (.csv)…</button>
+            <input type="file" id="impFile" accept=".csv,text/csv,text/plain" hidden>
           </div>
         </div>
         <button class="ic" id="addBtn" title="Nová poznámka" aria-label="Nová poznámka">＋</button>
@@ -1213,7 +1230,12 @@
     if(S.tab === "fav") return D.favorites.map(m => describe(m.LocationId)).filter(d => matches(d.text + " " + d.sub)).map(d => ({ title: d.text, text: "", loc: d.text, sub: d.sub, link: d.link, tags: "", color: "", created: "", modified: "" }));
     if(S.tab === "pl") return D.playlists.flatMap(p => p.items.map(i => ({ p, i }))).filter(({ p, i }) => matches(p.tag.Name + " " + i.Label)).map(({ p, i }) => { const t = Math.round(((i.EndTrimOffsetTicks || i.LocTicks || i.MediaTicks || 0) - (i.StartTrimOffsetTicks || 0)) / 1e7); return { title: i.Label, text: "", loc: "playlist " + p.tag.Name, sub: t > 0 ? Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0") : "", link: null, tags: p.tag.Name, color: "", created: "", modified: "" }; });
     if(S.tab === "fields") return D.fields.map(fl => ({ fl, d: describe(fl.LocationId) })).filter(({ fl, d }) => matches(fl.Value + " " + d.text)).map(({ fl, d }) => ({ title: "pole " + fl.TextTag, text: fl.Value, loc: d.text, sub: d.sub, link: d.link, tags: "", color: "", created: "", modified: "" }));
-    return filteredNotes().map(({ n, d }) => ({ title: n.Title || "", text: n.Content || "", loc: d.text, sub: d.sub, link: d.link, tags: n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).filter(Boolean).join(", "), color: n.color != null ? COLORS[n.color] : "", created: (n.Created || "").slice(0, 10), modified: (n.LastModified || "").slice(0, 10) }));
+    return filteredNotes().map(({ n, d }) => {
+      const l = D.loc[n.LocationId] || {};
+      const rg = n.UserMarkId != null && D.ranges[n.UserMarkId] ? D.ranges[n.UserMarkId].map(r => r.Identifier + ":" + r.StartToken + "-" + r.EndToken).join(";") : "";
+      return { title: n.Title || "", text: n.Content || "", loc: d.text, sub: d.sub, link: d.link, tags: n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).filter(Boolean).join(", "), color: n.color != null ? COLORS[n.color] : "", created: n.Created || "", modified: n.LastModified || "",
+        tech: [n.Guid, l.MepsLanguage ?? "", l.KeySymbol || "", l.IssueTagNumber || "", l.DocumentId || "", l.BookNumber || "", l.ChapterNumber || "", n.BlockType === 2 ? n.BlockIdentifier : "", n.BlockType === 1 ? n.BlockIdentifier : "", n.color ?? "", rg] };
+    });
   }
   const tabName = () => TABS.find(t => t[0] === S.tab)[1];
   $("expMd").onclick = () => {
@@ -1231,10 +1253,209 @@
   $("expCsv").onclick = () => {
     const rows = exportRows(); const today = new Date().toISOString().slice(0, 10);
     const c = v => '"' + String(v || "").replace(/"/g, '""') + '"';
-    const head = ["Nadpis", "Text", "Umístění", "Publikace", "Štítky", "Barva", "Vytvořeno", "Změněno", "Odkaz"];
-    const csv = "﻿" + [head.map(c).join(";")].concat(rows.map(r => [r.title, r.text, r.loc, r.sub, r.tags, r.color, r.created, r.modified, r.link].map(c).join(";"))).join("\r\n");
+    const head = ["Nadpis", "Text", "Umístění", "Publikace", "Štítky", "Barva", "Vytvořeno", "Změněno", "Odkaz"].concat(S.tab === "notes" ? TECH_COLS : []);
+    const csv = "\ufeff" + [head.map(c).join(";")].concat(rows.map(r => [r.title, r.text, r.loc, r.sub, r.tags, r.color, r.created, r.modified, r.link].concat(S.tab === "notes" ? r.tech : []).map(c).join(";"))).join("\r\n");
     download(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${tabName()} JWL ${today}.csv`);
     $("expMenu").classList.remove("open");
+  };
+
+  /* ---------- import poznámek z CSV ----------
+     Formát: tabulka z exportu této stránky (oddělovač ; , nebo tabulátor). Sloupce podle záhlaví:
+     Nadpis, Text, Štítky, Barva, Vytvořeno, Změněno, Odkaz + technické sloupce (Guid, Jazyk MEPS, Publikace kód, Vydání, Dokument,
+     Kniha, Kapitola, Verš, Odstavec, Barva č., Rozsah). Přijme i anglické názvy jako JWLManager (TITLE, NOTE, TAGS, COLOR, LANG, PUB, BK, CH, VS, ISSUE, DOC, BLOCK, CREATED, MODIFIED, RANGE). */
+  const TECH_COLS = ["Guid", "Jazyk MEPS", "Publikace kód", "Vydání", "Dokument", "Kniha", "Kapitola", "Verš", "Odstavec", "Barva č.", "Rozsah"];
+  const COLMAP = {
+    title:["nadpis","title"], text:["text","note","obsah"], tags:["štítky","stitky","tags"], colorName:["barva"], created:["vytvořeno","vytvoreno","created"], modified:["změněno","zmeneno","modified"],
+    link:["odkaz","link"], guid:["guid"], lang:["jazyk meps","lang"], pub:["publikace kód","publikace kod","pub"], issue:["vydání","vydani","issue"], doc:["dokument","doc"],
+    bk:["kniha","bk"], ch:["kapitola","ch"], vs:["verš","vers","vs"], block:["odstavec","block"], color:["barva č.","barva c.","color"], range:["rozsah","range"]
+  };
+  function parseCSV(text){
+    text = text.replace(/^﻿/, "");
+    const first = text.split(/\r?\n/)[0];
+    const delim = [";", "\t", ","].map(d => [d, first.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+    const rows = []; let row = [], f = "", inq = false;
+    for(let i = 0; i < text.length; i++){
+      const ch = text[i];
+      if(inq){
+        if(ch === '"'){ if(text[i + 1] === '"'){ f += '"'; i++; } else inq = false; }
+        else f += ch;
+      }else if(ch === '"' && f === "") inq = true;
+      else if(ch === delim){ row.push(f); f = ""; }
+      else if(ch === "\n" || ch === "\r"){ if(ch === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += ch;
+    }
+    if(inq) throw new Error("neuzavřené uvozovky v souboru");
+    if(f !== "" || row.length){ row.push(f); rows.push(row); }
+    return rows.filter(r => r.some(x => x.trim() !== ""));
+  }
+  const MEPS_BY_SYM = {}; Object.entries(LANGS).forEach(([id, v]) => { if(MEPS_BY_SYM[v[0]] == null) MEPS_BY_SYM[v[0]] = +id; });
+  const intOrNull = v => { v = String(v ?? "").trim(); if(v === "") return null; const n = Number(v); return Number.isInteger(n) ? n : NaN; };
+  function normDate(v){
+    v = String(v || "").trim(); if(!v) return null;
+    let m = v.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if(m) return `${m[1]}-${m[2]}-${m[3]}T${m[4] || "00"}:${m[5] || "00"}:${m[6] || "00"}Z`;
+    m = v.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+    if(m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}T00:00:00Z`;
+    return undefined;
+  }
+  function analyzeCSV(text){
+    const rows = parseCSV(text);
+    if(rows.length < 2) throw new Error("tabulka nemá žádné řádky s daty");
+    const head = rows[0].map(h => h.trim().toLowerCase());
+    const col = {};
+    Object.entries(COLMAP).forEach(([k, names]) => { const i = head.findIndex(h => names.includes(h)); if(i >= 0) col[k] = i; });
+    if(col.title == null && col.text == null) throw new Error("chybí sloupec „Nadpis“ nebo „Text“ – je to export poznámek?");
+    const items = [], errors = [];
+    rows.slice(1).forEach((r, idx) => {
+      const line = idx + 2, g = k => col[k] != null ? (r[col[k]] ?? "") : "";
+      try{
+        const it = { line, title: g("title").trim(), text: g("text").replace(/\r\n/g, "\n"), guid: g("guid").trim() || null,
+          tags: g("tags").split(/[|,]/).map(t => t.trim()).filter(Boolean), created: normDate(g("created")), modified: normDate(g("modified")) };
+        if(!it.title && !it.text.trim()) throw new Error("prázdný nadpis i text");
+        if(it.created === undefined || it.modified === undefined) throw new Error("neplatné datum");
+        if(it.guid && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(it.guid)) throw new Error("neplatné Guid");
+        let lang = intOrNull(g("lang")), pub = g("pub").trim() || null, issue = intOrNull(g("issue")) || 0, doc = intOrNull(g("doc")),
+            bk = intOrNull(g("bk")), ch = intOrNull(g("ch")), vs = intOrNull(g("vs")), block = intOrNull(g("block"));
+        let color = intOrNull(g("color"));
+        if(color == null && g("colorName").trim()) color = COLORS.indexOf(g("colorName").trim().toLowerCase());
+        const link = g("link").trim();
+        if(link && bk == null && doc == null){
+          try{
+            const u = new URL(link), p = u.searchParams;
+            if(lang == null && p.get("wtlocale")) lang = MEPS_BY_SYM[p.get("wtlocale")] ?? null;
+            const bib = (p.get("bible") || "").split("-")[0];
+            if(/^\d{8}$/.test(bib)){ bk = +bib.slice(0, 2); ch = +bib.slice(2, 5); vs = +bib.slice(5) || null; pub = pub || p.get("pub") || "nwtsty"; }
+            else if(p.get("docid")){ doc = +p.get("docid"); block = p.get("par") ? +p.get("par") : null; }
+          }catch(e){ throw new Error("nečitelný odkaz"); }
+        }
+        if([lang, issue, doc, bk, ch, vs, block, color].some(x => Number.isNaN(x))) throw new Error("číslo ve špatném formátu");
+        if(color != null && (color < 0 || color > 6)) throw new Error("neznámá barva");
+        if(bk != null){
+          if(bk < 1 || bk > 66) throw new Error("neplatná biblická kniha " + bk);
+          if(!ch || ch < 1 || ch > 150) throw new Error("neplatná kapitola");
+          if(vs != null && (vs < 1 || vs > 200)) throw new Error("neplatný verš");
+          if(lang == null) throw new Error("chybí jazyk");
+          it.kind = "bible";
+        }else if(doc != null){
+          if(lang == null && !pub) throw new Error("chybí jazyk");
+          if(!pub){ const ex = one2("SELECT KeySymbol, IssueTagNumber FROM Location WHERE DocumentId = ? AND MepsLanguage IS ? AND KeySymbol IS NOT NULL", [doc, lang]); if(!ex) throw new Error("chybí kód publikace (sloupec „Publikace kód“)"); pub = ex.KeySymbol; issue = issue || ex.IssueTagNumber || 0; }
+          it.kind = "doc";
+        }else it.kind = "ind";
+        Object.assign(it, { lang, pub, issue, doc, bk, ch, vs, block, color: color || 0, range: g("range").trim() || null });
+        if(it.range && !/^(\d+:)?\d+-\d+(;(\d+:)?\d+-\d+)*$/.test(it.range)) throw new Error("neplatný rozsah zvýraznění");
+        // rozhodnutí: nový / aktualizace / duplicitní
+        const ex = findExisting(it);
+        if(ex){
+          const tagsNow = q("SELECT t.Name FROM TagMap m JOIN Tag t USING (TagId) WHERE m.NoteId = ? ORDER BY t.Name", [ex.NoteId]).map(r => r.Name).join("|");
+          const same = (ex.Title || "") === it.title && (ex.Content || "").trim() === it.text.trim() && (col.tags == null || tagsNow === it.tags.slice().sort((a, b) => a.localeCompare(b)).join("|"));
+          it.action = same ? "dup" : "upd"; it.noteId = ex.NoteId;
+        }else it.action = "new";
+        items.push(it);
+      }catch(e){ errors.push({ line, msg: e.message }); }
+    });
+    // duplicity uvnitř souboru
+    const seen = new Set();
+    items.forEach(it => { const k = it.guid || [it.kind, it.lang, it.pub, it.doc, it.bk, it.ch, it.vs, it.block, it.title, it.text.trim()].join("|"); if(seen.has(k)) it.action = "dupfile"; seen.add(k); });
+    return { items, errors };
+  }
+  function one2(sql, p){ return q(sql, p)[0]; }
+  function locFor(it, create){
+    if(it.kind === "bible"){
+      const ex = one2("SELECT LocationId FROM Location WHERE KeySymbol = ? AND MepsLanguage = ? AND BookNumber = ? AND ChapterNumber = ? AND Type = 0", [it.pub, it.lang, it.bk, it.ch]);
+      if(ex || !create) return ex ? ex.LocationId : null;
+      run("INSERT INTO Location (KeySymbol, MepsLanguage, BookNumber, ChapterNumber, Title, Type) VALUES (?, ?, ?, ?, '', 0)", [it.pub, it.lang, it.bk, it.ch]);
+    }else if(it.kind === "doc"){
+      const ex = one2("SELECT LocationId FROM Location WHERE KeySymbol IS ? AND MepsLanguage IS ? AND IssueTagNumber = ? AND DocumentId = ? AND Type = 0", [it.pub, it.lang, it.issue, it.doc]);
+      if(ex || !create) return ex ? ex.LocationId : null;
+      run("INSERT INTO Location (IssueTagNumber, KeySymbol, MepsLanguage, DocumentId, Title, Type) VALUES (?, ?, ?, ?, '', 0)", [it.issue, it.pub, it.lang, it.doc]);
+    }else return null;
+    return one2("SELECT last_insert_rowid() AS id").id;
+  }
+  const blockOf = it => it.kind === "bible" ? (it.vs != null ? [2, it.vs] : [0, null]) : it.kind === "doc" ? (it.block != null ? [1, it.block] : [0, null]) : [0, null];
+  function findExisting(it){
+    if(it.guid){ const g = one2("SELECT * FROM Note WHERE Guid = ?", [it.guid]); if(g) return g; }
+    const loc = locFor(it, false);
+    if(it.kind !== "ind" && loc == null) return null;
+    const [bt, bi] = blockOf(it);
+    const key = it.title ? ["TRIM(Title) = ?", it.title.trim()] : ["(Title = '' OR Title IS NULL) AND TRIM(Content) = ?", it.text.trim()];
+    return it.kind === "ind"
+      ? one2(`SELECT * FROM Note WHERE LocationId IS NULL AND ${key[0]} AND BlockType = 0`, [key[1]])
+      : one2(`SELECT * FROM Note WHERE LocationId = ? AND ${key[0]} AND BlockType = ? AND BlockIdentifier IS ?`, [loc, key[1], bt, bi]);
+  }
+  function applyImport(items){
+    const now = nowIso(); let added = 0, updated = 0;
+    run("BEGIN");
+    try{
+      for(const it of items){
+        if(it.action !== "new" && it.action !== "upd") continue;
+        const loc = locFor(it, true); const [bt, bi] = blockOf(it);
+        let nid = it.noteId;
+        if(it.action === "upd"){
+          run("UPDATE Note SET Title = ?, Content = ?, LastModified = ? WHERE NoteId = ?", [it.title, it.text, it.modified || now, nid]); updated++;
+        }else{
+          let um = null;
+          if(it.color > 0 && it.range && it.kind !== "ind"){
+            run("INSERT INTO UserMark (ColorIndex, LocationId, StyleIndex, UserMarkGuid, Version) VALUES (?, ?, 0, ?, 1)", [it.color, loc, uuid()]);
+            um = one2("SELECT last_insert_rowid() AS id").id;
+            const rbt = it.kind === "bible" ? 2 : 1;
+            it.range.split(";").forEach(r => { const [idp, tk] = r.includes(":") ? r.split(":") : [bi, r]; const [a, b] = tk.split("-").map(Number);
+              run("INSERT INTO BlockRange (BlockType, Identifier, StartToken, EndToken, UserMarkId) VALUES (?, ?, ?, ?, ?)", [rbt, +idp, a, b, um]); });
+          }
+          const guid = it.guid && !one2("SELECT 1 AS x FROM Note WHERE Guid = ?", [it.guid]) ? it.guid : uuid();
+          run("INSERT INTO Note (Guid, UserMarkId, LocationId, Title, Content, LastModified, Created, BlockType, BlockIdentifier) VALUES (?,?,?,?,?,?,?,?,?)",
+            [guid, um, loc, it.title, it.text, it.modified || now, it.created || it.modified || now, bt, bi]);
+          nid = one2("SELECT last_insert_rowid() AS id").id; added++;
+        }
+        if(it.tags.length || it.action === "upd"){
+          if(it.action === "upd") run("DELETE FROM TagMap WHERE NoteId = ?", [nid]);
+          it.tags.forEach(name => {
+            let t = one2("SELECT TagId FROM Tag WHERE Type = 1 AND Name = ?", [name]);
+            if(!t){ run("INSERT INTO Tag (Type, Name) VALUES (1, ?)", [name]); t = { TagId: one2("SELECT last_insert_rowid() AS id").id }; }
+            if(!one2("SELECT 1 AS x FROM TagMap WHERE TagId = ? AND NoteId = ?", [t.TagId, nid])){
+              const pos = one2("SELECT COALESCE(MAX(Position), -1) + 1 AS p FROM TagMap WHERE TagId = ?", [t.TagId]).p;
+              run("INSERT INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (NULL, NULL, ?, ?, ?)", [nid, t.TagId, pos]);
+            }
+          });
+        }
+      }
+      const chk = S.db.exec("PRAGMA foreign_key_check");
+      if(chk.length && chk[0].values.length) throw new Error("kontrola vazeb selhala");
+      run("COMMIT");
+    }catch(e){ try{ run("ROLLBACK"); }catch(x){} throw e; }
+    return { added, updated };
+  }
+  let impData = null;
+  $("impCsv").onclick = () => { $("expMenu").classList.remove("open"); if(!S.writable){ toast("Tuto zálohu nelze upravovat."); return; } $("impFile").click(); };
+  $("impFile").onchange = async () => {
+    const f = $("impFile").files[0]; $("impFile").value = ""; if(!f) return;
+    try{
+      let text = await f.text();
+      if(text.includes("�")) text = new TextDecoder("windows-1250").decode(await f.arrayBuffer());
+      impData = analyzeCSV(text);
+      const c = a => impData.items.filter(i => i.action === a).length;
+      const nNew = c("new"), nUpd = c("upd"), nDup = c("dup") + c("dupfile");
+      const pl = (n, a, b, x) => n === 1 ? a : n >= 2 && n <= 4 ? b : x;
+      const total = impData.items.length + impData.errors.length;
+      $("impReport").innerHTML = `<p>Soubor <strong>${esc(f.name)}</strong> – ${total} ${pl(total, "řádek", "řádky", "řádků")} s daty:</p>
+        <ul style="margin:0 0 8px;padding-left:20px">
+          <li>✅ přidá se <strong>${nNew}</strong> ${pl(nNew, "nová poznámka", "nové poznámky", "nových poznámek")}</li>
+          <li>✏️ aktualizuje se <strong>${nUpd}</strong> ${pl(nUpd, "existující poznámka", "existující poznámky", "existujících poznámek")} (změněný text nebo štítky)</li>
+          <li>⏭️ přeskočí se <strong>${nDup}</strong> ${pl(nDup, "duplicita", "duplicity", "duplicit")} (už v záloze jsou${c("dupfile") ? ", z toho " + c("dupfile") + " opakovaně v souboru" : ""})</li>
+          <li>${impData.errors.length ? "⚠️" : "✔️"} vynechá se <strong>${impData.errors.length}</strong> ${pl(impData.errors.length, "chybný řádek", "chybné řádky", "chybných řádků")}</li>
+        </ul>
+        ${impData.errors.length ? `<div style="max-height:160px;overflow:auto;background:var(--warn-bg);border-radius:8px;padding:6px 10px;font-size:.88em">${impData.errors.slice(0, 50).map(e => `řádek ${e.line}: ${esc(e.msg)}`).join("<br>")}${impData.errors.length > 50 ? "<br>…" : ""}</div>` : ""}
+        <p class="hint" style="margin-top:8px">Nic se nezmění, dokud neklepneš na Importovat. Pak ještě zkontroluj výsledek a ulož novou zálohu.</p>`;
+      $("impOk").disabled = !(nNew + nUpd);
+      $("impOk").textContent = nNew + nUpd ? `Importovat (${nNew + nUpd})` : "Není co importovat";
+      $("impModal").classList.add("show");
+    }catch(e){ console.error(e); toast("Tabulku nelze načíst: " + e.message); }
+  };
+  const closeImp = () => $("impModal").classList.remove("show");
+  $("impClose").onclick = $("impCancel").onclick = closeImp;
+  $("impOk").onclick = () => {
+    if(!impData) return;
+    try{ const r = applyImport(impData.items); closeImp(); changed(); $("dirtyText").textContent = `Import z tabulky: přidáno ${r.added}, aktualizováno ${r.updated}. Neuloženo.`; toast("Import hotov"); }
+    catch(e){ console.error(e); toast("Import se nepovedl: " + e.message); }
   };
 
   /* ---------- uložení nové zálohy (podle JWLManageru) ---------- */
@@ -1355,7 +1576,7 @@
   ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) openFile(f); });
-  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); closePl(); closeBulkTag(); } });
+  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); closePl(); closeBulkTag(); closeImp(); } });
 
   // zpřístupnění pro testy
   window.__jwl = S;
