@@ -17,6 +17,7 @@
   :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
   .wrap{max-width:820px;margin:0 auto;padding:22px 14px 60px}
+  @media (min-width:1000px){ .wrap{max-width:1180px} }
   .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
   header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
   h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
@@ -39,9 +40,9 @@
   .msg.err{color:var(--red)}
 
   #app{margin-top:16px}
-  .sum{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  .sum .info{flex:1 1 240px;min-width:0}
-  .sum .fname{font-weight:700;color:var(--maroon-dark);word-break:break-all;font-size:.95em}
+  .sum{display:flex;flex-direction:column;gap:10px}
+  .sum .info{min-width:0}
+  .sum .fname{font-weight:700;color:var(--maroon-dark);overflow-wrap:anywhere;font-size:.95em}
   .sum .meta{font-size:.82em;color:var(--ink-soft);margin-top:3px}
   .sum .acts{display:flex;gap:8px;flex-wrap:wrap}
   .warn{margin-top:10px;background:var(--warn-bg);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:.88em;line-height:1.45}
@@ -49,6 +50,8 @@
   .dirty.show{display:flex}
 
   .tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0 0;padding-bottom:4px;scrollbar-width:thin}
+  @media (min-width:760px){ .tabs{flex-wrap:wrap;overflow:visible} }
+  .morebtn{display:block;margin:12px auto 0}
   .tab{flex:0 0 auto;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:20px;padding:7px 13px;font-size:.88em;cursor:pointer;color:var(--ink-soft);font-weight:600}
   .tab.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
   :root[data-theme="dark"] .tab.on{color:#1b1710}
@@ -303,7 +306,7 @@
       <div class="row">
         <input type="search" id="q" placeholder="Hledat…" aria-label="Hledat">
         <div class="menu" id="expMenu">
-          <button class="ic" id="expBtn" title="Export" aria-label="Export">⬇️</button>
+          <button class="ic" id="expBtn" title="Export do souboru (záloha se nemění)" aria-label="Export">⬇️ <small>Export</small></button>
           <div class="pop">
             <button id="expMd">Export do Markdownu (.md)</button>
             <button id="expCsv">Export do tabulky (.csv)</button>
@@ -352,11 +355,12 @@
   const COLORS = ["šedá","žlutá","zelená","modrá","růžová","oranžová","fialová"];
   const LANGS = window.JWL_LANGS || {}, PUBS_EN = window.JWL_PUBS_EN || {};
   const $ = id => document.getElementById(id);
+  const PAGE = 200;
 
   const S = {
     SQL:null, db:null, zip:null, fileName:"", manifest:null, origBytes:null, hdr:[2,2],
     schema:0, writable:false, dirty:false, tab:"notes", data:null, defLang:"B",
-    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), added:new Map(), moveItem:null, selMode:false, sel:new Set()
+    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), added:new Map(), moveItem:null, selMode:false, sel:new Set(), limit:200
   };
 
   /* ---------- pomocné ---------- */
@@ -497,7 +501,7 @@
       const text = book + (l.ChapterNumber ? " " + l.ChapterNumber + vs : "");
       const ref = String(l.BookNumber).padStart(2,"0") + String(l.ChapterNumber || 1).padStart(3,"0") + String(verses[0] || 0).padStart(3,"0");
       const link = "https://www.jw.org/finder?wtlocale=" + lang + "&pub=" + encodeURIComponent(l.KeySymbol || "nwtsty") + "&bible=" + ref + (verses.length > 1 ? "-" + ref.slice(0,5) + String(verses[verses.length-1]).padStart(3,"0") : "");
-      return { text, sub: pubName(l), link, sort: "0" + String(l.BookNumber).padStart(2,"0") + String(l.ChapterNumber || 0).padStart(3,"0") + String(verses[0] || 0).padStart(3,"0"), kind:"bible" };
+      return { text, sub: pubName(l), link, sort: "0" + String(l.BookNumber).padStart(2,"0") + String(l.ChapterNumber || 0).padStart(3,"0") + String(verses[0] || 0).padStart(3,"0"), kind:"bible", book: l.BookNumber, chap: l.ChapterNumber || 0 };
     }
     if(l.Type === 2 || l.Type === 3){
       return { text: (l.Type === 2 ? "Video" : "Audio") + (l.KeySymbol ? " " + l.KeySymbol : "") + (l.Track ? ", č. " + l.Track : ""), sub: l.Title || "", link:null, sort:"2" + (l.KeySymbol || ""), kind:"media" };
@@ -522,6 +526,7 @@
     const need = {};
     Object.values(S.data.loc).forEach(l => { if(l.KeySymbol && !isBible(l) && l.Type === 0 && !BIBLES[l.KeySymbol]) need[pubKey(l)] = l; });
     Object.keys(need).forEach(k => { if(cache[k]) S.pubNames[k] = cache[k]; });
+    S.data.notes.forEach(n => delete n._d); S.data.highlights.forEach(h => delete h._d);
     render();
     const todo = Object.entries(need).filter(([k]) => !cache[k]);
     for(const [k, l] of todo){
@@ -534,7 +539,7 @@
       }catch(e){}
     }
     try{ localStorage.setItem("jwl_pubNames", JSON.stringify(cache)); }catch(e){}
-    if(todo.length) render();
+    if(todo.length){ S.data.notes.forEach(n => delete n._d); S.data.highlights.forEach(h => delete h._d); render(); }
   }
 
   /* ---------- hlavička ---------- */
@@ -571,7 +576,7 @@
   }
   $("tabs").addEventListener("click", e => {
     const b = e.target.closest("[data-tab]"); if(!b) return;
-    S.tab = b.dataset.tab; $("q").value = ""; S.filters = {}; S.selMode = false; S.sel.clear(); renderTabs(); render();
+    S.tab = b.dataset.tab; $("q").value = ""; S.filters = {}; S.limit = PAGE; S.selMode = false; S.sel.clear(); renderTabs(); render();
   });
 
   /* ---------- filtry ---------- */
@@ -584,23 +589,28 @@
       h += sel("fTag", "Štítek", [["", "Všechny štítky"], ["-", "Bez štítku"]].concat(D.userTags.map(t => [t.TagId, t.Name])), f.tag);
       h += sel("fColor", "Barva", [["", "Všechny barvy"]].concat(COLORS.map((c, i) => [i, c]).filter(([i]) => D.notes.some(n => n.color === i))), f.color);
       h += sel("fKind", "Zdroj", [["", "Vše"], ["bible", "Bible"], ["pub", "Publikace"], ["ind", "Samostatné"]], f.kind);
+      h += bibleFilters(D.notes.map(noteD));
       h += sel("fSort", "Řazení", [["mod", "Naposledy změněné"], ["created", "Naposledy vytvořené"], ["loc", "Podle umístění"]], f.sort || "mod");
     }else if(S.tab === "hl"){
       h += sel("fColor", "Barva", [["", "Všechny barvy"]].concat(COLORS.map((c, i) => [i, c]).filter(([i]) => D.highlights.some(x => x.ColorIndex === i))), f.color);
       h += sel("fKind", "Zdroj", [["", "Vše"], ["bible", "Bible"], ["pub", "Publikace"]], f.kind);
+      h += bibleFilters(D.highlights.map(hlD));
     }
     $("filters").innerHTML = h;
     $("filters").hidden = !h;
     $("addBtn").hidden = S.tab !== "notes" && S.tab !== "tags";
     $("addBtn").title = S.tab === "tags" ? "Nový štítek" : "Nová poznámka";
     $("addBtn").disabled = !S.writable;
-    $("expMenu").hidden = !(S.tab === "notes" || S.tab === "fields" || S.tab === "hl");
+    $("expMenu").hidden = S.tab === "tags";
   }
   $("filters").addEventListener("change", e => {
-    const map = { fTag:"tag", fColor:"color", fKind:"kind", fSort:"sort" };
-    S.filters[map[e.target.id]] = e.target.value; render(true);
+    const map = { fTag:"tag", fColor:"color", fKind:"kind", fSort:"sort", fBook:"book", fChap:"chap" };
+    const k = map[e.target.id]; S.filters[k] = e.target.value;
+    if(k === "kind" && e.target.value !== "bible"){ S.filters.book = ""; S.filters.chap = ""; }
+    if(k === "book") S.filters.chap = "";
+    S.limit = PAGE; render(true);
   });
-  let qt; $("q").addEventListener("input", () => { clearTimeout(qt); qt = setTimeout(() => render(true), 200); });
+  let qt; $("q").addEventListener("input", () => { clearTimeout(qt); qt = setTimeout(() => { S.limit = PAGE; render(true); }, 250); });
 
   /* ---------- vykreslení seznamů ---------- */
   function colorStyle(c){ return c != null ? `style="border-left-color:var(--c${c})"` : ""; }
@@ -608,23 +618,36 @@
   function delBtn(kind, id){ return S.writable ? `<button class="ic" data-del="${kind}" data-id="${esc(id)}" title="Smazat" aria-label="Smazat">🗑️</button>` : ""; }
   function matches(text){ const t = fold($("q").value.trim()); return !t || fold(text).includes(t); }
 
+  const noteD = n => n._d || (n._d = describe(n.LocationId, n.BlockType, n.BlockIdentifier));
+  const hlD = h => h._d || (h._d = describe(h.LocationId, null, null, h.ranges));
+  function bibleFilters(ds){
+    const f = S.filters; if(f.kind !== "bible") return "";
+    const books = [...new Set(ds.filter(d => d.kind === "bible").map(d => d.book))].sort((a, b) => a - b);
+    let h = sel("fBook", "Kniha", [["", "Všechny knihy"]].concat(books.map(b => [b, BOOKS[b - 1] || ("kniha " + b)])), f.book);
+    if(f.book){
+      const ch = [...new Set(ds.filter(d => d.kind === "bible" && d.book === +f.book).map(d => d.chap))].sort((a, b) => a - b);
+      h += sel("fChap", "Kapitola", [["", "Všechny kapitoly"]].concat(ch.map(c => [c, "kapitola " + c])), f.chap);
+    }
+    return h;
+  }
+  const bibleOk = d => { const f = S.filters; return (!f.book || (d.kind === "bible" && d.book === +f.book)) && (!f.chap || d.chap === +f.chap); };
   function filteredNotes(){
     const f = S.filters, D = S.data;
-    let arr = D.notes.map(n => ({ n, d: describe(n.LocationId, n.BlockType, n.BlockIdentifier) }));
+    let arr = D.notes.map(n => ({ n, d: noteD(n) }));
     arr = arr.filter(({ n, d }) =>
       matches([n.Title, n.Content, d.text, d.sub, n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).join(" ")].join(" ")) &&
       (!f.tag || (f.tag === "-" ? !n.tagIds.length : n.tagIds.includes(+f.tag))) &&
       (f.color == null || f.color === "" || n.color === +f.color) &&
-      (!f.kind || d.kind === f.kind));
+      (!f.kind || d.kind === f.kind) && bibleOk(d));
     const s = f.sort || "mod";
     arr.sort((a, b) => s === "loc" ? a.d.sort.localeCompare(b.d.sort) : String(s === "created" ? b.n.Created : b.n.LastModified).localeCompare(s === "created" ? a.n.Created : a.n.LastModified));
     return arr;
   }
   function filteredHl(){
     const f = S.filters;
-    return S.data.highlights.map(h => ({ h, d: describe(h.LocationId, null, null, h.ranges) }))
+    return S.data.highlights.map(h => ({ h, d: hlD(h) }))
       .filter(({ h, d }) => matches(d.text + " " + d.sub + " " + (h.note ? h.note.Title + " " + h.note.Content : "")) &&
-        (f.color == null || f.color === "" || h.ColorIndex === +f.color) && (!f.kind || d.kind === f.kind))
+        (f.color == null || f.color === "" || h.ColorIndex === +f.color) && (!f.kind || d.kind === f.kind) && bibleOk(d))
       .sort((a, b) => a.d.sort.localeCompare(b.d.sort));
   }
   function render(keepScroll){
@@ -633,7 +656,7 @@
     const D = S.data; let html = "", n = 0;
     if(S.tab === "notes"){
       const arr = filteredNotes(); n = arr.length;
-      html = arr.map(({ n: x, d }) => {
+      html = arr.slice(0, S.limit).map(({ n: x, d }) => {
         const long = (x.Content || "").length > 380 || (x.Content || "").split("\n").length > 6;
         return `<article class="card${S.selMode ? " pick" : ""}${S.sel.has(x.NoteId) ? " picked" : ""}" data-pick="${x.NoteId}" ${colorStyle(x.color)}>${S.selMode ? `<input type="checkbox" class="cb" tabindex="-1"${S.sel.has(x.NoteId) ? " checked" : ""}>` : ""}
           ${x.Title ? `<h3>${esc(x.Title)}</h3>` : ""}
@@ -646,7 +669,7 @@
       }).join("");
     }else if(S.tab === "hl"){
       const arr = filteredHl(); n = arr.length;
-      html = arr.map(({ h, d }) => {
+      html = arr.slice(0, S.limit).map(({ h, d }) => {
         const words = h.ranges.map(r => r.StartToken != null ? (r.EndToken > r.StartToken ? `slova ${r.StartToken + 1}–${r.EndToken + 1}` : `slovo ${r.StartToken + 1}`) + (h.ranges.length > 1 ? (r.BlockType === 2 ? " (v. " : " (odst. ") + r.Identifier + ")" : "") : "").filter(Boolean).join(", ");
         return `<article class="card${S.selMode ? " pick" : ""}${S.sel.has(h.UserMarkId) ? " picked" : ""}" data-pick="${h.UserMarkId}" ${colorStyle(h.ColorIndex)}>${S.selMode ? `<input type="checkbox" class="cb" tabindex="-1"${S.sel.has(h.UserMarkId) ? " checked" : ""}>` : ""}
           <div class="loc" style="margin-top:0">${locHtml(d)}</div>
@@ -704,6 +727,7 @@
         }).join("")}</ol></article>`).join("");
     }
     const y = scrollY;
+    if(n > S.limit && (S.tab === "notes" || S.tab === "hl")) html += `<button class="btn secondary morebtn" id="moreBtn">Zobrazit dalších ${Math.min(PAGE, n - S.limit)} (zobrazeno ${S.limit} z ${n})</button>`;
     $("list").innerHTML = html || `<div class="empty">${$("q").value || Object.values(S.filters).some(Boolean) ? "Nic neodpovídá hledání." : "Tady zatím nic není."}</div>`;
     $("count").textContent = n + " " + (n === 1 ? "položka" : n >= 2 && n <= 4 ? "položky" : "položek");
     if(keepScroll) window.scrollTo(0, y);
@@ -724,6 +748,7 @@
   let armed = null;
   $("list").addEventListener("click", e => {
     const t = e.target;
+    if(t.id === "moreBtn"){ S.limit += PAGE; render(true); return; }
     const more = t.closest("[data-more]");
     if(more){ const b = more.previousElementSibling; b.classList.toggle("clamp"); more.textContent = b.classList.contains("clamp") ? "Zobrazit celé ▾" : "Sbalit ▴"; return; }
     if(S.selMode){
@@ -1184,6 +1209,9 @@
   function exportRows(){
     const D = S.data;
     if(S.tab === "hl") return filteredHl().map(({ h, d }) => ({ title: h.note ? h.note.Title : "", text: h.note ? h.note.Content : "", loc: d.text, sub: d.sub, link: d.link, tags: "", color: COLORS[h.ColorIndex] || "", created: "", modified: "" }));
+    if(S.tab === "bm") return D.bookmarks.map(b => ({ b, d: describe(b.LocationId, b.BlockType, b.BlockIdentifier) })).filter(({ b, d }) => matches(b.Title + " " + b.Snippet + " " + d.text)).map(({ b, d }) => ({ title: b.Title, text: b.Snippet || "", loc: d.text, sub: d.sub, link: d.link, tags: "záložka č. " + (b.Slot + 1), color: "", created: "", modified: "" }));
+    if(S.tab === "fav") return D.favorites.map(m => describe(m.LocationId)).filter(d => matches(d.text + " " + d.sub)).map(d => ({ title: d.text, text: "", loc: d.text, sub: d.sub, link: d.link, tags: "", color: "", created: "", modified: "" }));
+    if(S.tab === "pl") return D.playlists.flatMap(p => p.items.map(i => ({ p, i }))).filter(({ p, i }) => matches(p.tag.Name + " " + i.Label)).map(({ p, i }) => { const t = Math.round(((i.EndTrimOffsetTicks || i.LocTicks || i.MediaTicks || 0) - (i.StartTrimOffsetTicks || 0)) / 1e7); return { title: i.Label, text: "", loc: "playlist " + p.tag.Name, sub: t > 0 ? Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0") : "", link: null, tags: p.tag.Name, color: "", created: "", modified: "" }; });
     if(S.tab === "fields") return D.fields.map(fl => ({ fl, d: describe(fl.LocationId) })).filter(({ fl, d }) => matches(fl.Value + " " + d.text)).map(({ fl, d }) => ({ title: "pole " + fl.TextTag, text: fl.Value, loc: d.text, sub: d.sub, link: d.link, tags: "", color: "", created: "", modified: "" }));
     return filteredNotes().map(({ n, d }) => ({ title: n.Title || "", text: n.Content || "", loc: d.text, sub: d.sub, link: d.link, tags: n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).filter(Boolean).join(", "), color: n.color != null ? COLORS[n.color] : "", created: (n.Created || "").slice(0, 10), modified: (n.LastModified || "").slice(0, 10) }));
   }
