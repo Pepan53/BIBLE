@@ -103,6 +103,14 @@
   .warnbox .red{color:var(--red);font-weight:700}
   .warnbox .small{font-size:.88em;color:var(--ink-soft)}
   .warnbox .mfoot{justify-content:center}
+  .bulk{display:none;flex-direction:column;gap:8px;background:var(--sel-bg);border:1.5px solid var(--gold);border-radius:12px;padding:8px 10px}
+  .bulk.show{display:flex}
+  .bulk .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.88em;color:var(--maroon-dark);font-weight:700}
+  .bulk .top button{background:none;border:none;color:var(--gold-dark);cursor:pointer;font-size:.95em;text-decoration:underline;padding:2px}
+  .bulk .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .card.pick{cursor:pointer}
+  .card.picked{outline:3px solid var(--gold);background:var(--sel-bg)}
+  .card .cb{float:right;width:22px;height:22px;margin:0 0 4px 8px;accent-color:var(--maroon);pointer-events:none}
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tooltip-bg);color:#fff8ec;padding:9px 16px;border-radius:20px;font-size:.9em;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20000;max-width:90vw;text-align:center}
   .toast.show{opacity:1}
   .menu{position:relative}
@@ -210,6 +218,24 @@
   </div>
 </div>
 
+<!-- hromadné štítky -->
+<div class="modal-overlay" id="bTagModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="bTagTitle">Přidat štítek</h3>
+      <button class="modal-close" id="bTagClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="hint" id="bTagHint"></div>
+    <label for="bTagSel">Štítek</label>
+    <select id="bTagSel" style="width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--ink);padding:0 8px;font-size:.95em"></select>
+    <div id="bTagNewRow" hidden><label for="bTagNew">Název nového štítku</label><input type="text" id="bTagNew"></div>
+    <div class="mfoot">
+      <button class="btn secondary" id="bTagCancel">Zrušit</button>
+      <button class="btn" id="bTagOk">Použít</button>
+    </div>
+  </div>
+</div>
+
 <!-- varování před uložením -->
 <div class="modal-overlay" id="saveModal">
   <div class="modal-box warnbox" role="alertdialog" aria-labelledby="saveWarnText">
@@ -284,8 +310,18 @@
           </div>
         </div>
         <button class="ic" id="addBtn" title="Nová poznámka" aria-label="Nová poznámka">＋</button>
+        <button class="ic" id="selBtn" title="Vybrat víc položek" aria-label="Vybrat víc položek">☑️</button>
       </div>
       <div class="row" id="filters"></div>
+      <div class="bulk" id="bulk">
+        <div class="top"><span id="selCount">Vybráno 0</span><button id="selAll">vybrat vše</button><button id="selNone">zrušit výběr</button><button id="selExit">hotovo</button></div>
+        <div class="acts">
+          <button class="ic" id="bTagAdd" title="Přidat štítek vybraným" aria-label="Přidat štítek">🏷️＋</button>
+          <button class="ic" id="bTagDel" title="Odebrat štítek vybraným" aria-label="Odebrat štítek">🏷️−</button>
+          <span class="swrow" id="bColors"></span>
+          <button class="ic" id="bDel" title="Smazat vybrané" aria-label="Smazat vybrané">🗑️</button>
+        </div>
+      </div>
       <div class="count" id="count"></div>
     </div>
 
@@ -320,7 +356,7 @@
   const S = {
     SQL:null, db:null, zip:null, fileName:"", manifest:null, origBytes:null, hdr:[2,2],
     schema:0, writable:false, dirty:false, tab:"notes", data:null, defLang:"B",
-    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), added:new Map(), moveItem:null
+    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), added:new Map(), moveItem:null, selMode:false, sel:new Set()
   };
 
   /* ---------- pomocné ---------- */
@@ -535,7 +571,7 @@
   }
   $("tabs").addEventListener("click", e => {
     const b = e.target.closest("[data-tab]"); if(!b) return;
-    S.tab = b.dataset.tab; $("q").value = ""; S.filters = {}; renderTabs(); render();
+    S.tab = b.dataset.tab; $("q").value = ""; S.filters = {}; S.selMode = false; S.sel.clear(); renderTabs(); render();
   });
 
   /* ---------- filtry ---------- */
@@ -599,7 +635,7 @@
       const arr = filteredNotes(); n = arr.length;
       html = arr.map(({ n: x, d }) => {
         const long = (x.Content || "").length > 380 || (x.Content || "").split("\n").length > 6;
-        return `<article class="card" ${colorStyle(x.color)}>
+        return `<article class="card${S.selMode ? " pick" : ""}${S.sel.has(x.NoteId) ? " picked" : ""}" data-pick="${x.NoteId}" ${colorStyle(x.color)}>${S.selMode ? `<input type="checkbox" class="cb" tabindex="-1"${S.sel.has(x.NoteId) ? " checked" : ""}>` : ""}
           ${x.Title ? `<h3>${esc(x.Title)}</h3>` : ""}
           ${x.Content ? `<div class="body${long ? " clamp" : ""}">${esc(x.Content)}</div>${long ? `<button class="more" data-more>Zobrazit celé ▾</button>` : ""}` : ""}
           <div class="loc">${locHtml(d)}</div>
@@ -612,7 +648,7 @@
       const arr = filteredHl(); n = arr.length;
       html = arr.map(({ h, d }) => {
         const words = h.ranges.map(r => r.StartToken != null ? (r.EndToken > r.StartToken ? `slova ${r.StartToken + 1}–${r.EndToken + 1}` : `slovo ${r.StartToken + 1}`) + (h.ranges.length > 1 ? (r.BlockType === 2 ? " (v. " : " (odst. ") + r.Identifier + ")" : "") : "").filter(Boolean).join(", ");
-        return `<article class="card" ${colorStyle(h.ColorIndex)}>
+        return `<article class="card${S.selMode ? " pick" : ""}${S.sel.has(h.UserMarkId) ? " picked" : ""}" data-pick="${h.UserMarkId}" ${colorStyle(h.ColorIndex)}>${S.selMode ? `<input type="checkbox" class="cb" tabindex="-1"${S.sel.has(h.UserMarkId) ? " checked" : ""}>` : ""}
           <div class="loc" style="margin-top:0">${locHtml(d)}</div>
           <div class="dates" style="margin-top:4px">${esc(COLORS[h.ColorIndex] || "")}${words ? " · " + esc(words) : ""}</div>
           ${h.note ? `<div class="body" style="margin-top:6px">🗒️ <strong>${esc(h.note.Title || "")}</strong>${h.note.Content ? " – " + esc(h.note.Content) : ""}</div>` : ""}
@@ -672,6 +708,7 @@
     $("count").textContent = n + " " + (n === 1 ? "položka" : n >= 2 && n <= 4 ? "položky" : "položek");
     if(keepScroll) window.scrollTo(0, y);
     if(S.tab === "pl") loadThumbs();
+    renderBulk();
   }
   const thumbCache = {};
   async function loadThumbs(){
@@ -689,6 +726,10 @@
     const t = e.target;
     const more = t.closest("[data-more]");
     if(more){ const b = more.previousElementSibling; b.classList.toggle("clamp"); more.textContent = b.classList.contains("clamp") ? "Zobrazit celé ▾" : "Sbalit ▴"; return; }
+    if(S.selMode){
+      const card = t.closest("[data-pick]");
+      if(card && !t.closest("a,[data-more]")){ const id = +card.dataset.pick; S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); render(true); return; }
+    }
     const st = t.closest("[data-showtag]");
     if(st){ e.preventDefault(); S.tab = "notes"; S.filters = { tag: st.dataset.showtag }; $("q").value = ""; renderTabs(); render(); return; }
     if(!S.writable) return;
@@ -826,6 +867,91 @@
       run("INSERT INTO Tag (Type, Name) VALUES (1, ?)", [v.trim()]);
       changed("Štítek přidán – prázdný štítek se při uložení zálohy vynechá, přiřaď ho nějaké poznámce.");
     }else openNote(null);
+  };
+
+  /* ---------- hromadné úpravy (poznámky, zvýraznění) ---------- */
+  function visibleIds(){
+    return S.tab === "notes" ? filteredNotes().map(x => x.n.NoteId) : S.tab === "hl" ? filteredHl().map(x => x.h.UserMarkId) : [];
+  }
+  function renderBulk(){
+    const can = S.writable && (S.tab === "notes" || S.tab === "hl");
+    $("selBtn").hidden = !can;
+    $("selBtn").classList.toggle("on", S.selMode);
+    if(!can){ S.selMode = false; }
+    const vis = new Set(visibleIds());
+    [...S.sel].forEach(id => { if(!vis.has(id)) S.sel.delete(id); });
+    $("bulk").classList.toggle("show", S.selMode);
+    if(!S.selMode) return;
+    const n = S.sel.size;
+    $("selCount").textContent = "Vybráno " + n + " z " + vis.size;
+    $("bTagAdd").hidden = $("bTagDel").hidden = S.tab !== "notes";
+    $("bColors").innerHTML = COLORS.map((c, i) => i ? `<button class="sw" style="background:var(--c${i})" data-bc="${i}" title="Změnit barvu na: ${c}" aria-label="${c}"${n ? "" : " disabled"}></button>` : "").join("");
+    ["bTagAdd", "bTagDel", "bDel"].forEach(id => $(id).disabled = !n);
+    if(armedBulk){ armedBulk = false; $("bDel").classList.remove("confirm"); $("bDel").textContent = "🗑️"; }
+  }
+  $("selBtn").onclick = () => { S.selMode = !S.selMode; S.sel.clear(); render(true); };
+  $("selExit").onclick = () => { S.selMode = false; S.sel.clear(); render(true); };
+  $("selAll").onclick = () => { visibleIds().forEach(id => S.sel.add(id)); render(true); };
+  $("selNone").onclick = () => { S.sel.clear(); render(true); };
+  const selList = () => [...S.sel].map(Number).join(",");
+  $("bColors").addEventListener("click", e => {
+    const b = e.target.closest("[data-bc]"); if(!b || !S.sel.size) return;
+    const c = +b.dataset.bc; let skippedColor = 0;
+    if(S.tab === "hl") run(`UPDATE UserMark SET ColorIndex = ? WHERE UserMarkId IN (${selList()})`, [c]);
+    else{
+      const marks = q(`SELECT UserMarkId FROM Note WHERE NoteId IN (${selList()}) AND UserMarkId IS NOT NULL`);
+      if(!marks.length){ toast("Vybrané poznámky nejsou u zvýraznění, barvu nemají."); return; }
+      run(`UPDATE UserMark SET ColorIndex = ? WHERE UserMarkId IN (${marks.map(m => m.UserMarkId).join(",")})`, [c]);
+      skippedColor = S.sel.size - marks.length;
+    }
+    changed(S.tab === "notes" && skippedColor ? "Barva změněna; " + skippedColor + " samostatných poznámek barvu nemá" : "Barva změněna");
+  });
+  let armedBulk = false;
+  $("bDel").onclick = () => {
+    if(!S.sel.size) return;
+    if(!armedBulk){ armedBulk = true; $("bDel").classList.add("confirm"); $("bDel").textContent = "Opravdu smazat " + S.sel.size + "?"; setTimeout(() => { if(armedBulk){ armedBulk = false; $("bDel").classList.remove("confirm"); $("bDel").textContent = "🗑️"; } }, 4000); return; }
+    armedBulk = false;
+    const n = S.sel.size, L = selList();
+    run("BEGIN");
+    if(S.tab === "notes"){ run(`DELETE FROM TagMap WHERE NoteId IN (${L})`); run(`DELETE FROM Note WHERE NoteId IN (${L})`); }
+    else run(`DELETE FROM BlockRange WHERE UserMarkId IN (${L})`);
+    run("COMMIT");
+    S.sel.clear(); changed("Smazáno " + n + " položek");
+  };
+  let bTagMode = "add";
+  function openBulkTag(mode){
+    bTagMode = mode;
+    const used = new Set(q(`SELECT DISTINCT TagId FROM TagMap WHERE NoteId IN (${selList()})`).map(r => r.TagId));
+    const tags = S.data.userTags.filter(t => mode === "add" || used.has(t.TagId));
+    if(mode === "del" && !tags.length){ toast("Vybrané poznámky nemají žádný štítek."); return; }
+    $("bTagTitle").textContent = mode === "add" ? "Přidat štítek" : "Odebrat štítek";
+    $("bTagHint").textContent = (mode === "add" ? "Štítek se přidá " : "Štítek se odebere ") + S.sel.size + " vybraným poznámkám.";
+    $("bTagSel").innerHTML = tags.map(t => `<option value="${t.TagId}">${esc(t.Name)}</option>`).join("") + (mode === "add" ? `<option value="new">➕ Nový štítek…</option>` : "");
+    $("bTagNewRow").hidden = $("bTagSel").value !== "new"; $("bTagNew").value = "";
+    $("bTagModal").classList.add("show");
+  }
+  $("bTagSel").onchange = () => { $("bTagNewRow").hidden = $("bTagSel").value !== "new"; if(!$("bTagNewRow").hidden) $("bTagNew").focus(); };
+  const closeBulkTag = () => $("bTagModal").classList.remove("show");
+  $("bTagClose").onclick = $("bTagCancel").onclick = closeBulkTag;
+  $("bTagAdd").onclick = () => openBulkTag("add");
+  $("bTagDel").onclick = () => openBulkTag("del");
+  $("bTagOk").onclick = () => {
+    let tag = $("bTagSel").value;
+    run("BEGIN");
+    try{
+      if(tag === "new"){
+        const name = $("bTagNew").value.trim(); if(!name) throw new Error("Zadej název štítku.");
+        const ex = S.data.userTags.find(t => t.Name.toLowerCase() === name.toLowerCase());
+        if(ex) tag = ex.TagId; else { run("INSERT INTO Tag (Type, Name) VALUES (1, ?)", [name]); tag = q("SELECT last_insert_rowid() AS id")[0].id; }
+      }
+      tag = +tag;
+      if(bTagMode === "add"){
+        let pos = q("SELECT COALESCE(MAX(Position), -1) + 1 AS p FROM TagMap WHERE TagId = ?", [tag])[0].p;
+        [...S.sel].forEach(id => { if(!q("SELECT 1 AS x FROM TagMap WHERE TagId = ? AND NoteId = ?", [tag, id]).length){ run("INSERT INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (NULL, NULL, ?, ?, ?)", [id, tag, pos++]); } });
+      }else run(`DELETE FROM TagMap WHERE TagId = ? AND NoteId IN (${selList()})`, [tag]);
+      run("COMMIT");
+    }catch(e){ run("ROLLBACK"); toast(e.message); return; }
+    closeBulkTag(); changed(bTagMode === "add" ? "Štítek přidán" : "Štítek odebrán");
   };
 
   /* ---------- playlisty (podle JWLManageru) ---------- */
@@ -1201,7 +1327,7 @@
   ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) openFile(f); });
-  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); closePl(); } });
+  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); closePl(); closeBulkTag(); } });
 
   // zpřístupnění pro testy
   window.__jwl = S;
