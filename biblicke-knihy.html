@@ -2685,6 +2685,15 @@
     panels[modeSelect.value].classList.add("active");
   });
 
+  // Přímý odkaz na herní režim z rozcestníku: biblicke-knihy.html?hra=2
+  try{
+    const wanted = new URLSearchParams(location.search).get("hra");
+    if(wanted && panels[wanted]){
+      modeSelect.value = wanted;
+      modeSelect.dispatchEvent(new Event("change"));
+    }
+  }catch(e){}
+
 })();
 </script>
 <script src="assets/nav-dock.js"></script>

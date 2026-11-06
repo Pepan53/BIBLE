@@ -19,6 +19,16 @@
     --shadow: 0 2px 6px rgba(60, 45, 20, 0.12);
     --heading-font: Georgia, "Palatino Linotype", serif;
   }
+  :root{
+    --tint-green:#dcebdc; --tint-maroon:#f3e4df; --tint-slate:#e9edf1;
+    --ic-green:#3c7a3c; --ic-maroon:#7a2e2e; --ic-slate:#4a5a6a;
+    --row-line:#ece3cc; --badge-bg:#fff4d6;
+  }
+  :root[data-theme="dark"]{
+    --tint-green:#1f3b2a; --tint-maroon:#3d2220; --tint-slate:#2a3138;
+    --ic-green:#6fcf8f; --ic-maroon:#f0917c; --ic-slate:#a9bccd;
+    --row-line:#3a3124; --badge-bg:#3a2f1e;
+  }
   *{ box-sizing: border-box; }
   html,body{
     margin:0; padding:0;
@@ -27,12 +37,9 @@
     font-family: "Segoe UI", Verdana, Arial, sans-serif;
     min-height:100vh;
   }
-  .wrap{
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 40px 20px 60px;
-  }
-  header{ text-align:center; margin-bottom: 34px; }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 40px 20px 60px; }
+  @media (min-width:1100px){ .wrap{ max-width: 1200px; padding: 48px 48px 60px; } }
+  header{ text-align:center; margin-bottom: 26px; }
   h1{
     font-family: var(--heading-font);
     color: var(--maroon-dark);
@@ -41,53 +48,93 @@
   }
   .subtitle{ color: var(--ink-soft); font-size: 1em; }
 
-  .cards{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .card-link{
-    display:block;
-    text-decoration:none;
-    color: inherit;
+  .search{
+    display:flex; align-items:center; gap:10px;
+    height:48px; padding:0 16px; margin:0 auto 20px;
+    max-width:520px;
     background: var(--bg-panel);
-    border: 1.5px solid var(--border);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    padding: 26px 24px;
-    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    border:1.5px solid var(--border);
+    border-radius:24px;
   }
-  .card-link:hover{
-    transform: translateY(-3px);
-    border-color: var(--gold);
-    box-shadow: 0 6px 18px rgba(60,45,20,0.18);
+  .search:focus-within{ border-color: var(--gold); }
+  .search svg{ flex:none; color: var(--ink-soft); }
+  .search input{
+    flex:1; min-width:0; border:0; outline:0; background:transparent;
+    font:inherit; font-size:15px; color: var(--ink);
   }
-  .card-link:active{ transform: translateY(0); }
 
-  .card-icon{
-    font-size: 2.4em;
-    margin-bottom: 10px;
-    display:block;
+  .groups{ display:grid; gap:16px; grid-template-columns:1fr; align-items:start; }
+  @media (min-width:720px){
+    .groups{ grid-template-columns:1fr 1fr; }
+    .g-studium{ grid-column:1; grid-row:1 / span 2; }
+    .g-hry{ grid-column:2; grid-row:1; }
+    .g-nastroje{ grid-column:2; grid-row:2; }
   }
-  .card-title{
-    font-family: var(--heading-font);
-    color: var(--maroon-dark);
-    font-size: 1.35em;
-    font-weight: 700;
-    margin-bottom: 6px;
+  @media (min-width:1100px){
+    .groups{ grid-template-columns:repeat(3, minmax(0,1fr)); gap:24px; }
+    .g-hry,.g-studium,.g-nastroje{ grid-column:auto; grid-row:auto; }
   }
-  .card-desc{
+  .group{
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .group h2{
+    margin:0; padding:14px 18px 10px;
+    display:flex; align-items:center; gap:8px;
+    font-family:"Segoe UI", Verdana, Arial, sans-serif;
+    font-size:13px; letter-spacing:.08em; text-transform:uppercase;
     color: var(--ink-soft);
-    font-size: 0.95em;
-    line-height: 1.4;
   }
-  .card-arrow{
-    display:inline-block;
-    margin-top: 12px;
-    color: var(--gold-dark);
-    font-weight: 700;
-    font-size: 0.9em;
+  .group h2 .dot{ width:10px; height:10px; border-radius:50%; }
+  .g-hry .dot{ background: var(--green); }
+  .g-studium .dot{ background: var(--maroon); }
+  .g-nastroje .dot{ background:#4a5a6a; }
+
+  .row{
+    display:flex; align-items:center; gap:14px;
+    min-height:72px; padding:10px 18px;
+    border-top:1px solid var(--row-line);
+    text-decoration:none; color:inherit;
+    transition: background .12s ease;
   }
+  .row:hover{ background: var(--hover-tint); }
+  .row:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .ico{
+    width:44px; height:44px; flex:none; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .g-hry .ico{ background: var(--tint-green); color: var(--ic-green); }
+  .g-studium .ico{ background: var(--tint-maroon); color: var(--ic-maroon); }
+  .g-nastroje .ico{ background: var(--tint-slate); color: var(--ic-slate); }
+  .txt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .ttl{ font-family: var(--heading-font); font-weight:700; font-size:16px; line-height:1.25; color: var(--ink); }
+  .dsc{ font-size:13px; line-height:1.35; color: var(--ink-soft); }
+  .chev{ flex:none; color: var(--ink-soft); }
+  .wip{
+    flex:none; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px;
+    background: var(--badge-bg); color: var(--gold-dark); border:1px solid var(--gold);
+  }
+
+  .modes{ display:none; border-top:1px solid var(--row-line); padding:6px 10px 12px; }
+  @media (min-width:1000px){ .modes{ display:block; } }
+  .modes-label{ margin:6px 8px 4px; font-size:12px; color: var(--ink-soft); font-weight:700; letter-spacing:.04em; }
+  .mode{
+    display:flex; align-items:center; gap:12px; min-height:44px; padding:6px 8px;
+    border-radius:10px; text-decoration:none; color: var(--ink); font-size:14px;
+  }
+  .mode:hover{ background: var(--hover-tint); }
+  .mode:focus-visible{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .mode .n{
+    width:26px; height:26px; flex:none; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--tint-green); color: var(--ic-green); font-weight:700; font-size:13px;
+  }
+  .mode .go{ margin-left:auto; color: var(--ink-soft); }
+
+  .empty{ display:none; text-align:center; color: var(--ink-soft); padding:30px 0; }
 
   footer{
     text-align:center;
@@ -154,75 +201,104 @@
     <button class="history-btn" id="historyBtn" title="Historie skóre" aria-label="Historie skóre">📈</button>
   </div>
 
-  <div class="cards">
-    <a class="card-link" href="biblicke-knihy.html">
-      <span class="card-icon">📖</span>
-      <div class="card-title">BIBLICKÉ KNIHY</div>
-      <div class="card-desc">Procvič si pořadí biblických knih, jejich pisatele, dobu vzniku a rozdělení na Starý a Nový zákon v několika různých herních režimech.</div>
-      <span class="card-arrow">Spustit hru →</span>
-    </a>
+  <label class="search">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4"/></svg>
+    <input type="search" id="q" placeholder="Hledat hru, studium nebo nástroj" aria-label="Hledat" autocomplete="off">
+  </label>
 
-    <a class="card-link" href="mapa-evangelii.html">
-      <span class="card-icon">🗺️</span>
-      <div class="card-title">MAPA ČTYŘ EVANGELIÍ</div>
-      <div class="card-desc">Prozkoumej, kde se odehrály události z evangelií Matouše, Marka, Lukáše a Jana. Klikni na číslo v mapě a uvidíš, co se na daném místě stalo, i s odkazy na verše.</div>
-      <span class="card-arrow">Otevřít mapu →</span>
-    </a>
+  <div class="groups" id="groups">
+    <section class="group g-hry" aria-labelledby="h-hry">
+      <h2 id="h-hry"><span class="dot"></span>Hry</h2>
+      <a class="row" href="biblicke-knihy.html" data-s="Pořadí biblických knih Sedm herních režimů – od pěti knih po všech 66. hra procvičování pořadí knihy pisatelé">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7C10 5.5 7 5 4 5.5V18c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5.5C17 5 14 5.5 12 7zM12 7v12.5"/></svg></span>
+        <span class="txt"><span class="ttl">Pořadí biblických knih</span><span class="dsc">Sedm herních režimů – od pěti knih po všech 66.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <div class="modes">
+        <div class="modes-label">Rovnou do hry</div>
+        <a class="mode" href="biblicke-knihy.html?hra=2" data-s="Pět knih"><span class="n">1</span>Pět knih<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=3" data-s="Malí proroci"><span class="n">2</span>Malí proroci<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=4" data-s="Knihy a pisatelé"><span class="n">3</span>Knihy a pisatelé<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=5" data-s="Kniha a doba dokončení psaní"><span class="n">4</span>Kniha a doba dokončení psaní<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=6" data-s="Křesťanská řecká písma"><span class="n">5</span>Křesťanská řecká písma<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=1" data-s="Všech 66 knih"><span class="n">6</span>Všech 66 knih<span class="go">→</span></a>
+        <a class="mode" href="biblicke-knihy.html?hra=7" data-s="Všech 66 knih (čtverečky)"><span class="n">7</span>Všech 66 knih (čtverečky)<span class="go">→</span></a>
+      </div>
+      <!-- Dočasně skryto na žádost uživatele — hru lze vrátit odstraněním tohoto komentáře.
+      <a class="row" href="casova-osa.html" data-s="Časová osa">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4v16M5 7h14M5 12h10M5 17h12"/></svg></span>
+        <span class="txt"><span class="ttl">Časová osa</span><span class="dsc">Seřaď osoby a události chronologicky.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      -->
+    </section>
 
-    <a class="card-link" href="zivot-jezise.html">
-      <span class="card-icon">👣</span>
-      <div class="card-title">JEŽÍŠŮV ŽIVOT</div>
-      <div class="card-desc">Projdi chronologicky hlavní události Ježíšova života na zemi. Posouvej se po časové ose a ikona Ježíše se přesune na místo, kde se událost odehrála — i s odkazy na verše ve všech čtyřech evangeliích.</div>
-      <span class="card-arrow">Otevřít mapu →</span>
-    </a>
+    <section class="group g-studium" aria-labelledby="h-studium">
+      <h2 id="h-studium"><span class="dot"></span>Studium</h2>
+      <a class="row" href="mapa-evangelii.html" data-s="Mapa čtyř evangelií Kde se odehrály události z evangelií – s odkazy na verše. mapa matouš marek lukáš jan">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6.5V20l6-2.5 6 2.5 6-2.5V4l-6 2.5L9 4zM9 4v13.5M15 6.5V20"/></svg></span>
+        <span class="txt"><span class="ttl">Mapa čtyř evangelií</span><span class="dsc">Kde se odehrály události z evangelií – s odkazy na verše.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="row" href="zivot-jezise.html" data-s="Ježíšův život Události jeho života na časové ose a na mapě. chronologie">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-5.4-6.5-10.5a6.5 6.5 0 0113 0C18.5 15.6 12 21 12 21zM12 12.5a2 2 0 100-4 2 2 0 000 4z"/></svg></span>
+        <span class="txt"><span class="ttl">Ježíšův život</span><span class="dsc">Události jeho života na časové ose a na mapě.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="row" href="rodokmen-jezise.html" data-s="Ježíšův rodokmen Linie slíbeného potomstva od Adama až k Ježíši. adam david šalomoun natan josef marie">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v6M12 9H6v4M12 9h6v4M3.5 13h5v5h-5zM15.5 13h5v5h-5z"/></svg></span>
+        <span class="txt"><span class="ttl">Ježíšův rodokmen</span><span class="dsc">Linie slíbeného potomstva od Adama až k Ježíši.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="row" href="osa-dejin.html" data-s="Osa dějin Biblické dějiny na jedné ose od stvoření. patriarchové události data">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M12 7h7M12 12H5M12 17h7"/></svg></span>
+        <span class="txt"><span class="ttl">Osa dějin</span><span class="dsc">Biblické dějiny na jedné ose od stvoření.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="row" href="celosvetova-zprava.html" data-s="Celosvětová zpráva Služební rok 2025 podle zemí a graf vývoje od 2016. zvěstovatelé země statistika">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>
+        <span class="txt"><span class="ttl">Celosvětová zpráva</span><span class="dsc">Služební rok 2025 podle zemí a graf vývoje od 2016.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </section>
 
-    <a class="card-link" href="rodokmen-jezise.html">
-      <span class="card-icon">🌳</span>
-      <div class="card-title">JEŽÍŠŮV RODOKMEN</div>
-      <div class="card-desc">Sleduj linii slíbeného potomstva od Adama až k Ježíši. U Davida se rozdělí na Matoušův rodokmen přes Šalomouna k Josefovi a Lukášův přes Natana k Marii. Uvidíš i Boží sliby a chvíle, kdy byla linie ohrožena.</div>
-      <span class="card-arrow">Otevřít rodokmen →</span>
-    </a>
-
-    <!-- Dočasně skryto na žádost uživatele — hru lze vrátit odstraněním tohoto komentáře.
-    <a class="card-link" href="casova-osa.html">
-      <span class="card-icon">🕰️</span>
-      <div class="card-title">ČASOVÁ OSA</div>
-      <div class="card-desc">Seřaď biblické patriarchy, krále, soudce, proroky, události a další postavy chronologicky za sebou. Vyber si vlastní skupiny a počet karet v kole.</div>
-      <span class="card-arrow">Spustit hru →</span>
-    </a>
-    -->
-
-    <a class="card-link" href="osa-dejin.html">
-      <span class="card-icon">📜</span>
-      <div class="card-title">OSA DĚJIN</div>
-      <div class="card-desc">Biblické dějiny na jedné svislé ose od stvoření. Životy patriarchů, události s přesným i jen přibližným datem, obrázky a odkazy na verše. Přibližuj a oddaluj prsty.</div>
-      <span class="card-arrow">Otevřít osu →</span>
-    </a>
-
-    <a class="card-link" href="celosvetova-zprava.html">
-      <span class="card-icon">🌍</span>
-      <div class="card-title">CELOSVĚTOVÁ ZPRÁVA</div>
-      <div class="card-desc">Vyber zemi a prohlédni si přehled za služební rok 2025 – zvěstovatele, pokřtěné, průkopníky, sbory i účast na Památné slavnosti. Klepnutím na řádek uvidíš graf vývoje od roku 2016.</div>
-      <span class="card-arrow">Otevřít přehled →</span>
-    </a>
-
-    <a class="card-link" href="titulky-videi.html">
-      <span class="card-icon">🎬</span>
-      <div class="card-title">TITULKY VIDEÍ</div>
-      <div class="card-desc">Vlož odkaz na video z JW Library nebo JW.ORG a uvidíš jeho titulky i souvislý přepis. Hledej v textu, vyber úsek, zkopíruj ho, sdílej nebo si ho přehraj. Funguje ve všech jazycích, ve kterých video vyšlo.</div>
-      <span class="card-arrow">Otevřít titulky →</span>
-    </a>
-
-    <a class="card-link" href="moje-poznamky-jwl.html">
-      <span class="card-icon">🗒️</span>
-      <div class="card-title">MOJE POZNÁMKY JWL <span style="display:inline-block;vertical-align:middle;font-family:Segoe UI,Verdana,Arial,sans-serif;font-size:.55em;font-weight:700;letter-spacing:.3px;background:#fff4d6;color:#7d5e20;border:1px solid #a9812f;border-radius:10px;padding:2px 8px">🚧 VE VÝVOJI</span></div>
-      <div class="card-desc">Otevři zálohu z JW Library a prohlédni si své poznámky, zvýraznění, záložky a odpovědi na jednom místě. Hledej v nich, uprav je, exportuj a ulož jako novou zálohu. Záloha zůstává jen v tvém zařízení. <em>Aplikace ještě není dokončená.</em></div>
-      <span class="card-arrow">Otevřít poznámky →</span>
-    </a>
+    <section class="group g-nastroje" aria-labelledby="h-nastroje">
+      <h2 id="h-nastroje"><span class="dot"></span>Nástroje</h2>
+      <a class="row" href="titulky-videi.html" data-s="Titulky videí Titulky a přepis videí z JW.ORG a JW Library. video přepis jw.org">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16v12H4zM8 11h3M13 11h3M8 15h6"/></svg></span>
+        <span class="txt"><span class="ttl">Titulky videí</span><span class="dsc">Titulky a přepis videí z JW.ORG a JW Library.</span></span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <a class="row" href="moje-poznamky-jwl.html" data-s="Moje poznámky JWL Záloha z JW Library: poznámky, záložky, zvýraznění. záloha jw library">
+        <span class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h5"/></svg></span>
+        <span class="txt"><span class="ttl">Moje poznámky JWL</span><span class="dsc">Záloha z JW Library: poznámky, záložky, zvýraznění.</span></span><span class="wip">VE VÝVOJI</span><svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </section>
   </div>
+  <div class="empty" id="empty">Nic nenalezeno.</div>
 
   <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.</footer>
 </div>
+<script>
+(function(){
+  var q=document.getElementById("q"), empty=document.getElementById("empty");
+  function norm(t){ return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+  q.addEventListener("input", function(){
+    var v=norm(q.value.trim()), any=false;
+    document.querySelectorAll(".group").forEach(function(g){
+      var shown=0;
+      g.querySelectorAll(".row").forEach(function(r){
+        var ok=!v || norm(r.getAttribute("data-s")).indexOf(v)>-1;
+        r.style.display=ok?"":"none"; if(ok) shown++;
+      });
+      var m=g.querySelector(".modes");
+      if(m){
+        var ms=0;
+        m.querySelectorAll(".mode").forEach(function(a){
+          var ok=!v || norm(a.getAttribute("data-s")).indexOf(v)>-1;
+          a.style.display=ok?"":"none"; if(ok) ms++;
+        });
+        m.style.display=(v&&!ms)?"none":"";
+        if(v&&ms&&!shown){ g.querySelectorAll(".row").forEach(function(r){ r.style.display=""; }); shown=1; }
+      }
+      g.style.display=shown?"":"none"; if(shown) any=true;
+    });
+    empty.style.display=any?"none":"block";
+  });
+})();
+</script>
 <script src="assets/common.js"></script>
 <script src="assets/nav-dock.js"></script>
 </body>
