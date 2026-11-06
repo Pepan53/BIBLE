@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Moje poznámky JWL — poznámky ze zálohy JW Library</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗒️</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a2e2e">
+<style>
+  :root{ --sel-bg:#f6e9cf; --c0:#b9b2a4; --c1:#f5d33f; --c2:#7fcf6e; --c3:#6cb6ee; --c4:#ef7f9a; --c5:#f7a54a; --c6:#b38be8; --warn-bg:#fff4d6; }
+  :root[data-theme="dark"]{ --sel-bg:#3a2f1a; --warn-bg:#3a3018; }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  .modal-box a,.hint a{color:var(--gold-dark)}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:820px;margin:0 auto;padding:22px 14px 60px}
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+  header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:38em;margin:0 auto 14px;line-height:1.5;font-size:.95em}
+  .wip{background:var(--warn-bg);border:1.5px solid var(--gold);border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:.9em;line-height:1.5;color:var(--ink)}
+  .wip strong{color:var(--maroon-dark)}
+  .panel{background:var(--bg-panel);border:1.5px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+  .btn{background:linear-gradient(135deg,#f1e6ce,#e7d5a8);color:var(--maroon-dark);font-weight:700;border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:.92em;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .btn.secondary{background:var(--bg-panel);color:var(--ink-soft);font-weight:600}
+  .btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+  :root[data-theme="dark"] .btn:not(.secondary):not(.danger){background:linear-gradient(135deg,#4a3c22,#3a2f1a);color:var(--gold)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .drop{border:2px dashed var(--border);border-radius:12px;padding:22px 14px;text-align:center;color:var(--ink-soft)}
+  .drop.over{border-color:var(--gold);background:var(--sel-bg)}
+  .drop .btn{font-size:1em;padding:12px 18px}
+  details.how{margin-top:12px;font-size:.9em;color:var(--ink-soft)}
+  details.how summary{cursor:pointer;color:var(--gold-dark);font-weight:600}
+  details.how li{margin:4px 0;line-height:1.45}
+  .msg{margin:10px 2px 0;font-size:.9em;color:var(--ink-soft)}
+  .msg.err{color:var(--red)}
+
+  #app{margin-top:16px}
+  .sum{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .sum .info{flex:1 1 240px;min-width:0}
+  .sum .fname{font-weight:700;color:var(--maroon-dark);word-break:break-all;font-size:.95em}
+  .sum .meta{font-size:.82em;color:var(--ink-soft);margin-top:3px}
+  .sum .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .warn{margin-top:10px;background:var(--warn-bg);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:.88em;line-height:1.45}
+  .dirty{display:none;margin-top:10px;background:var(--sel-bg);border-radius:10px;padding:8px 12px;font-size:.88em;color:var(--maroon-dark);align-items:center;gap:10px;flex-wrap:wrap}
+  .dirty.show{display:flex}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;margin:16px 0 0;padding-bottom:4px;scrollbar-width:thin}
+  .tab{flex:0 0 auto;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:20px;padding:7px 13px;font-size:.88em;cursor:pointer;color:var(--ink-soft);font-weight:600}
+  .tab.on{background:var(--maroon);border-color:var(--maroon);color:#fff}
+  :root[data-theme="dark"] .tab.on{color:#1b1710}
+  .tab .n{opacity:.75;font-weight:400;margin-left:3px}
+
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:10px 0 8px;display:flex;flex-direction:column;gap:8px}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .row input[type=search]{flex:1 1 180px;min-width:0;height:38px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--ink);font-size:.95em}
+  .row select{height:38px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-panel);color:var(--ink);padding:0 6px;font-size:.88em;max-width:48%}
+  .count{font-size:.82em;color:var(--ink-soft)}
+
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .card{background:var(--bg-panel);border:1.5px solid var(--border);border-left:6px solid var(--c0);border-radius:12px;padding:11px 12px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 4px;font-size:1.02em;color:var(--maroon-dark);font-family:var(--heading-font);line-height:1.3;word-break:break-word}
+  .card .body{white-space:pre-wrap;line-height:1.5;font-size:.95em;word-break:break-word}
+  .card .body.clamp{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+  .card .more{background:none;border:none;color:var(--gold-dark);cursor:pointer;padding:2px 0;font-size:.85em}
+  .card .loc{font-size:.85em;color:var(--ink-soft);margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .card .loc a{color:var(--gold-dark);font-weight:600;text-decoration:none}
+  .card .loc a:hover{text-decoration:underline}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .chip{background:var(--sel-bg);color:var(--maroon-dark);border-radius:12px;padding:2px 9px;font-size:.78em}
+  .card .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .card .dates{font-size:.75em;color:var(--ink-soft)}
+  .card .acts{display:flex;gap:6px}
+  .ic{background:var(--bg-panel);border:1.5px solid var(--border);color:var(--gold-dark);min-width:36px;height:34px;border-radius:9px;cursor:pointer;font-size:.92em;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .ic:hover{border-color:var(--gold)}
+  .ic.confirm{background:var(--red-bg);border-color:var(--red);color:var(--red);font-weight:700;font-size:.8em}
+  .ic:disabled{opacity:.4;cursor:default}
+  .sw{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .sw.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg-panel) inset}
+  .swrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .empty{color:var(--ink-soft);text-align:center;padding:26px 10px;font-size:.92em}
+  .pl img{width:72px;height:40px;object-fit:cover;border-radius:6px;background:var(--border)}
+  .pl li{display:flex;gap:10px;align-items:center;margin:6px 0}
+  .pl ol{margin:6px 0 0;padding-left:0;list-style:none}
+
+  .modal-box label{display:block;font-size:.82em;color:var(--gold-dark);font-weight:700;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+  .modal-box input[type=text],.modal-box textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 11px;background:var(--item-bg);color:var(--ink);font:inherit;font-size:.95em}
+  .modal-box textarea{min-height:160px;resize:vertical;line-height:1.45}
+  .tagpick{display:flex;flex-wrap:wrap;gap:6px}
+  .tagpick label{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:4px 10px;margin:0;font-size:.88em;cursor:pointer}
+  .newtag{display:flex;gap:6px;margin-top:8px}
+  .newtag input{flex:1}
+  .mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tooltip-bg);color:#fff8ec;padding:9px 16px;border-radius:20px;font-size:.9em;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20000;max-width:90vw;text-align:center}
+  .toast.show{opacity:1}
+  .menu{position:relative}
+  .menu .pop{display:none;position:absolute;right:0;top:44px;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);min-width:210px;z-index:300;padding:6px}
+  .menu.open .pop{display:block}
+  .pop button{display:block;width:100%;text-align:left;background:none;border:none;padding:9px 10px;border-radius:7px;color:var(--ink);cursor:pointer;font-size:.9em}
+  .pop button:hover{background:var(--hover-tint)}
+  footer{text-align:center;color:var(--ink-soft);font-size:.78em;margin-top:40px;line-height:1.5}
+  footer a{color:var(--gold-dark)}
+  @media (max-width:480px){ h1{font-size:1.55em} .row select{max-width:100%;flex:1 1 40%} }
+</style>
+<script src="assets/pwa.js" defer></script>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<!-- úprava poznámky -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="noteModalTitle">Upravit poznámku</h3>
+      <button class="modal-close" id="noteClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="hint" id="noteLoc"></div>
+    <label for="noteTitle">Nadpis</label>
+    <input type="text" id="noteTitle">
+    <label for="noteContent">Text</label>
+    <textarea id="noteContent"></textarea>
+    <div id="noteColorBox">
+      <label>Barva zvýraznění</label>
+      <div class="swrow" id="noteColors"></div>
+    </div>
+    <label>Štítky</label>
+    <div class="tagpick" id="noteTags"></div>
+    <div class="newtag"><input type="text" id="noteNewTag" placeholder="Nový štítek…"><button class="btn secondary" id="noteAddTag">+ Přidat</button></div>
+    <div class="mfoot">
+      <button class="btn secondary" id="noteCancel">Zrušit</button>
+      <button class="btn" id="noteSave">Uložit změny</button>
+    </div>
+  </div>
+</div>
+
+<!-- úprava komentáře / pole -->
+<div class="modal-overlay" id="fieldModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Upravit odpověď</h3>
+      <button class="modal-close" id="fieldClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="hint" id="fieldLoc"></div>
+    <label for="fieldValue">Text</label>
+    <textarea id="fieldValue"></textarea>
+    <div class="mfoot">
+      <button class="btn secondary" id="fieldCancel">Zrušit</button>
+      <button class="btn" id="fieldSave">Uložit změny</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Moje poznámky JWL</h1>
+    <p class="lead">Otevři zálohu z JW Library a prohlédni si své poznámky, zvýraznění, záložky a odpovědi na jednom místě. Můžeš v nich hledat, upravovat je, exportovat a uložit jako novou zálohu.</p>
+  </header>
+
+  <div class="wip" role="note">🚧 <strong>Na této aplikaci se ještě pracuje a není dokončená.</strong> Prohlížení a export můžeš klidně používat. Upravenou zálohu zatím obnovuj v JW Library jen opatrně – <strong>vždy si předtím udělej čerstvou zálohu</strong>, protože obnovení nahradí všechna současná data.</div>
+
+  <div class="panel" id="openPanel">
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept=".jwlibrary,application/zip,application/octet-stream" hidden>
+      <button class="btn" id="pickBtn">📂 Otevřít zálohu (.jwlibrary)</button>
+      <div style="margin-top:8px;font-size:.85em">nebo sem soubor přetáhni</div>
+    </div>
+    <p class="msg" id="msg">Záloha zůstává jen v tomto zařízení – nikam se neodesílá.</p>
+    <details class="how">
+      <summary>Jak získat zálohu z JW Library?</summary>
+      <ol>
+        <li>V JW Library otevři <strong>Osobní studium → Zálohovat a obnovit → Vytvořit zálohu</strong>.</li>
+        <li>Zálohu ulož do souborů v telefonu (např. do Stažených souborů).</li>
+        <li>Tady klepni na <strong>Otevřít zálohu</strong> a vyber ji.</li>
+        <li>Upravenou zálohu vrátíš přes <strong>Zálohovat a obnovit → Obnovit zálohu</strong>. Pozor: obnovení <strong>nahradí všechna</strong> současná data v JW Library – před ním si vždy udělej čerstvou zálohu.</li>
+      </ol>
+    </details>
+  </div>
+
+  <section id="app" hidden>
+    <div class="panel">
+      <div class="sum">
+        <div class="info">
+          <div class="fname" id="fname"></div>
+          <div class="meta" id="fmeta"></div>
+        </div>
+        <div class="acts">
+          <button class="btn" id="saveBtn" disabled>💾 Uložit novou zálohu</button>
+          <button class="btn secondary" id="closeBtn">Zavřít</button>
+        </div>
+      </div>
+      <div class="warn" id="roWarn" hidden></div>
+      <div class="dirty" id="dirty"><span id="dirtyText">Máš neuložené změny.</span><button class="btn secondary" id="revertBtn" style="padding:5px 10px">↶ Zahodit změny</button></div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+
+    <div class="controls" id="controls">
+      <div class="row">
+        <input type="search" id="q" placeholder="Hledat…" aria-label="Hledat">
+        <div class="menu" id="expMenu">
+          <button class="ic" id="expBtn" title="Export" aria-label="Export">⬇️</button>
+          <div class="pop">
+            <button id="expMd">Export do Markdownu (.md)</button>
+            <button id="expCsv">Export do tabulky (.csv)</button>
+          </div>
+        </div>
+        <button class="ic" id="addBtn" title="Nová poznámka" aria-label="Nová poznámka">＋</button>
+      </div>
+      <div class="row" id="filters"></div>
+      <div class="count" id="count"></div>
+    </div>
+
+    <div class="list" id="list"></div>
+  </section>
+
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.<br>
+  Záloha se zpracovává jen v tomto zařízení. Inspirováno programem <a href="https://github.com/erykjj/jwlmanager" target="_blank" rel="noopener">JWLManager</a> (Eryk J., licence MIT).<br>
+  Používá <a href="https://sql.js.org" target="_blank" rel="noopener">sql.js</a> a <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a> (licence MIT).</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/common.js"></script>
+<script src="assets/jwl/jwl-data.js"></script>
+<script src="assets/jwl/jszip.min.js"></script>
+<script src="assets/jwl/sql-wasm.js"></script>
+<script>
+(function(){
+  "use strict";
+  /* Ověřené verze schématu databáze JW Library, do kterých smí stránka zapisovat.
+     Při nové verzi JW Library / JWLManageru ověř a doplň (viz _LAB\BIBLE\JWLM\JWLM-projekt.md). */
+  const WRITE_SCHEMAS = [16];
+  const DB_NAME = "userData.db";
+  const SKIP_FILES = /^userData\.db-(wal|shm|journal)$/;
+  const BOOKS = ["1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova","Jozue","Soudci","Rut","1. Samuelova","2. Samuelova","1. Královská","2. Královská","1. Paralipomenon","2. Paralipomenon","Ezra","Nehemjáš","Ester","Job","Žalmy","Přísloví","Kazatel","Šalomounova píseň","Izajáš","Jeremjáš","Nářky","Ezekiel","Daniel","Ozeáš","Joel","Amos","Obadjáš","Jonáš","Micheáš","Nahum","Habakuk","Sefanjáš","Ageus","Zecharjáš","Malachiáš","Matouš","Marek","Lukáš","Jan","Skutky","Římanům","1. Korinťanům","2. Korinťanům","Galaťanům","Efezanům","Filipanům","Kolosanům","1. Tesaloničanům","2. Tesaloničanům","1. Timoteovi","2. Timoteovi","Titovi","Filemonovi","Hebrejcům","Jakub","1. Petra","2. Petra","1. Jana","2. Jana","3. Jana","Juda","Zjevení"];
+  const BIBLES = { nwt:"Překlad nového světa", nwtsty:"Studijní Bible", bi12:"Bible (1984)", bi7:"Bible (1984, odkazy)" };
+  const COLORS = ["šedá","žlutá","zelená","modrá","růžová","oranžová","fialová"];
+  const LANGS = window.JWL_LANGS || {}, PUBS_EN = window.JWL_PUBS_EN || {};
+  const $ = id => document.getElementById(id);
+
+  const S = {
+    SQL:null, db:null, zip:null, fileName:"", manifest:null, origBytes:null, hdr:[2,2],
+    schema:0, writable:false, dirty:false, tab:"notes", data:null, defLang:"B",
+    pubNames: {}, filters:{}, openNoteId:null, openField:null
+  };
+
+  /* ---------- pomocné ---------- */
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  const fold = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const nowIso = () => new Date().toISOString().replace(/\.\d+Z$/, "Z");
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c === "x" ? r : (r&3|8)).toString(16); }));
+  function fmtDate(iso){ if(!iso) return ""; const d = new Date(iso); return isNaN(d) ? iso.slice(0,10) : d.toLocaleDateString("cs-CZ", { day:"numeric", month:"numeric", year:"numeric" }); }
+  let toastT;
+  function toast(t){ const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 2200); }
+  function setMsg(t, err){ const m = $("msg"); m.innerHTML = t; m.classList.toggle("err", !!err); }
+  function q(sql, params){
+    const st = S.db.prepare(sql); if(params) st.bind(params);
+    const rows = []; while(st.step()) rows.push(st.getAsObject()); st.free(); return rows;
+  }
+  function run(sql, params){ S.db.run(sql, params || []); }
+  function download(blob, name){
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  async function sha256Hex(bytes){
+    const h = await crypto.subtle.digest("SHA-256", bytes);
+    return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  /* ---------- otevření zálohy ---------- */
+  async function initSql(){
+    if(!S.SQL) S.SQL = await initSqlJs({ locateFile: f => "assets/jwl/" + f });
+    return S.SQL;
+  }
+  async function openFile(file){
+    if(S.dirty && !confirmLeave()) return;
+    setMsg("Otevírám zálohu…");
+    try{
+      const buf = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+      const mf = zip.file("manifest.json"), dbf = zip.file(DB_NAME);
+      if(!mf || !dbf) throw new Error("Tohle není záloha z JW Library (chybí manifest.json nebo userData.db).");
+      const manifest = JSON.parse(await mf.async("string"));
+      if(!manifest.userDataBackup) throw new Error("Soubor neobsahuje osobní data z JW Library.");
+      const dbBytes = await dbf.async("uint8array");
+      await initSql();
+      S.zip = zip; S.fileName = file.name; S.manifest = manifest; S.origBytes = dbBytes;
+      loadDb(dbBytes);
+      $("openPanel").hidden = true; $("app").hidden = false;
+      setMsg("");
+      window.scrollTo(0, 0);
+    }catch(e){
+      console.error(e);
+      setMsg("Zálohu se nepodařilo otevřít: " + esc(e.message || e), true);
+    }
+  }
+  function loadDb(bytes){
+    if(S.db) S.db.close();
+    const b = new Uint8Array(bytes);
+    S.hdr = [b[18], b[19]];
+    b[18] = 1; b[19] = 1;          // WAL → klasický režim, aby šla databáze upravovat v paměti
+    S.db = new S.SQL.Database(b);
+    S.schema = q("PRAGMA user_version")[0].user_version;
+    S.writable = WRITE_SCHEMAS.includes(S.schema);
+    S.dirty = false;
+    readAll();
+    renderHead();
+    renderTabs();
+    render();
+    fetchPubNames();
+  }
+
+  /* ---------- čtení dat ---------- */
+  function readAll(){
+    const D = {};
+    D.loc = {}; q("SELECT * FROM Location").forEach(l => D.loc[l.LocationId] = l);
+    const langCount = {};
+    Object.values(D.loc).forEach(l => { if(l.MepsLanguage != null) langCount[l.MepsLanguage] = (langCount[l.MepsLanguage] || 0) + 1; });
+    const topLang = Object.entries(langCount).sort((a, b) => b[1] - a[1])[0];
+    S.defLang = topLang && LANGS[topLang[0]] ? LANGS[topLang[0]][0] : "B";
+
+    D.tags = q("SELECT * FROM Tag ORDER BY Name COLLATE NOCASE");
+    D.tagById = {}; D.tags.forEach(t => D.tagById[t.TagId] = t);
+    D.tagMap = q("SELECT * FROM TagMap ORDER BY TagId, Position");
+    D.ranges = {}; q("SELECT * FROM BlockRange ORDER BY Identifier, StartToken").forEach(r => (D.ranges[r.UserMarkId] = D.ranges[r.UserMarkId] || []).push(r));
+    D.marks = {}; q("SELECT * FROM UserMark").forEach(m => D.marks[m.UserMarkId] = m);
+
+    const noteTags = {};
+    D.tagMap.forEach(m => { if(m.NoteId != null) (noteTags[m.NoteId] = noteTags[m.NoteId] || []).push(m.TagId); });
+    D.notes = q("SELECT * FROM Note").map(n => {
+      const mark = n.UserMarkId != null ? D.marks[n.UserMarkId] : null;
+      return Object.assign(n, { color: mark ? mark.ColorIndex : null, tagIds: noteTags[n.NoteId] || [] });
+    });
+    const notesByMark = {}; D.notes.forEach(n => { if(n.UserMarkId != null) notesByMark[n.UserMarkId] = n; });
+    D.highlights = Object.values(D.marks).filter(m => D.ranges[m.UserMarkId]).map(m => Object.assign({}, m, { ranges: D.ranges[m.UserMarkId], note: notesByMark[m.UserMarkId] || null }));
+    D.bookmarks = q("SELECT * FROM Bookmark ORDER BY PublicationLocationId, Slot");
+    D.fields = q("SELECT * FROM InputField ORDER BY LocationId, TextTag");
+    D.favorites = D.tagMap.filter(m => m.LocationId != null && D.tagById[m.TagId] && D.tagById[m.TagId].Type === 0);
+    D.userTags = D.tags.filter(t => t.Type === 1);
+    D.playlists = D.tags.filter(t => t.Type === 2).map(t => ({ tag: t, items: q(`SELECT p.*, m.Position,
+        (SELECT BaseDurationTicks FROM PlaylistItemLocationMap WHERE PlaylistItemId = p.PlaylistItemId LIMIT 1) AS LocTicks,
+        (SELECT DurationTicks FROM PlaylistItemIndependentMediaMap WHERE PlaylistItemId = p.PlaylistItemId LIMIT 1) AS MediaTicks
+        FROM TagMap m JOIN PlaylistItem p USING (PlaylistItemId) WHERE m.TagId = ? ORDER BY m.Position`, [t.TagId]) }));
+    D.lastModified = (q("SELECT LastModified FROM LastModified")[0] || {}).LastModified;
+    S.data = D;
+  }
+
+  /* ---------- popis umístění ---------- */
+  function langSym(l){ return l && l.MepsLanguage != null && LANGS[l.MepsLanguage] ? LANGS[l.MepsLanguage][0] : S.defLang; }
+  function pubKey(l){ return [l.KeySymbol, l.IssueTagNumber || 0, langSym(l)].join("|"); }
+  function issueText(n){
+    if(!n) return "";
+    const s = String(n), y = s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+    const mon = ["","leden","únor","březen","duben","květen","červen","červenec","srpen","září","říjen","listopad","prosinec"];
+    if(!m) return y;
+    return (d ? d + ". " : "") + (mon[m] || m) + " " + y;
+  }
+  function pubName(l){
+    if(!l || !l.KeySymbol) return "";
+    const cached = S.pubNames[pubKey(l)];
+    if(cached) return cached;
+    if(BIBLES[l.KeySymbol]) return BIBLES[l.KeySymbol];
+    const en = PUBS_EN[l.KeySymbol];
+    return (en ? en : l.KeySymbol) + (l.IssueTagNumber ? " (" + issueText(l.IssueTagNumber) + ")" : "");
+  }
+  function isBible(l){ return l && l.BookNumber; }
+  // obj: { LocationId, BlockType, BlockIdentifier } nebo rozsahy zvýraznění
+  function describe(locId, blockType, blockId, ranges){
+    const l = S.data.loc[locId];
+    if(!l) return { text:"Samostatná poznámka", link:null, sort:"~", kind:"ind" };
+    const lang = langSym(l);
+    if(isBible(l)){
+      let vs = "";
+      let verses = [];
+      if(blockType === 2 && blockId != null) verses = [blockId];
+      else if(ranges) verses = [...new Set(ranges.filter(r => r.BlockType === 2).map(r => r.Identifier))].sort((a, b) => a - b);
+      if(verses.length) vs = ":" + (verses.length > 1 ? verses[0] + "–" + verses[verses.length - 1] : verses[0]);
+      const book = BOOKS[l.BookNumber - 1] || ("kniha " + l.BookNumber);
+      const text = book + (l.ChapterNumber ? " " + l.ChapterNumber + vs : "");
+      const ref = String(l.BookNumber).padStart(2,"0") + String(l.ChapterNumber || 1).padStart(3,"0") + String(verses[0] || 0).padStart(3,"0");
+      const link = "https://www.jw.org/finder?wtlocale=" + lang + "&pub=" + encodeURIComponent(l.KeySymbol || "nwtsty") + "&bible=" + ref + (verses.length > 1 ? "-" + ref.slice(0,5) + String(verses[verses.length-1]).padStart(3,"0") : "");
+      return { text, sub: pubName(l), link, sort: "0" + String(l.BookNumber).padStart(2,"0") + String(l.ChapterNumber || 0).padStart(3,"0") + String(verses[0] || 0).padStart(3,"0"), kind:"bible" };
+    }
+    if(l.Type === 2 || l.Type === 3){
+      return { text: (l.Type === 2 ? "Video" : "Audio") + (l.KeySymbol ? " " + l.KeySymbol : "") + (l.Track ? ", č. " + l.Track : ""), sub: l.Title || "", link:null, sort:"2" + (l.KeySymbol || ""), kind:"media" };
+    }
+    let par = null;
+    if(blockType === 1 && blockId != null) par = blockId;
+    else if(ranges){ const p = ranges.filter(r => r.BlockType === 1).map(r => r.Identifier); if(p.length) par = Math.min(...p); }
+    const name = pubName(l);
+    const text = name + (par != null ? ", odst. " + par : "");
+    const link = l.DocumentId ? "https://www.jw.org/finder?wtlocale=" + lang + "&docid=" + l.DocumentId + (par != null ? "&par=" + par : "") : null;
+    return { text, sub: l.Title || "", link, sort: "1" + fold(name) + String(l.DocumentId || 0).padStart(12,"0") + String(par || 0).padStart(4,"0"), kind:"pub" };
+  }
+  function locHtml(d){
+    const icon = d.kind === "bible" ? "📖" : d.kind === "pub" ? "📄" : d.kind === "media" ? "🎞️" : "🗒️";
+    const main = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" title="Otevřít v JW Library / na JW.ORG">${esc(d.text)} ↗</a>` : esc(d.text);
+    return `<span>${icon}</span> ${main}${d.sub ? ` <span>· ${esc(d.sub)}</span>` : ""}`;
+  }
+
+  /* názvy publikací v jazyce zálohy z JW.ORG (uloží se do prohlížeče) */
+  async function fetchPubNames(){
+    let cache = {}; try{ cache = JSON.parse(localStorage.getItem("jwl_pubNames") || "{}"); }catch(e){}
+    const need = {};
+    Object.values(S.data.loc).forEach(l => { if(l.KeySymbol && !isBible(l) && l.Type === 0 && !BIBLES[l.KeySymbol]) need[pubKey(l)] = l; });
+    Object.keys(need).forEach(k => { if(cache[k]) S.pubNames[k] = cache[k]; });
+    render();
+    const todo = Object.entries(need).filter(([k]) => !cache[k]);
+    for(const [k, l] of todo){
+      try{
+        const iss = l.IssueTagNumber ? String(l.IssueTagNumber).replace(/00$/, "") : "";
+        const u = "https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?output=json&pub=" + encodeURIComponent(l.KeySymbol) + (iss ? "&issue=" + iss : "") + "&langwritten=" + langSym(l) + "&txtCMSLang=" + langSym(l);
+        const r = await fetch(u); if(!r.ok) continue;
+        const j = await r.json();
+        if(j.pubName){ cache[k] = j.pubName + (j.formattedDate ? " – " + j.formattedDate : ""); S.pubNames[k] = cache[k]; }
+      }catch(e){}
+    }
+    try{ localStorage.setItem("jwl_pubNames", JSON.stringify(cache)); }catch(e){}
+    if(todo.length) render();
+  }
+
+  /* ---------- hlavička ---------- */
+  function renderHead(){
+    const m = S.manifest.userDataBackup || {};
+    $("fname").textContent = S.fileName;
+    $("fmeta").textContent = [m.deviceName, m.lastModifiedDate ? "upraveno " + fmtDate(m.lastModifiedDate) : "", "schéma " + S.schema].filter(Boolean).join(" · ");
+    $("roWarn").hidden = S.writable;
+    $("roWarn").innerHTML = S.writable ? "" : "⚠️ Tato záloha má verzi databáze <strong>" + S.schema + "</strong>, kterou zatím nemám ověřenou. Můžeš ji prohlížet a exportovat, ale <strong>úpravy a ukládání jsou vypnuté</strong>, aby se záloha nepoškodila.";
+    updateDirty();
+  }
+  function updateDirty(){
+    $("dirty").classList.toggle("show", S.dirty);
+    $("saveBtn").disabled = !S.dirty || !S.writable;
+  }
+  function changed(msg){
+    S.dirty = true; readAll(); updateDirty(); renderTabs(); render();
+    if(msg) toast(msg);
+  }
+
+  /* ---------- záložky ---------- */
+  const TABS = [
+    ["notes", "Poznámky", D => D.notes.length],
+    ["hl", "Zvýraznění", D => D.highlights.length],
+    ["bm", "Záložky", D => D.bookmarks.length],
+    ["fields", "Odpovědi", D => D.fields.length],
+    ["fav", "Oblíbené", D => D.favorites.length],
+    ["tags", "Štítky", D => D.userTags.length],
+    ["pl", "Playlisty", D => D.playlists.length]
+  ];
+  function renderTabs(){
+    $("tabs").innerHTML = TABS.map(([k, label, n]) => `<button class="tab${S.tab === k ? " on" : ""}" data-tab="${k}">${label}<span class="n">${n(S.data)}</span></button>`).join("");
+  }
+  $("tabs").addEventListener("click", e => {
+    const b = e.target.closest("[data-tab]"); if(!b) return;
+    S.tab = b.dataset.tab; $("q").value = ""; S.filters = {}; renderTabs(); render();
+  });
+
+  /* ---------- filtry ---------- */
+  function sel(id, label, opts, val){
+    return `<select id="${id}" aria-label="${esc(label)}">` + opts.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(val ?? "") ? " selected" : ""}>${esc(t)}</option>`).join("") + "</select>";
+  }
+  function renderFilters(){
+    const f = S.filters, D = S.data; let h = "";
+    if(S.tab === "notes"){
+      h += sel("fTag", "Štítek", [["", "Všechny štítky"], ["-", "Bez štítku"]].concat(D.userTags.map(t => [t.TagId, t.Name])), f.tag);
+      h += sel("fColor", "Barva", [["", "Všechny barvy"]].concat(COLORS.map((c, i) => [i, c]).filter(([i]) => D.notes.some(n => n.color === i))), f.color);
+      h += sel("fKind", "Zdroj", [["", "Vše"], ["bible", "Bible"], ["pub", "Publikace"], ["ind", "Samostatné"]], f.kind);
+      h += sel("fSort", "Řazení", [["mod", "Naposledy změněné"], ["created", "Naposledy vytvořené"], ["loc", "Podle umístění"]], f.sort || "mod");
+    }else if(S.tab === "hl"){
+      h += sel("fColor", "Barva", [["", "Všechny barvy"]].concat(COLORS.map((c, i) => [i, c]).filter(([i]) => D.highlights.some(x => x.ColorIndex === i))), f.color);
+      h += sel("fKind", "Zdroj", [["", "Vše"], ["bible", "Bible"], ["pub", "Publikace"]], f.kind);
+    }
+    $("filters").innerHTML = h;
+    $("filters").hidden = !h;
+    $("addBtn").hidden = S.tab !== "notes" && S.tab !== "tags";
+    $("addBtn").title = S.tab === "tags" ? "Nový štítek" : "Nová poznámka";
+    $("addBtn").disabled = !S.writable;
+    $("expMenu").hidden = !(S.tab === "notes" || S.tab === "fields" || S.tab === "hl");
+  }
+  $("filters").addEventListener("change", e => {
+    const map = { fTag:"tag", fColor:"color", fKind:"kind", fSort:"sort" };
+    S.filters[map[e.target.id]] = e.target.value; render(true);
+  });
+  let qt; $("q").addEventListener("input", () => { clearTimeout(qt); qt = setTimeout(() => render(true), 200); });
+
+  /* ---------- vykreslení seznamů ---------- */
+  function colorStyle(c){ return c != null ? `style="border-left-color:var(--c${c})"` : ""; }
+  function tagChips(ids){ return ids && ids.length ? `<div class="chips">${ids.map(id => S.data.tagById[id] ? `<span class="chip">🏷️ ${esc(S.data.tagById[id].Name)}</span>` : "").join("")}</div>` : ""; }
+  function delBtn(kind, id){ return S.writable ? `<button class="ic" data-del="${kind}" data-id="${esc(id)}" title="Smazat" aria-label="Smazat">🗑️</button>` : ""; }
+  function matches(text){ const t = fold($("q").value.trim()); return !t || fold(text).includes(t); }
+
+  function filteredNotes(){
+    const f = S.filters, D = S.data;
+    let arr = D.notes.map(n => ({ n, d: describe(n.LocationId, n.BlockType, n.BlockIdentifier) }));
+    arr = arr.filter(({ n, d }) =>
+      matches([n.Title, n.Content, d.text, d.sub, n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).join(" ")].join(" ")) &&
+      (!f.tag || (f.tag === "-" ? !n.tagIds.length : n.tagIds.includes(+f.tag))) &&
+      (f.color == null || f.color === "" || n.color === +f.color) &&
+      (!f.kind || d.kind === f.kind));
+    const s = f.sort || "mod";
+    arr.sort((a, b) => s === "loc" ? a.d.sort.localeCompare(b.d.sort) : String(s === "created" ? b.n.Created : b.n.LastModified).localeCompare(s === "created" ? a.n.Created : a.n.LastModified));
+    return arr;
+  }
+  function filteredHl(){
+    const f = S.filters;
+    return S.data.highlights.map(h => ({ h, d: describe(h.LocationId, null, null, h.ranges) }))
+      .filter(({ h, d }) => matches(d.text + " " + d.sub + " " + (h.note ? h.note.Title + " " + h.note.Content : "")) &&
+        (f.color == null || f.color === "" || h.ColorIndex === +f.color) && (!f.kind || d.kind === f.kind))
+      .sort((a, b) => a.d.sort.localeCompare(b.d.sort));
+  }
+  function render(keepScroll){
+    if(!S.data) return;
+    renderFilters();
+    const D = S.data; let html = "", n = 0;
+    if(S.tab === "notes"){
+      const arr = filteredNotes(); n = arr.length;
+      html = arr.map(({ n: x, d }) => {
+        const long = (x.Content || "").length > 380 || (x.Content || "").split("\n").length > 6;
+        return `<article class="card" ${colorStyle(x.color)}>
+          ${x.Title ? `<h3>${esc(x.Title)}</h3>` : ""}
+          ${x.Content ? `<div class="body${long ? " clamp" : ""}">${esc(x.Content)}</div>${long ? `<button class="more" data-more>Zobrazit celé ▾</button>` : ""}` : ""}
+          <div class="loc">${locHtml(d)}</div>
+          ${tagChips(x.tagIds)}
+          <div class="foot"><span class="dates">vytvořeno ${fmtDate(x.Created)}${x.LastModified && x.LastModified !== x.Created ? " · změněno " + fmtDate(x.LastModified) : ""}</span>
+            <span class="acts">${S.writable ? `<button class="ic" data-edit="${x.NoteId}" title="Upravit" aria-label="Upravit">✏️</button>` : ""}${delBtn("note", x.NoteId)}</span></div>
+        </article>`;
+      }).join("");
+    }else if(S.tab === "hl"){
+      const arr = filteredHl(); n = arr.length;
+      html = arr.map(({ h, d }) => {
+        const words = h.ranges.map(r => r.StartToken != null ? (r.EndToken > r.StartToken ? `slova ${r.StartToken + 1}–${r.EndToken + 1}` : `slovo ${r.StartToken + 1}`) + (h.ranges.length > 1 ? (r.BlockType === 2 ? " (v. " : " (odst. ") + r.Identifier + ")" : "") : "").filter(Boolean).join(", ");
+        return `<article class="card" ${colorStyle(h.ColorIndex)}>
+          <div class="loc" style="margin-top:0">${locHtml(d)}</div>
+          <div class="dates" style="margin-top:4px">${esc(COLORS[h.ColorIndex] || "")}${words ? " · " + esc(words) : ""}</div>
+          ${h.note ? `<div class="body" style="margin-top:6px">🗒️ <strong>${esc(h.note.Title || "")}</strong>${h.note.Content ? " – " + esc(h.note.Content) : ""}</div>` : ""}
+          <div class="foot"><span class="swrow">${S.writable ? COLORS.map((c, i) => i ? `<button class="sw${i === h.ColorIndex ? " on" : ""}" style="background:var(--c${i})" data-hlcolor="${h.UserMarkId}" data-c="${i}" title="${c}" aria-label="${c}"></button>` : "").join("") : ""}</span>
+            <span class="acts">${delBtn("hl", h.UserMarkId)}</span></div>
+        </article>`;
+      }).join("");
+    }else if(S.tab === "bm"){
+      const arr = D.bookmarks.map(b => ({ b, d: describe(b.LocationId, b.BlockType, b.BlockIdentifier) })).filter(({ b, d }) => matches(b.Title + " " + b.Snippet + " " + d.text)); n = arr.length;
+      html = arr.map(({ b, d }) => `<article class="card">
+          <h3>🔖 ${esc(b.Title)}</h3>${b.Snippet ? `<div class="body">${esc(b.Snippet)}</div>` : ""}
+          <div class="loc">${locHtml(d)}</div>
+          <div class="foot"><span class="dates">záložka č. ${b.Slot + 1} v publikaci ${esc(pubName(D.loc[b.PublicationLocationId]))}</span><span class="acts">${delBtn("bm", b.BookmarkId)}</span></div>
+        </article>`).join("");
+    }else if(S.tab === "fields"){
+      const arr = D.fields.map(fl => ({ fl, d: describe(fl.LocationId) })).filter(({ fl, d }) => matches(fl.Value + " " + d.text)); n = arr.length;
+      html = arr.map(({ fl, d }) => {
+        const isCheck = fl.Value === "1" || fl.Value === "0";
+        return `<article class="card">
+          <div class="body">${isCheck ? (fl.Value === "1" ? "☑️ zaškrtnuto" : "⬜ nezaškrtnuto") : esc(fl.Value)}</div>
+          <div class="loc">${locHtml(d)} <span>· pole ${esc(fl.TextTag)}</span></div>
+          <div class="foot"><span></span><span class="acts">${S.writable && !isCheck ? `<button class="ic" data-fedit="${fl.LocationId}" data-tag="${esc(fl.TextTag)}" title="Upravit" aria-label="Upravit">✏️</button>` : ""}${S.writable ? `<button class="ic" data-del="field" data-id="${fl.LocationId}" data-tag="${esc(fl.TextTag)}" title="Smazat" aria-label="Smazat">🗑️</button>` : ""}</span></div>
+        </article>`;
+      }).join("");
+    }else if(S.tab === "fav"){
+      const arr = D.favorites.map(m => ({ m, d: describe(m.LocationId) })).filter(({ d }) => matches(d.text + " " + d.sub)); n = arr.length;
+      html = arr.map(({ m, d }) => `<article class="card"><div class="loc" style="margin-top:0">⭐ ${locHtml(d)}</div>
+          <div class="foot"><span></span><span class="acts">${delBtn("fav", m.TagMapId)}</span></div></article>`).join("");
+    }else if(S.tab === "tags"){
+      const cnt = {}; D.tagMap.forEach(m => { if(m.NoteId != null) cnt[m.TagId] = (cnt[m.TagId] || 0) + 1; });
+      const arr = D.userTags.filter(t => matches(t.Name)); n = arr.length;
+      html = arr.map(t => `<article class="card"><h3>🏷️ ${esc(t.Name)}</h3>
+          <div class="foot"><span class="dates">${cnt[t.TagId] || 0} poznámek · <a href="#" data-showtag="${t.TagId}" style="color:var(--gold-dark)">zobrazit</a></span>
+          <span class="acts">${S.writable ? `<button class="ic" data-rename="${t.TagId}" title="Přejmenovat" aria-label="Přejmenovat">✏️</button>` : ""}${delBtn("tag", t.TagId)}</span></div></article>`).join("");
+    }else if(S.tab === "pl"){
+      const arr = D.playlists.filter(p => matches(p.tag.Name + " " + p.items.map(i => i.Label).join(" "))); n = arr.length;
+      html = arr.map(p => `<article class="card pl"><h3>▶️ ${esc(p.tag.Name)}</h3><ol>${p.items.map(i => {
+          const ticks = i.LocTicks || i.MediaTicks; const sec = ticks ? Math.round(ticks / 1e7) : 0;
+          return `<li><img data-thumb="${esc(i.ThumbnailFilePath || "")}" alt=""><span>${esc(i.Label)}${sec ? ` <span class="dates">· ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}</span>` : ""}</span></li>`;
+        }).join("")}</ol><div class="dates" style="margin-top:6px">Playlisty se zatím dají jen prohlížet.</div></article>`).join("");
+    }
+    const y = scrollY;
+    $("list").innerHTML = html || `<div class="empty">${$("q").value || Object.values(S.filters).some(Boolean) ? "Nic neodpovídá hledání." : "Tady zatím nic není."}</div>`;
+    $("count").textContent = n + " " + (n === 1 ? "položka" : n >= 2 && n <= 4 ? "položky" : "položek");
+    if(keepScroll) window.scrollTo(0, y);
+    if(S.tab === "pl") loadThumbs();
+  }
+  const thumbCache = {};
+  async function loadThumbs(){
+    for(const img of document.querySelectorAll("img[data-thumb]")){
+      const p = img.dataset.thumb; if(!p) continue;
+      if(!thumbCache[p]){ const f = S.zip.file(p); if(!f) continue; thumbCache[p] = URL.createObjectURL(new Blob([await f.async("uint8array")], { type: "image/jpeg" })); }
+      img.src = thumbCache[p];
+    }
+  }
+
+  /* ---------- akce v seznamu ---------- */
+  let armed = null;
+  $("list").addEventListener("click", e => {
+    const t = e.target;
+    const more = t.closest("[data-more]");
+    if(more){ const b = more.previousElementSibling; b.classList.toggle("clamp"); more.textContent = b.classList.contains("clamp") ? "Zobrazit celé ▾" : "Sbalit ▴"; return; }
+    const st = t.closest("[data-showtag]");
+    if(st){ e.preventDefault(); S.tab = "notes"; S.filters = { tag: st.dataset.showtag }; $("q").value = ""; renderTabs(); render(); return; }
+    if(!S.writable) return;
+    const ed = t.closest("[data-edit]"); if(ed){ openNote(+ed.dataset.edit); return; }
+    const fe = t.closest("[data-fedit]"); if(fe){ openField(+fe.dataset.fedit, fe.dataset.tag); return; }
+    const rn = t.closest("[data-rename]"); if(rn){ renameTag(+rn.dataset.rename); return; }
+    const hc = t.closest("[data-hlcolor]");
+    if(hc){ run("UPDATE UserMark SET ColorIndex = ? WHERE UserMarkId = ?", [+hc.dataset.c, +hc.dataset.hlcolor]); changed("Barva změněna"); return; }
+    const del = t.closest("[data-del]");
+    if(del){
+      if(armed !== del){ // první klepnutí = potvrzení
+        if(armed){ armed.classList.remove("confirm"); armed.textContent = "🗑️"; }
+        armed = del; del.classList.add("confirm"); del.textContent = "Opravdu smazat?";
+        setTimeout(() => { if(armed === del){ del.classList.remove("confirm"); del.textContent = "🗑️"; armed = null; } }, 4000);
+        return;
+      }
+      armed = null;
+      doDelete(del.dataset.del, +del.dataset.id, del.dataset.tag);
+    }
+  });
+  function doDelete(kind, id, tag){
+    if(kind === "note"){ run("DELETE FROM TagMap WHERE NoteId = ?", [id]); run("DELETE FROM Note WHERE NoteId = ?", [id]); changed("Poznámka smazána"); }
+    else if(kind === "hl"){ run("DELETE FROM BlockRange WHERE UserMarkId = ?", [id]); changed("Zvýraznění smazáno"); }
+    else if(kind === "bm"){ run("DELETE FROM Bookmark WHERE BookmarkId = ?", [id]); changed("Záložka smazána"); }
+    else if(kind === "field"){ run("DELETE FROM InputField WHERE LocationId = ? AND TextTag = ?", [id, tag]); changed("Odpověď smazána"); }
+    else if(kind === "fav"){ run("DELETE FROM TagMap WHERE TagMapId = ?", [id]); changed("Odebráno z oblíbených"); }
+    else if(kind === "tag"){ run("DELETE FROM TagMap WHERE TagId = ?", [id]); run("DELETE FROM Tag WHERE TagId = ?", [id]); changed("Štítek smazán"); }
+  }
+
+  /* ---------- úprava poznámky ---------- */
+  let draftTags = [];
+  function openNote(id){
+    const D = S.data;
+    const n = id ? D.notes.find(x => x.NoteId === id) : null;
+    S.openNoteId = id || null;
+    $("noteModalTitle").textContent = n ? "Upravit poznámku" : "Nová poznámka";
+    $("noteLoc").innerHTML = n ? locHtml(describe(n.LocationId, n.BlockType, n.BlockIdentifier)) : "Samostatná poznámka – v JW Library ji najdeš v Osobním studiu mezi poznámkami.";
+    $("noteTitle").value = n ? n.Title || "" : "";
+    $("noteContent").value = n ? n.Content || "" : "";
+    $("noteColorBox").hidden = !(n && n.UserMarkId != null);
+    $("noteColors").innerHTML = n && n.UserMarkId != null ? COLORS.map((c, i) => i ? `<button class="sw${i === n.color ? " on" : ""}" style="background:var(--c${i})" data-c="${i}" title="${c}" aria-label="${c}"></button>` : "").join("") + `<span class="hint" style="font-size:.8em">mění i barvu zvýraznění v textu</span>` : "";
+    draftTags = n ? n.tagIds.slice() : [];
+    renderTagPick();
+    $("noteNewTag").value = "";
+    $("noteModal").classList.add("show");
+    setTimeout(() => $(n ? "noteContent" : "noteTitle").focus(), 50);
+  }
+  function renderTagPick(extra){
+    const D = S.data;
+    const list = D.userTags.map(t => [t.TagId, t.Name]).concat((extra || pendingTags).map((name, i) => ["new" + i, name]));
+    $("noteTags").innerHTML = list.length ? list.map(([id, name]) => `<label><input type="checkbox" value="${esc(id)}"${draftTags.includes(id) || String(id).startsWith("new") ? " checked" : ""}> ${esc(name)}</label>`).join("") : `<span class="hint" style="font-size:.85em">Zatím nemáš žádné štítky.</span>`;
+  }
+  let pendingTags = [];
+  $("noteAddTag").onclick = () => {
+    const v = $("noteNewTag").value.trim(); if(!v) return;
+    const ex = S.data.userTags.find(t => t.Name.toLowerCase() === v.toLowerCase());
+    if(ex){ if(!draftTags.includes(ex.TagId)) draftTags.push(ex.TagId); }
+    else if(!pendingTags.some(p => p.toLowerCase() === v.toLowerCase())) pendingTags.push(v);
+    $("noteNewTag").value = ""; renderTagPick();
+  };
+  $("noteNewTag").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); $("noteAddTag").click(); } });
+  $("noteColors").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if(!b) return; $("noteColors").querySelectorAll(".sw").forEach(x => x.classList.toggle("on", x === b)); });
+  function closeNote(){ $("noteModal").classList.remove("show"); pendingTags = []; }
+  $("noteClose").onclick = $("noteCancel").onclick = closeNote;
+  $("noteSave").onclick = () => {
+    const title = $("noteTitle").value.trim(), content = $("noteContent").value;
+    if(!title && !content.trim()){ toast("Poznámka musí mít nadpis nebo text."); return; }
+    const now = nowIso();
+    const checked = [...$("noteTags").querySelectorAll("input:checked")].map(i => i.value);
+    run("BEGIN");
+    try{
+      let id = S.openNoteId;
+      if(id){ run("UPDATE Note SET Title = ?, Content = ?, LastModified = ? WHERE NoteId = ?", [title, content, now, id]); }
+      else{
+        run("INSERT INTO Note (Guid, UserMarkId, LocationId, Title, Content, LastModified, Created, BlockType, BlockIdentifier) VALUES (?, NULL, NULL, ?, ?, ?, ?, 0, NULL)", [uuid(), title, content, now, now]);
+        id = q("SELECT last_insert_rowid() AS id")[0].id;
+      }
+      const sw = $("noteColors").querySelector(".sw.on");
+      const n = S.data.notes.find(x => x.NoteId === id);
+      if(sw && n && n.UserMarkId != null && +sw.dataset.c !== n.color) run("UPDATE UserMark SET ColorIndex = ? WHERE UserMarkId = ?", [+sw.dataset.c, n.UserMarkId]);
+      // štítky
+      const want = new Set();
+      checked.forEach(v => {
+        if(v.startsWith("new")){
+          const name = pendingTags[+v.slice(3)];
+          run("INSERT OR IGNORE INTO Tag (Type, Name) VALUES (1, ?)", [name]);
+          want.add(q("SELECT TagId FROM Tag WHERE Type = 1 AND Name = ?", [name])[0].TagId);
+        }else want.add(+v);
+      });
+      const have = new Set(q("SELECT TagId FROM TagMap WHERE NoteId = ?", [id]).map(r => r.TagId));
+      have.forEach(t => { if(!want.has(t)) run("DELETE FROM TagMap WHERE NoteId = ? AND TagId = ?", [id, t]); });
+      want.forEach(t => { if(!have.has(t)){ const pos = q("SELECT COALESCE(MAX(Position), -1) + 1 AS p FROM TagMap WHERE TagId = ?", [t])[0].p; run("INSERT INTO TagMap (PlaylistItemId, LocationId, NoteId, TagId, Position) VALUES (NULL, NULL, ?, ?, ?)", [id, t, pos]); } });
+      run("COMMIT");
+    }catch(e){ run("ROLLBACK"); toast("Uložení se nepovedlo: " + e.message); return; }
+    closeNote(); changed(S.openNoteId ? "Poznámka upravena" : "Poznámka přidána");
+  };
+
+  /* ---------- odpovědi (InputField) ---------- */
+  function openField(locId, tag){
+    const fl = S.data.fields.find(x => x.LocationId === locId && x.TextTag === tag); if(!fl) return;
+    S.openField = [locId, tag];
+    $("fieldLoc").innerHTML = locHtml(describe(locId)) + " · pole " + esc(tag);
+    $("fieldValue").value = fl.Value;
+    $("fieldModal").classList.add("show");
+  }
+  const closeField = () => $("fieldModal").classList.remove("show");
+  $("fieldClose").onclick = $("fieldCancel").onclick = closeField;
+  $("fieldSave").onclick = () => {
+    const v = $("fieldValue").value;
+    if(!v.trim()){ toast("Prázdnou odpověď raději smaž."); return; }
+    run("UPDATE InputField SET Value = ? WHERE LocationId = ? AND TextTag = ?", [v, S.openField[0], S.openField[1]]);
+    closeField(); changed("Odpověď upravena");
+  };
+
+  /* ---------- štítky ---------- */
+  function renameTag(id){
+    const t = S.data.tagById[id]; const v = prompt("Nový název štítku:", t.Name);
+    if(v == null) return; const name = v.trim(); if(!name || name === t.Name) return;
+    if(S.data.userTags.some(x => x.TagId !== id && x.Name.toLowerCase() === name.toLowerCase())){ toast("Štítek s tímto názvem už existuje."); return; }
+    run("UPDATE Tag SET Name = ? WHERE TagId = ?", [name, id]); changed("Štítek přejmenován");
+  }
+  $("addBtn").onclick = () => {
+    if(!S.writable) return;
+    if(S.tab === "tags"){
+      const v = prompt("Název nového štítku:"); if(!v || !v.trim()) return;
+      if(S.data.userTags.some(x => x.Name.toLowerCase() === v.trim().toLowerCase())){ toast("Takový štítek už máš."); return; }
+      run("INSERT INTO Tag (Type, Name) VALUES (1, ?)", [v.trim()]);
+      changed("Štítek přidán – prázdný štítek se při uložení zálohy vynechá, přiřaď ho nějaké poznámce.");
+    }else openNote(null);
+  };
+
+  /* ---------- export ---------- */
+  $("expBtn").onclick = e => { e.stopPropagation(); $("expMenu").classList.toggle("open"); };
+  document.addEventListener("click", e => { if(!e.target.closest("#expMenu")) $("expMenu").classList.remove("open"); });
+  function exportRows(){
+    const D = S.data;
+    if(S.tab === "hl") return filteredHl().map(({ h, d }) => ({ title: h.note ? h.note.Title : "", text: h.note ? h.note.Content : "", loc: d.text, sub: d.sub, link: d.link, tags: "", color: COLORS[h.ColorIndex] || "", created: "", modified: "" }));
+    if(S.tab === "fields") return D.fields.map(fl => ({ fl, d: describe(fl.LocationId) })).filter(({ fl, d }) => matches(fl.Value + " " + d.text)).map(({ fl, d }) => ({ title: "pole " + fl.TextTag, text: fl.Value, loc: d.text, sub: d.sub, link: d.link, tags: "", color: "", created: "", modified: "" }));
+    return filteredNotes().map(({ n, d }) => ({ title: n.Title || "", text: n.Content || "", loc: d.text, sub: d.sub, link: d.link, tags: n.tagIds.map(t => D.tagById[t] && D.tagById[t].Name).filter(Boolean).join(", "), color: n.color != null ? COLORS[n.color] : "", created: (n.Created || "").slice(0, 10), modified: (n.LastModified || "").slice(0, 10) }));
+  }
+  const tabName = () => TABS.find(t => t[0] === S.tab)[1];
+  $("expMd").onclick = () => {
+    const rows = exportRows(); const today = new Date().toISOString().slice(0, 10);
+    let md = `# ${tabName()} z JW Library\n\n_Export ${today} ze zálohy ${S.fileName} · ${rows.length} položek_\n\n`;
+    rows.forEach(r => {
+      md += `## ${r.title || r.loc}\n\n`;
+      const meta = [r.link ? `[${r.loc}](${r.link})` : r.loc, r.sub, r.tags && "štítky: " + r.tags, r.color && "barva: " + r.color, r.modified && "změněno " + r.modified].filter(Boolean);
+      md += `*${meta.join(" · ")}*\n\n`;
+      if(r.text) md += r.text.trim() + "\n\n";
+    });
+    download(new Blob([md], { type: "text/markdown;charset=utf-8" }), `${tabName()} JWL ${today}.md`);
+    $("expMenu").classList.remove("open");
+  };
+  $("expCsv").onclick = () => {
+    const rows = exportRows(); const today = new Date().toISOString().slice(0, 10);
+    const c = v => '"' + String(v || "").replace(/"/g, '""') + '"';
+    const head = ["Nadpis", "Text", "Umístění", "Publikace", "Štítky", "Barva", "Vytvořeno", "Změněno", "Odkaz"];
+    const csv = "﻿" + [head.map(c).join(";")].concat(rows.map(r => [r.title, r.text, r.loc, r.sub, r.tags, r.color, r.created, r.modified, r.link].map(c).join(";"))).join("\r\n");
+    download(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${tabName()} JWL ${today}.csv`);
+    $("expMenu").classList.remove("open");
+  };
+
+  /* ---------- uložení nové zálohy (podle JWLManageru) ---------- */
+  const TRIM_SQL = `
+    DELETE FROM InputField WHERE COALESCE(Value, '') = '';
+    DELETE FROM Note WHERE COALESCE(Title, '') = '' AND COALESCE(Content, '') = '' AND NOT EXISTS (SELECT 1 FROM TagMap WHERE TagMap.NoteId = Note.NoteId);
+    DELETE FROM TagMap WHERE (NoteId IS NOT NULL AND NoteId NOT IN (SELECT NoteId FROM Note))
+      OR (PlaylistItemId IS NOT NULL AND PlaylistItemId NOT IN (SELECT PlaylistItemId FROM PlaylistItem));
+    DELETE FROM Tag WHERE TagId NOT IN (SELECT DISTINCT TagId FROM TagMap) AND Type > 0;
+    CREATE TEMP TABLE TagMapNew AS SELECT TagMapId, PlaylistItemId, LocationId, NoteId, TagId, ROW_NUMBER() OVER (PARTITION BY TagId ORDER BY Position, TagMapId) - 1 AS Position FROM TagMap;
+    DELETE FROM TagMap;
+    INSERT INTO TagMap SELECT * FROM TagMapNew;
+    DROP TABLE TagMapNew;
+    DELETE FROM UserMark WHERE (UserMarkId NOT IN (SELECT UserMarkId FROM BlockRange WHERE UserMarkId IS NOT NULL)
+        AND UserMarkId NOT IN (SELECT UserMarkId FROM Note WHERE UserMarkId IS NOT NULL))
+      OR LocationId NOT IN (SELECT LocationId FROM Location WHERE LocationId IS NOT NULL);
+    DELETE FROM BlockRange WHERE UserMarkId NOT IN (SELECT UserMarkId FROM UserMark WHERE UserMarkId IS NOT NULL);
+    DELETE FROM PlaylistItem WHERE PlaylistItemId NOT IN (SELECT PlaylistItemId FROM TagMap WHERE PlaylistItemId IS NOT NULL);
+    DELETE FROM PlaylistItemMarker WHERE PlaylistItemId NOT IN (SELECT PlaylistItemId FROM PlaylistItem);
+    DELETE FROM PlaylistItemLocationMap WHERE PlaylistItemId NOT IN (SELECT PlaylistItemId FROM PlaylistItem);
+    DELETE FROM PlaylistItemIndependentMediaMap WHERE PlaylistItemId NOT IN (SELECT PlaylistItemId FROM PlaylistItem);
+    DELETE FROM PlaylistItemIndependentMediaMap WHERE IndependentMediaId NOT IN (SELECT IndependentMediaId FROM IndependentMedia);
+    DELETE FROM PlaylistItemMarkerBibleVerseMap WHERE PlaylistItemMarkerId NOT IN (SELECT PlaylistItemMarkerId FROM PlaylistItemMarker);
+    DELETE FROM PlaylistItemMarkerParagraphMap WHERE PlaylistItemMarkerId NOT IN (SELECT PlaylistItemMarkerId FROM PlaylistItemMarker);
+    DELETE FROM Location WHERE LocationId NOT IN (SELECT LocationId FROM UserMark)
+      AND LocationId NOT IN (SELECT LocationId FROM Note WHERE LocationId IS NOT NULL)
+      AND LocationId NOT IN (SELECT LocationId FROM TagMap WHERE LocationId IS NOT NULL)
+      AND LocationId NOT IN (SELECT LocationId FROM Bookmark)
+      AND LocationId NOT IN (SELECT PublicationLocationId FROM Bookmark)
+      AND LocationId NOT IN (SELECT LocationId FROM InputField)
+      AND LocationId NOT IN (SELECT LocationId FROM PlaylistItemLocationMap);
+    UPDATE Location SET Title = '' WHERE Title IS NULL;`;
+
+  async function buildBackup(){
+    const db = S.db;
+    db.exec("PRAGMA foreign_keys = OFF; BEGIN;" + TRIM_SQL + " COMMIT; PRAGMA foreign_keys = ON;");
+    const stamp = nowIso();
+    db.run("UPDATE LastModified SET LastModified = ?", [stamp]);
+    db.exec("VACUUM");
+    const problems = db.exec("PRAGMA integrity_check")[0].values[0][0];
+    if(problems !== "ok") throw new Error("kontrola databáze: " + problems);
+    const fk = db.exec("PRAGMA foreign_key_check");
+    if(fk.length && fk[0].values.length) throw new Error("databáze obsahuje neplatné odkazy (" + fk[0].values.length + ")");
+    const bytes = db.export();
+    // sql.js po exportu databázi znovu otevře – přečti ji znovu, ať se pokračuje s aktuálním stavem
+    bytes[18] = S.hdr[0]; bytes[19] = S.hdr[1];
+    const hash = await sha256Hex(bytes);
+    const today = stamp.slice(0, 10);
+    const base = (S.manifest.userDataBackup.deviceName || "JWL").replace(/[^\w-]+/g, "_");
+    const name = `UserdataBackup_${today}_${base}_MojePoznamkyJWL.jwlibrary`;
+    const m = JSON.parse(JSON.stringify(S.manifest));
+    m.name = name; m.creationDate = today;
+    m.userDataBackup.lastModifiedDate = stamp;
+    m.userDataBackup.databaseName = DB_NAME;
+    m.userDataBackup.hash = hash;
+    m.userDataBackup.schemaVersion = S.schema;
+    const out = new JSZip();
+    for(const [path, f] of Object.entries(S.zip.files)){
+      if(f.dir || SKIP_FILES.test(path) || path === DB_NAME || path === "manifest.json") continue;
+      out.file(path, await f.async("uint8array"));
+    }
+    out.file(DB_NAME, bytes);
+    out.file("manifest.json", JSON.stringify(m));
+    const blob = await out.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+    // kontrola: otevřít výsledek znovu
+    const chk = await JSZip.loadAsync(blob);
+    const chkDb = await chk.file(DB_NAME).async("uint8array");
+    if(await sha256Hex(chkDb) !== hash) throw new Error("kontrolní součet nesouhlasí");
+    return { blob, name, manifest: m, bytes };
+  }
+  $("saveBtn").onclick = async () => {
+    if(!S.writable || !S.dirty) return;
+    $("saveBtn").disabled = true; toast("Připravuji zálohu…");
+    try{
+      const r = await buildBackup();
+      S.manifest = r.manifest; S.fileName = r.name; S.origBytes = r.bytes;
+      // nový základ: otevři uložený stav (odpovídá souboru)
+      const z = new JSZip(); for(const [p, f] of Object.entries(S.zip.files)){ if(!f.dir && !SKIP_FILES.test(p) && p !== DB_NAME && p !== "manifest.json") z.file(p, await f.async("uint8array")); }
+      z.file(DB_NAME, r.bytes); z.file("manifest.json", JSON.stringify(r.manifest)); S.zip = z;
+      loadDb(r.bytes.slice());
+      const file = new File([r.blob], r.name, { type: "application/octet-stream" });
+      if(navigator.canShare && navigator.canShare({ files: [file] })){
+        try{ await navigator.share({ files: [file], title: r.name }); toast("Záloha připravena"); }
+        catch(e){ if(e.name !== "AbortError") download(r.blob, r.name); }
+      }else download(r.blob, r.name);
+      setMsg("");
+      toast("Uloženo jako " + r.name);
+    }catch(e){
+      console.error(e);
+      toast("Zálohu se nepodařilo uložit: " + e.message);
+      updateDirty();
+    }
+  };
+
+  /* ---------- ostatní ---------- */
+  function confirmLeave(){ return window.confirm("Máš neuložené změny. Opravdu je zahodit?"); }
+  $("revertBtn").onclick = () => { loadDb(S.origBytes.slice()); toast("Změny zahozeny"); };
+  $("closeBtn").onclick = () => {
+    if(S.dirty && !confirmLeave()) return;
+    if(S.db) S.db.close(); S.db = null; S.data = null; S.zip = null; S.dirty = false;
+    $("app").hidden = true; $("openPanel").hidden = false; $("file").value = "";
+  };
+  window.addEventListener("beforeunload", e => { if(S.dirty){ e.preventDefault(); e.returnValue = ""; } });
+  $("pickBtn").onclick = () => $("file").click();
+  $("file").onchange = () => { const f = $("file").files[0]; if(f) openFile(f); };
+  const drop = $("drop");
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) openFile(f); });
+  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); } });
+
+  // zpřístupnění pro testy
+  window.__jwl = S;
+})();
+</script>
+<script src="assets/nav-dock.js"></script>
+</body>
+</html>

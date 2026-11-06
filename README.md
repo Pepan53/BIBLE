@@ -14,6 +14,8 @@ rodokmen-jezise.html — Ježíšův rodokmen (linie slíbeného potomstva od Ad
 osa-dejin.html       — Osa dějin (svislá časová osa, data z Google tabulky BILO)
 celosvetova-zprava.html — Celosvětová zpráva (přehled podle zemí + grafy)
 titulky-videi.html   — Titulky videí (titulky a přepis videí z JW.ORG, výběr úseku, přehrávač)
+moje-poznamky-jwl.html — Moje poznámky JWL (záloha JW Library: poznámky, zvýraznění, úpravy, nová záloha)
+assets/jwl/          — sql.js, JSZip (MIT) a data jazyků/publikací z JWLManageru (MIT)
 ```
 
 Žádné buildy, žádné závislosti — stačí otevřít `index.html` v prohlížeči.
