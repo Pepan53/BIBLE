@@ -83,7 +83,10 @@
   .swrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .empty{color:var(--ink-soft);text-align:center;padding:26px 10px;font-size:.92em}
   .pl img{width:72px;height:40px;object-fit:cover;border-radius:6px;background:var(--border)}
-  .pl li{display:flex;gap:10px;align-items:center;margin:6px 0}
+  .pl li{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--border)}
+  .pl li:last-child{border-bottom:none}
+  .pl .plact{flex:1 1 100%;justify-content:flex-end}
+  @media (min-width:600px){ .pl .plact{flex:0 0 auto} }
   .pl ol{margin:6px 0 0;padding-left:0;list-style:none}
 
   .modal-box label{display:block;font-size:.82em;color:var(--gold-dark);font-weight:700;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px}
@@ -184,6 +187,25 @@
     <div class="mfoot">
       <button class="btn secondary" id="fieldCancel">Zrušit</button>
       <button class="btn" id="fieldSave">Uložit změny</button>
+    </div>
+  </div>
+</div>
+
+<!-- úprava položky playlistu -->
+<div class="modal-overlay" id="plModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Položka playlistu</h3>
+      <button class="modal-close" id="plClose" aria-label="Zavřít">✕</button>
+    </div>
+    <label for="plLabel">Název</label>
+    <input type="text" id="plLabel">
+    <label for="plTarget">Playlist</label>
+    <select id="plTarget" style="width:100%;height:40px;border:1.5px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--ink);padding:0 8px;font-size:.95em"></select>
+    <div id="plNewRow" hidden><label for="plNewName">Název nového playlistu</label><input type="text" id="plNewName"></div>
+    <div class="mfoot">
+      <button class="btn secondary" id="plCancel">Zrušit</button>
+      <button class="btn" id="plSave">Uložit změny</button>
     </div>
   </div>
 </div>
@@ -296,7 +318,7 @@
   const S = {
     SQL:null, db:null, zip:null, fileName:"", manifest:null, origBytes:null, hdr:[2,2],
     schema:0, writable:false, dirty:false, tab:"notes", data:null, defLang:"B",
-    pubNames: {}, filters:{}, openNoteId:null, openField:null
+    pubNames: {}, filters:{}, openNoteId:null, openField:null, removed:new Set(), moveItem:null
   };
 
   /* ---------- pomocné ---------- */
@@ -357,7 +379,7 @@
     S.db = new S.SQL.Database(b);
     S.schema = q("PRAGMA user_version")[0].user_version;
     S.writable = WRITE_SCHEMAS.includes(S.schema);
-    S.dirty = false;
+    S.dirty = false; S.removed = new Set();
     readAll();
     renderHead();
     renderTabs();
@@ -392,8 +414,10 @@
     D.fields = q("SELECT * FROM InputField ORDER BY LocationId, TextTag");
     D.favorites = D.tagMap.filter(m => m.LocationId != null && D.tagById[m.TagId] && D.tagById[m.TagId].Type === 0);
     D.userTags = D.tags.filter(t => t.Type === 1);
-    D.playlists = D.tags.filter(t => t.Type === 2).map(t => ({ tag: t, items: q(`SELECT p.*, m.Position,
+    D.playlists = D.tags.filter(t => t.Type === 2).map(t => ({ tag: t, items: q(`SELECT p.*, m.Position, m.TagMapId,
         (SELECT BaseDurationTicks FROM PlaylistItemLocationMap WHERE PlaylistItemId = p.PlaylistItemId LIMIT 1) AS LocTicks,
+        (SELECT l.Type FROM PlaylistItemLocationMap x JOIN Location l USING (LocationId) WHERE x.PlaylistItemId = p.PlaylistItemId LIMIT 1) AS LocType,
+        (SELECT i.MimeType FROM PlaylistItemIndependentMediaMap x JOIN IndependentMedia i USING (IndependentMediaId) WHERE x.PlaylistItemId = p.PlaylistItemId LIMIT 1) AS Mime,
         (SELECT DurationTicks FROM PlaylistItemIndependentMediaMap WHERE PlaylistItemId = p.PlaylistItemId LIMIT 1) AS MediaTicks
         FROM TagMap m JOIN PlaylistItem p USING (PlaylistItemId) WHERE m.TagId = ? ORDER BY m.Position`, [t.TagId]) }));
     D.lastModified = (q("SELECT LastModified FROM LastModified")[0] || {}).LastModified;
@@ -621,10 +645,23 @@
           <span class="acts">${S.writable ? `<button class="ic" data-rename="${t.TagId}" title="Přejmenovat" aria-label="Přejmenovat">✏️</button>` : ""}${delBtn("tag", t.TagId)}</span></div></article>`).join("");
     }else if(S.tab === "pl"){
       const arr = D.playlists.filter(p => matches(p.tag.Name + " " + p.items.map(i => i.Label).join(" "))); n = arr.length;
-      html = arr.map(p => `<article class="card pl"><h3>▶️ ${esc(p.tag.Name)}</h3><ol>${p.items.map(i => {
-          const ticks = i.LocTicks || i.MediaTicks; const sec = ticks ? Math.round(ticks / 1e7) : 0;
-          return `<li><img data-thumb="${esc(i.ThumbnailFilePath || "")}" alt=""><span>${esc(i.Label)}${sec ? ` <span class="dates">· ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}</span>` : ""}</span></li>`;
-        }).join("")}</ol><div class="dates" style="margin-top:6px">Playlisty se zatím dají jen prohlížet.</div></article>`).join("");
+      const W = S.writable;
+      const mmss = t => { t = Math.round(t / 1e7); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+      html = arr.map(p => `<article class="card pl"><div class="foot" style="margin-top:0"><h3 style="margin:0">▶️ ${esc(p.tag.Name)}</h3>
+          <span class="acts">${W ? `<button class="ic" data-plrename="${p.tag.TagId}" title="Přejmenovat playlist" aria-label="Přejmenovat playlist">✏️</button>${delBtn("playlist", p.tag.TagId)}` : ""}</span></div>
+        <ol>${p.items.map((i, k) => {
+          const base = i.LocTicks || i.MediaTicks || 0;
+          const st = i.StartTrimOffsetTicks || 0, en = i.EndTrimOffsetTicks || base;
+          const trimmed = (i.StartTrimOffsetTicks != null || i.EndTrimOffsetTicks != null) && (st > 0 || (base && en < base));
+          const len = Math.max(0, en - st);
+          const kind = i.Mime ? (/^video/.test(i.Mime) ? "🎞️ vlastní video" : "🖼️ vlastní obrázek") : i.LocType === 3 ? "🎧 audio" : "🎬 video";
+          return `<li><img data-thumb="${esc(i.ThumbnailFilePath || "")}" alt=""><span style="flex:1;min-width:0">${esc(i.Label)}<br><span class="dates">${kind}${len ? " · " + mmss(len) : ""}${trimmed ? " · ✂️ ořez " + mmss(st) + "–" + mmss(en) : ""}</span></span>
+            ${W ? `<span class="acts plact">
+              <button class="ic" data-plmove="${i.PlaylistItemId}" data-tag="${p.tag.TagId}" data-dir="-1" title="Posunout nahoru" aria-label="Posunout nahoru"${k ? "" : " disabled"}>↑</button>
+              <button class="ic" data-plmove="${i.PlaylistItemId}" data-tag="${p.tag.TagId}" data-dir="1" title="Posunout dolů" aria-label="Posunout dolů"${k < p.items.length - 1 ? "" : " disabled"}>↓</button>
+              <button class="ic" data-plitem="${i.PlaylistItemId}" title="Přejmenovat nebo přesunout" aria-label="Přejmenovat nebo přesunout">✏️</button>
+              ${delBtn("plitem", i.PlaylistItemId)}</span>` : ""}</li>`;
+        }).join("")}</ol></article>`).join("");
     }
     const y = scrollY;
     $("list").innerHTML = html || `<div class="empty">${$("q").value || Object.values(S.filters).some(Boolean) ? "Nic neodpovídá hledání." : "Tady zatím nic není."}</div>`;
@@ -653,6 +690,9 @@
     const ed = t.closest("[data-edit]"); if(ed){ openNote(+ed.dataset.edit); return; }
     const fe = t.closest("[data-fedit]"); if(fe){ openField(+fe.dataset.fedit, fe.dataset.tag); return; }
     const rn = t.closest("[data-rename]"); if(rn){ renameTag(+rn.dataset.rename); return; }
+    const pr = t.closest("[data-plrename]"); if(pr){ renamePlaylist(+pr.dataset.plrename); return; }
+    const pm = t.closest("[data-plmove]"); if(pm){ movePlItem(+pm.dataset.plmove, +pm.dataset.tag, +pm.dataset.dir); return; }
+    const pi = t.closest("[data-plitem]"); if(pi){ openPlItem(+pi.dataset.plitem); return; }
     const hc = t.closest("[data-hlcolor]");
     if(hc){ run("UPDATE UserMark SET ColorIndex = ? WHERE UserMarkId = ?", [+hc.dataset.c, +hc.dataset.hlcolor]); changed("Barva změněna"); return; }
     const del = t.closest("[data-del]");
@@ -674,6 +714,11 @@
     else if(kind === "field"){ run("DELETE FROM InputField WHERE LocationId = ? AND TextTag = ?", [id, tag]); changed("Odpověď smazána"); }
     else if(kind === "fav"){ run("DELETE FROM TagMap WHERE TagMapId = ?", [id]); changed("Odebráno z oblíbených"); }
     else if(kind === "tag"){ run("DELETE FROM TagMap WHERE TagId = ?", [id]); run("DELETE FROM Tag WHERE TagId = ?", [id]); changed("Štítek smazán"); }
+    else if(kind === "plitem"){ deletePlItems([id]); changed("Položka odebrána z playlistu"); }
+    else if(kind === "playlist"){
+      deletePlItems(q("SELECT PlaylistItemId FROM TagMap WHERE TagId = ? AND PlaylistItemId IS NOT NULL", [id]).map(r => r.PlaylistItemId));
+      run("DELETE FROM TagMap WHERE TagId = ?", [id]); run("DELETE FROM Tag WHERE TagId = ?", [id]); changed("Playlist smazán");
+    }
   }
 
   /* ---------- úprava poznámky ---------- */
@@ -778,6 +823,76 @@
     }else openNote(null);
   };
 
+  /* ---------- playlisty (podle JWLManageru) ---------- */
+  function deletePlItems(ids){
+    if(!ids.length) return;
+    const L = ids.map(Number).join(",");
+    const otherThumbs = new Set(q(`SELECT ThumbnailFilePath AS f FROM PlaylistItem WHERE PlaylistItemId NOT IN (${L})`).map(r => r.f));
+    const otherFiles = new Set(q(`SELECT i.FilePath AS f FROM IndependentMedia i JOIN PlaylistItemIndependentMediaMap m USING (IndependentMediaId) WHERE m.PlaylistItemId NOT IN (${L})`).map(r => r.f));
+    const drop = f => { if(!f || otherThumbs.has(f) || otherFiles.has(f)) return; run("DELETE FROM IndependentMedia WHERE FilePath = ?", [f]); S.removed.add(f); };
+    q(`SELECT ThumbnailFilePath AS f FROM PlaylistItem WHERE PlaylistItemId IN (${L})`).forEach(r => drop(r.f));
+    q(`SELECT i.FilePath AS f FROM IndependentMedia i JOIN PlaylistItemIndependentMediaMap m USING (IndependentMediaId) WHERE m.PlaylistItemId IN (${L})`).forEach(r => drop(r.f));
+    run(`DELETE FROM PlaylistItemIndependentMediaMap WHERE PlaylistItemId IN (${L})`);
+    run(`DELETE FROM PlaylistItemLocationMap WHERE PlaylistItemId IN (${L})`);
+    run(`DELETE FROM TagMap WHERE PlaylistItemId IN (${L})`);
+    run(`DELETE FROM PlaylistItemMarkerBibleVerseMap WHERE PlaylistItemMarkerId IN (SELECT PlaylistItemMarkerId FROM PlaylistItemMarker WHERE PlaylistItemId IN (${L}))`);
+    run(`DELETE FROM PlaylistItemMarkerParagraphMap WHERE PlaylistItemMarkerId IN (SELECT PlaylistItemMarkerId FROM PlaylistItemMarker WHERE PlaylistItemId IN (${L}))`);
+    run(`DELETE FROM PlaylistItemMarker WHERE PlaylistItemId IN (${L})`);
+    run(`DELETE FROM PlaylistItem WHERE PlaylistItemId IN (${L})`);
+  }
+  function renamePlaylist(id){
+    const t = S.data.tagById[id]; const v = prompt("Nový název playlistu:", t.Name);
+    if(v == null) return; const name = v.trim(); if(!name || name === t.Name) return;
+    if(S.data.playlists.some(p => p.tag.TagId !== id && p.tag.Name.toLowerCase() === name.toLowerCase())){ toast("Playlist s tímto názvem už existuje."); return; }
+    run("UPDATE Tag SET Name = ? WHERE TagId = ?", [name, id]); changed("Playlist přejmenován");
+  }
+  function movePlItem(itemId, tagId, dir){
+    const rows = q("SELECT TagMapId, PlaylistItemId, Position FROM TagMap WHERE TagId = ? AND PlaylistItemId IS NOT NULL ORDER BY Position", [tagId]);
+    const i = rows.findIndex(r => r.PlaylistItemId === itemId), j = i + dir;
+    if(i < 0 || j < 0 || j >= rows.length) return;
+    const a = rows[i], b = rows[j], tmp = -1 - a.TagMapId;
+    run("BEGIN");
+    run("UPDATE TagMap SET Position = ? WHERE TagMapId = ?", [tmp, a.TagMapId]);
+    run("UPDATE TagMap SET Position = ? WHERE TagMapId = ?", [a.Position, b.TagMapId]);
+    run("UPDATE TagMap SET Position = ? WHERE TagMapId = ?", [b.Position, a.TagMapId]);
+    run("COMMIT");
+    changed();
+  }
+  function openPlItem(id){
+    const it = q("SELECT p.Label, m.TagId FROM PlaylistItem p JOIN TagMap m USING (PlaylistItemId) WHERE p.PlaylistItemId = ?", [id])[0]; if(!it) return;
+    S.moveItem = { id, tag: it.TagId };
+    $("plLabel").value = it.Label;
+    $("plTarget").innerHTML = S.data.playlists.map(p => `<option value="${p.tag.TagId}"${p.tag.TagId === it.TagId ? " selected" : ""}>${esc(p.tag.Name)}</option>`).join("") + `<option value="new">➕ Nový playlist…</option>`;
+    $("plNewName").value = ""; $("plNewRow").hidden = true;
+    $("plModal").classList.add("show");
+  }
+  $("plTarget").onchange = () => { $("plNewRow").hidden = $("plTarget").value !== "new"; if(!$("plNewRow").hidden) $("plNewName").focus(); };
+  const closePl = () => $("plModal").classList.remove("show");
+  $("plClose").onclick = $("plCancel").onclick = closePl;
+  $("plSave").onclick = () => {
+    const m = S.moveItem; const label = $("plLabel").value.trim();
+    if(!label){ toast("Položka musí mít název."); return; }
+    let target = $("plTarget").value;
+    run("BEGIN");
+    try{
+      run("UPDATE PlaylistItem SET Label = ? WHERE PlaylistItemId = ?", [label, m.id]);
+      if(target === "new"){
+        const name = $("plNewName").value.trim();
+        if(!name) throw new Error("Zadej název nového playlistu.");
+        if(S.data.playlists.some(p => p.tag.Name.toLowerCase() === name.toLowerCase())) throw new Error("Playlist s tímto názvem už existuje.");
+        run("INSERT INTO Tag (Type, Name) VALUES (2, ?)", [name]);
+        target = q("SELECT last_insert_rowid() AS id")[0].id;
+      }
+      target = +target;
+      if(target !== m.tag){
+        const pos = q("SELECT COALESCE(MAX(Position), -1) + 1 AS p FROM TagMap WHERE TagId = ?", [target])[0].p;
+        run("UPDATE TagMap SET TagId = ?, Position = ? WHERE PlaylistItemId = ? AND TagId = ?", [target, pos, m.id, m.tag]);
+      }
+      run("COMMIT");
+    }catch(e){ run("ROLLBACK"); toast(e.message); return; }
+    closePl(); changed(target !== m.tag ? "Položka přesunuta" : "Položka upravena");
+  };
+
   /* ---------- export ---------- */
   $("expBtn").onclick = e => { e.stopPropagation(); $("expMenu").classList.toggle("open"); };
   document.addEventListener("click", e => { if(!e.target.closest("#expMenu")) $("expMenu").classList.remove("open"); });
@@ -865,7 +980,7 @@
     m.userDataBackup.schemaVersion = S.schema;
     const out = new JSZip();
     for(const [path, f] of Object.entries(S.zip.files)){
-      if(f.dir || SKIP_FILES.test(path) || path === DB_NAME || path === "manifest.json") continue;
+      if(f.dir || SKIP_FILES.test(path) || S.removed.has(path) || path === DB_NAME || path === "manifest.json") continue;
       out.file(path, await f.async("uint8array"));
     }
     out.file(DB_NAME, bytes);
@@ -893,7 +1008,7 @@
       const r = await buildBackup();
       S.manifest = r.manifest; S.fileName = r.name; S.origBytes = r.bytes;
       // nový základ: otevři uložený stav (odpovídá souboru)
-      const z = new JSZip(); for(const [p, f] of Object.entries(S.zip.files)){ if(!f.dir && !SKIP_FILES.test(p) && p !== DB_NAME && p !== "manifest.json") z.file(p, await f.async("uint8array")); }
+      const z = new JSZip(); for(const [p, f] of Object.entries(S.zip.files)){ if(!f.dir && !SKIP_FILES.test(p) && !S.removed.has(p) && p !== DB_NAME && p !== "manifest.json") z.file(p, await f.async("uint8array")); }
       z.file(DB_NAME, r.bytes); z.file("manifest.json", JSON.stringify(r.manifest)); S.zip = z;
       loadDb(r.bytes.slice());
       const file = new File([r.blob], r.name, { type: "application/octet-stream" });
@@ -925,7 +1040,7 @@
   ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
   drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) openFile(f); });
-  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); } });
+  document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeNote(); closeField(); closeSave(); closePl(); } });
 
   // zpřístupnění pro testy
   window.__jwl = S;
