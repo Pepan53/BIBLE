@@ -10,6 +10,10 @@ casova-osa.html      — hra Časová osa (řazení postav a událostí chronolo
 biblicke-knihy.html  — hra Biblické knihy (pořadí knih, pisatelé, doba vzniku...)
 mapa-evangelii.html  — interaktivní mapa míst z evangelií (klik na číslo = události)
 zivot-jezise.html    — Ježíšův život (mapa s časovou osou + ikona Ježíše, 126 událostí chronologicky)
+rodokmen-jezise.html — Ježíšův rodokmen (linie slíbeného potomstva od Adama k Ježíši)
+osa-dejin.html       — Osa dějin (svislá časová osa, data z Google tabulky BILO)
+celosvetova-zprava.html — Celosvětová zpráva (přehled podle zemí + grafy)
+titulky-videi.html   — Titulky videí (titulky a přepis videí z JW.ORG, výběr úseku, přehrávač)
 ```
 
 Žádné buildy, žádné závislosti — stačí otevřít `index.html` v prohlížeči.

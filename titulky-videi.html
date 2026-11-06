@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Titulky videí — přepis videí z JW.ORG</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a2e2e">
+<style>
+  :root{ --sel-bg:#f6e9cf; --cur-bg:#e6f2e2; --mark:#ffe08a; }
+  :root[data-theme="dark"]{ --sel-bg:#3a2f1a; --cur-bg:#1f3b2a; --mark:#7a5d12; }
+  *{box-sizing:border-box}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 14px 60px}
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+  header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto 14px;line-height:1.5;font-size:.95em}
+
+  .panel{background:var(--bg-panel);border:1.5px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+  .linkrow{display:flex;gap:8px;flex-wrap:wrap}
+  .linkrow input{flex:1 1 220px;min-width:0;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--ink);font-size:.95em}
+  .linkrow input:focus{outline:none;border-color:var(--gold)}
+  .btn{background:linear-gradient(135deg,#f1e6ce,#e7d5a8);color:var(--maroon-dark);font-weight:700;border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:.92em;cursor:pointer;white-space:nowrap}
+  .btn.secondary{background:var(--bg-panel);color:var(--ink-soft);font-weight:600}
+  :root[data-theme="dark"] .btn:not(.secondary){background:linear-gradient(135deg,#4a3c22,#3a2f1a);color:var(--gold)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .msg{margin:10px 2px 0;font-size:.9em;color:var(--ink-soft)}
+  .msg.err{color:var(--red)}
+
+  .recent{margin-top:12px}
+  .recent h2{font-size:.8em;text-transform:uppercase;letter-spacing:.5px;color:var(--gold-dark);margin:0 0 6px}
+  .recent ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .recent li{display:flex;align-items:center;gap:8px}
+  .recent button.open{flex:1;text-align:left;background:var(--item-bg);border:1px solid var(--border);border-radius:10px;padding:7px 10px;color:var(--ink);cursor:pointer;font-size:.9em;display:flex;gap:10px;align-items:center}
+  .recent img{width:64px;height:36px;object-fit:cover;border-radius:5px;flex:0 0 auto;background:var(--border)}
+  .recent .rm{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:1em;padding:4px 6px}
+
+  #viewer{margin-top:16px}
+  .vhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+  .vhead img{width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;flex:0 0 auto;background:var(--border)}
+  .vhead h2{font-family:var(--heading-font);color:var(--maroon-dark);font-size:1.15em;margin:0 0 4px;line-height:1.25}
+  .vhead .meta{color:var(--ink-soft);font-size:.85em}
+
+  .controls{position:sticky;top:0;z-index:100;background:var(--bg);padding:8px 0;display:flex;flex-direction:column;gap:8px}
+  .tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .ic{background:var(--bg-panel);border:1.5px solid var(--border);color:var(--gold-dark);min-width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:1em;padding:0 9px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .ic:hover{border-color:var(--gold)}
+  .ic.on{background:var(--sel-bg);border-color:var(--gold)}
+  .ic:disabled{opacity:.4;cursor:default}
+  .ic small{font-size:.75em;font-weight:700}
+  select.lang{height:38px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-panel);color:var(--ink);padding:0 6px;max-width:170px;font-size:.9em}
+  .searchrow{display:flex;gap:6px;align-items:center}
+  .searchrow input{flex:1;min-width:0;height:38px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--item-bg);color:var(--ink);font-size:.95em}
+  .searchrow .cnt{font-size:.82em;color:var(--ink-soft);min-width:44px;text-align:center}
+  .selinfo{font-size:.85em;color:var(--maroon-dark);background:var(--sel-bg);border-radius:8px;padding:6px 10px;display:none;align-items:center;gap:8px;flex-wrap:wrap}
+  .selinfo.show{display:flex}
+
+  .player{margin:4px 0 10px;display:none}
+  .player.show{display:block}
+  .player video{width:100%;border-radius:10px;background:#000;max-height:46vh}
+
+  #text{font-size:var(--fs,1rem);line-height:1.55}
+  .cue{display:flex;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;border-left:3px solid transparent}
+  .cue:hover{background:var(--hover-tint)}
+  .cue .t{flex:0 0 auto;font-size:.78em;color:var(--gold-dark);font-variant-numeric:tabular-nums;padding-top:.25em;min-width:4.2em;background:none;border:none;text-align:left;cursor:pointer;font-family:inherit}
+  .cue .t:hover{text-decoration:underline}
+  .cue .x{flex:1;white-space:pre-line}
+  .sel{background:var(--sel-bg) !important}
+  .sel-start{border-left-color:var(--maroon)}
+  .cur{background:var(--cur-bg)}
+  .para{margin:0 0 .9em;padding:2px 4px}
+  .para .c{cursor:pointer;border-radius:4px;padding:1px 0}
+  .para .c:hover{background:var(--hover-tint)}
+  mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+  mark.now{outline:2px solid var(--maroon)}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--tooltip-bg);color:#fff8ec;padding:9px 16px;border-radius:20px;font-size:.9em;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;z-index:20000}
+  .toast.show{opacity:1}
+  .menu{position:relative}
+  .menu .pop{display:none;position:absolute;right:0;top:44px;background:var(--bg-panel);border:1.5px solid var(--border);border-radius:10px;box-shadow:var(--shadow);min-width:230px;z-index:300;padding:6px}
+  .menu.open .pop{display:block}
+  .pop button{display:block;width:100%;text-align:left;background:none;border:none;padding:9px 10px;border-radius:7px;color:var(--ink);cursor:pointer;font-size:.9em}
+  .pop button:hover{background:var(--hover-tint)}
+  .pop button:disabled{opacity:.45}
+  footer{text-align:center;color:var(--ink-soft);font-size:.78em;margin-top:40px;line-height:1.5}
+  footer a{color:var(--gold-dark)}
+  @media (max-width:480px){ h1{font-size:1.6em} .vhead img{width:96px} select.lang{max-width:130px} }
+</style>
+<script src="assets/pwa.js" defer></script>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Titulky videí</h1>
+    <p class="lead">Vlož odkaz na video z JW Library nebo JW.ORG a uvidíš jeho titulky i souvislý přepis. Můžeš v nich hledat, vybrat úsek, zkopírovat ho, sdílet nebo si ho přehrát.</p>
+  </header>
+
+  <div class="panel">
+    <div class="linkrow">
+      <input id="link" type="url" inputmode="url" placeholder="https://www.jw.org/finder?…lank=…_VIDEO" aria-label="Odkaz na video">
+      <button class="btn secondary" id="pasteBtn" title="Vložit ze schránky">📋 Vložit</button>
+      <button class="btn" id="loadBtn">Načíst</button>
+    </div>
+    <p class="msg" id="msg">V JW Library u videa klepni na <strong>Sdílet → Kopírovat odkaz</strong> a vlož ho sem.</p>
+    <div class="recent" id="recent" hidden>
+      <h2>Naposledy otevřená (fungují i offline)</h2>
+      <ul id="recentList"></ul>
+    </div>
+  </div>
+
+  <section id="viewer" hidden>
+    <div class="vhead">
+      <img id="vImg" alt="">
+      <div>
+        <h2 id="vTitle"></h2>
+        <div class="meta" id="vMeta"></div>
+      </div>
+    </div>
+
+    <div class="player" id="player"><video id="video" controls playsinline preload="metadata"></video></div>
+
+    <div class="controls" id="toolbar">
+      <div class="tools">
+        <button class="ic" id="fsDown" title="Menší písmo" aria-label="Menší písmo"><small>A−</small></button>
+        <button class="ic" id="fsUp" title="Větší písmo" aria-label="Větší písmo"><small>A+</small></button>
+        <button class="ic" id="modeBtn" title="Přepnout titulky / přepis" aria-label="Přepnout titulky / přepis">⏱️</button>
+        <button class="ic" id="playBtn" title="Přehrávač videa" aria-label="Přehrávač videa">▶️</button>
+        <button class="ic" id="copyBtn" title="Kopírovat" aria-label="Kopírovat">📄</button>
+        <button class="ic" id="shareBtn" title="Sdílet" aria-label="Sdílet">📤</button>
+        <button class="ic" id="saveBtn" title="Uložit soubor" aria-label="Uložit soubor">💾</button>
+        <div class="menu" id="linkMenu">
+          <button class="ic" id="linkBtn" title="Odkaz" aria-label="Odkaz">🔗</button>
+          <div class="pop">
+            <button id="lnkOpen">Otevřít video na JW.ORG / v JW Library</button>
+            <button id="lnkCopyJw">Kopírovat odkaz na JW.ORG</button>
+            <button id="lnkCopyHere">Kopírovat odkaz na tuto stránku (s vybraným úsekem)</button>
+          </div>
+        </div>
+        <select class="lang" id="lang" aria-label="Jazyk"></select>
+      </div>
+      <div class="searchrow">
+        <input id="search" type="search" placeholder="Hledat v textu…" aria-label="Hledat v textu">
+        <span class="cnt" id="cnt"></span>
+        <button class="ic" id="prevHit" title="Předchozí výskyt" aria-label="Předchozí výskyt">‹</button>
+        <button class="ic" id="nextHit" title="Další výskyt" aria-label="Další výskyt">›</button>
+      </div>
+      <div class="selinfo" id="selinfo">
+        <span id="selText"></span>
+        <button class="btn secondary" id="playSel" style="padding:5px 10px">▶ Přehrát úsek</button>
+        <button class="btn secondary" id="clearSel" style="padding:5px 10px">✕ Zrušit výběr</button>
+      </div>
+    </div>
+
+    <div id="text"></div>
+  </section>
+
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči.<br>
+  Titulky a videa se načítají přímo z JW.ORG. Inspirováno aplikací <a href="https://github.com/erykjj/jwlFission-app" target="_blank" rel="noopener">jwlFission</a>.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/common.js"></script>
+<script>
+(function(){
+  "use strict";
+  const API = "https://b.jw-cdn.org/apis/mediator/v1/";
+  const TOP_LANGS = ["B","E","V","X","S","F","I","P","U","K","T","O"];
+  const LS = { recent:"tv_recent", langs:"tv_recentLangs", fs:"tv_fontSize", mode:"tv_mode", langList:"tv_langList" };
+  const MAX_RECENT = 12;
+  const $ = id => document.getElementById(id);
+
+  const state = { key:null, lang:"B", media:null, cues:[], mode:"subs", selA:-1, selB:-1, hits:[], hitIdx:-1, playEnd:null, curIdx:-1, langNames:{} };
+
+  /* ---------- pomocné ---------- */
+  const ls = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+  };
+  function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  function fmt(t, ms){
+    t = Math.max(0, t); const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = Math.floor(t%60);
+    const base = (h ? h + ":" + String(m).padStart(2,"0") : m) + ":" + String(s).padStart(2,"0");
+    return ms ? base + "." + String(Math.round((t%1)*1000)).padStart(3,"0") : base;
+  }
+  function vttTime(t){
+    const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = Math.floor(t%60), ms = Math.round((t%1)*1000);
+    return [h,m,s].map(x => String(x).padStart(2,"0")).join(":") + "." + String(ms).padStart(3,"0");
+  }
+  let toastT;
+  function toast(t){ const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), 1800); }
+  function setMsg(t, err){ const m = $("msg"); m.innerHTML = t; m.classList.toggle("err", !!err); }
+  async function copyText(t){
+    try{ await navigator.clipboard.writeText(t); toast("Zkopírováno"); return; }catch(e){}
+    const ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("Zkopírováno"); }catch(e){ toast("Kopírování se nepovedlo"); }
+    ta.remove();
+  }
+
+  /* ---------- rozbor odkazu ---------- */
+  function parseLink(raw){
+    raw = (raw || "").trim();
+    if(!raw) return null;
+    const m0 = raw.match(/https?:\/\/\S+/); const s = m0 ? m0[0] : raw;
+    let key = null, lang = null, locale = null, od = null, doo = null;
+    try{
+      const u = new URL(s);
+      const p = u.searchParams;
+      key = p.get("lank") || p.get("item") || null;
+      lang = p.get("wtlocale") || p.get("lang") || null;
+      od = p.get("od"); doo = p.get("do");
+      if(!key){
+        const all = decodeURIComponent(u.pathname + u.hash);
+        const km = all.match(/((?:pub|docid)-[A-Za-z0-9_-]+?_VIDEO)/);
+        if(km) key = km[1];
+        const lm = u.hash.match(/^#([a-z]{2,3}(?:-[a-z]+)?)\//i) || u.pathname.match(/^\/([a-z]{2,3}(?:-[a-z]+)?)\//i);
+        if(lm) locale = lm[1].toLowerCase();
+      }
+    }catch(e){
+      const km = s.match(/((?:pub|docid)-[A-Za-z0-9_-]+?_VIDEO)/);
+      if(km) key = km[1];
+    }
+    if(!key) return null;
+    // klíč s kódem jazyka (např. pub-jwb-143_B_1_VIDEO) převeď na jazykově nezávislý
+    const nk = key.match(/^(pub-[^_]+(?:_[^_]+)*?)_([A-Z]{1,4})_(\d+_VIDEO)$/);
+    if(nk){ if(!lang) lang = nk[2]; key = nk[1] + "_" + nk[3]; }
+    return { key, lang, locale, od: od != null ? +od : null, do: doo != null ? +doo : null };
+  }
+
+  /* ---------- jazyky ---------- */
+  async function loadLangList(){
+    const cached = ls.get(LS.langList, null);
+    if(cached && cached.t > Date.now() - 30*864e5){ applyLangList(cached.list); return; }
+    try{
+      const r = await fetch(API + "languages/B/web?clientType=www");
+      const j = await r.json();
+      const list = j.languages.map(l => [l.code, l.name, l.vernacular, l.locale]);
+      ls.set(LS.langList, { t: Date.now(), list });
+      applyLangList(list);
+    }catch(e){ if(cached) applyLangList(cached.list); }
+  }
+  function applyLangList(list){
+    state.langNames = {}; state.localeToCode = {};
+    list.forEach(([c, n, v, loc]) => { state.langNames[c] = { n, v }; state.localeToCode[loc] = c; });
+  }
+  function langLabel(c){
+    const L = state.langNames[c]; if(!L) return c;
+    return L.n.toLowerCase() === L.v.toLowerCase() ? L.n : L.n + " (" + L.v + ")";
+  }
+  function fillLangSelect(avail){
+    const sel = $("lang"); sel.innerHTML = "";
+    const set = new Set(avail && avail.length ? avail : [state.lang]);
+    set.add(state.lang);
+    const recent = ls.get(LS.langs, []).filter(c => set.has(c));
+    const top = TOP_LANGS.filter(c => set.has(c) && !recent.includes(c));
+    const rest = [...set].filter(c => !recent.includes(c) && !top.includes(c))
+      .sort((a, b) => langLabel(a).localeCompare(langLabel(b), "cs"));
+    [["Naposledy použité", recent], ["Hlavní jazyky", top], ["Další jazyky", rest]].forEach(([lab, arr]) => {
+      if(!arr.length) return;
+      const g = document.createElement("optgroup"); g.label = lab;
+      arr.forEach(c => { const o = document.createElement("option"); o.value = c; o.textContent = langLabel(c); g.appendChild(o); });
+      sel.appendChild(g);
+    });
+    sel.value = state.lang;
+  }
+  function rememberLang(c){
+    const arr = ls.get(LS.langs, []).filter(x => x !== c); arr.unshift(c); ls.set(LS.langs, arr.slice(0, 6));
+  }
+
+  /* ---------- VTT ---------- */
+  function toSec(t){
+    const p = t.trim().split(":").map(Number);
+    return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1];
+  }
+  function parseVTT(txt){
+    const cues = [];
+    txt.replace(/\r/g, "").split(/\n{2,}/).forEach(block => {
+      const lines = block.split("\n");
+      const i = lines.findIndex(l => l.includes("-->"));
+      if(i < 0) return;
+      const [a, b] = lines[i].split("-->");
+      const text = lines.slice(i + 1).join("\n").trim();
+      if(!text) return;
+      cues.push({ s: toSec(a), e: toSec(b.trim().split(/\s+/)[0]), raw: text });
+    });
+    return cues;
+  }
+  function cueHtml(raw){
+    // ponech jen kurzívu, ostatní značky odstraň
+    return esc(raw.replace(/<(?!\/?i>)[^>]+>/g, "")).replace(/&lt;(\/?)i&gt;/g, "<$1i>");
+  }
+  function cuePlain(raw){ return raw.replace(/<[^>]+>/g, ""); }
+
+  /* ---------- nedávná videa ---------- */
+  function saveRecent(entry){
+    let arr = ls.get(LS.recent, []).filter(x => !(x.key === entry.key && x.lang === entry.lang));
+    arr.unshift(entry); arr = arr.slice(0, MAX_RECENT);
+    while(arr.length && !ls.set(LS.recent, arr)) arr.pop();
+    renderRecent();
+  }
+  function renderRecent(){
+    const arr = ls.get(LS.recent, []);
+    $("recent").hidden = !arr.length;
+    const ul = $("recentList"); ul.innerHTML = "";
+    arr.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<button class="open">${r.img ? `<img src="${esc(r.img)}" alt="" loading="lazy">` : ""}<span>${esc(r.title)} <small style="color:var(--ink-soft)">· ${esc(langLabel(r.lang))}</small></span></button><button class="rm" title="Odebrat" aria-label="Odebrat">✕</button>`;
+      li.querySelector(".open").onclick = () => openVideo(r.key, r.lang);
+      li.querySelector(".rm").onclick = () => { const a = ls.get(LS.recent, []); a.splice(i, 1); ls.set(LS.recent, a); renderRecent(); };
+      ul.appendChild(li);
+    });
+  }
+
+  /* ---------- načtení videa ---------- */
+  async function openVideo(key, lang, opts){
+    opts = opts || {};
+    const keepTime = opts.keepTime;
+    setMsg("Načítám…");
+    $("loadBtn").disabled = true;
+    let media = null, vtt = null, fromCache = false;
+    try{
+      const r = await fetch(API + "media-items/" + encodeURIComponent(lang) + "/" + encodeURIComponent(key) + "?clientType=www");
+      const j = await r.json();
+      media = j.media && j.media[0];
+      if(!media){ throw { user: "Video se nenašlo. Zkontroluj odkaz, nebo video v tomto jazyce neexistuje." }; }
+      const f = media.files.find(x => x.subtitles && x.subtitles.url);
+      if(!f){ throw { user: "Toto video nemá v tomto jazyce titulky. Zkus jiný jazyk, u ukázek zkus najít celé video.", media }; }
+      const vr = await fetch(f.subtitles.url);
+      if(!vr.ok) throw { user: "Titulky se nepodařilo stáhnout." };
+      vtt = await vr.text();
+    }catch(e){
+      const rec = ls.get(LS.recent, []).find(x => x.key === key && x.lang === lang);
+      if(rec && rec.vtt && !e.user){
+        fromCache = true;
+        media = { title: rec.title, languageAgnosticNaturalKey: key, images: rec.img ? { x: { lg: rec.img } } : {}, files: rec.mp4 ? [{ progressiveDownloadURL: rec.mp4, label: "" }] : [], availableLanguages: rec.avail || [lang], duration: rec.dur };
+        vtt = rec.vtt;
+      }else{
+        $("loadBtn").disabled = false;
+        setMsg(e.user || "Nepodařilo se spojit s JW.ORG. Jsi připojen k internetu?", true);
+        return false;
+      }
+    }
+    $("loadBtn").disabled = false;
+    const prevT = keepTime != null ? keepTime : null;
+    state.key = key; state.lang = lang; state.media = media;
+    state.cues = parseVTT(vtt);
+    state.selA = state.selB = -1; state.hits = []; state.hitIdx = -1;
+    rememberLang(lang);
+
+    const img = pickImg(media.images);
+    $("vImg").src = img || ""; $("vImg").style.display = img ? "" : "none";
+    $("vTitle").textContent = media.title;
+    $("vMeta").textContent = [langLabel(lang), media.duration ? fmt(media.duration) : "", state.cues.length + " titulků", fromCache ? "offline kopie" : ""].filter(Boolean).join(" · ");
+    fillLangSelect(media.availableLanguages);
+    setupVideo();
+    $("viewer").hidden = false;
+    setMsg(fromCache ? "Bez internetu – zobrazuji uloženou kopii." : "Hotovo. Klepnutím na řádek vybereš začátek, dalším klepnutím konec úseku.");
+    $("link").value = jwLink();
+
+    if(!fromCache){
+      const mp4 = pickMp4(media.files);
+      saveRecent({ key, lang, title: media.title, img, mp4, dur: media.duration, avail: media.availableLanguages, vtt });
+    }
+    history.replaceState(null, "", "?lank=" + encodeURIComponent(key) + "&wtlocale=" + encodeURIComponent(lang));
+    render();
+
+    if(prevT != null){ const i = cueAt(prevT); if(i >= 0){ state.selA = i; render(); scrollToCue(i); } }
+    if(opts.od != null){
+      const a = cueAt(opts.od), b = opts.do != null ? cueAt(Math.max(opts.od, opts.do - 0.01)) : -1;
+      if(a >= 0){ state.selA = a; state.selB = b > a ? b : -1; render(); scrollToCue(a); }
+    }
+    return true;
+  }
+  function pickImg(images){
+    if(!images) return "";
+    for(const k of ["lsr","lss","wss","pnr","sqr","x"]){ const v = images[k]; if(v){ return v.sm || v.md || v.lg || v.xl || Object.values(v)[0]; } }
+    const first = Object.values(images)[0]; return first ? Object.values(first)[0] : "";
+  }
+  function pickMp4(files){
+    if(!files || !files.length) return "";
+    const pref = ["480p","360p","720p","240p"];
+    for(const p of pref){ const f = files.find(x => x.label === p); if(f) return f.progressiveDownloadURL; }
+    return files[0].progressiveDownloadURL;
+  }
+  function cueAt(t){
+    const c = state.cues; if(!c.length) return -1;
+    let best = 0;
+    for(let i = 0; i < c.length; i++){ if(c[i].s <= t + 0.05) best = i; else break; }
+    return best;
+  }
+
+  /* ---------- přehrávač ---------- */
+  let trackUrl = null;
+  function setupVideo(){
+    const v = $("video");
+    v.pause(); v.removeAttribute("src"); v.innerHTML = "";
+    const mp4 = pickMp4(state.media.files);
+    $("playBtn").disabled = !mp4;
+    if(!mp4){ $("player").classList.remove("show"); $("playBtn").classList.remove("on"); return; }
+    v.dataset.src = mp4;
+    if(trackUrl) URL.revokeObjectURL(trackUrl);
+    const vtt = "WEBVTT\n\n" + state.cues.map(c => vttTime(c.s) + " --> " + vttTime(c.e) + "\n" + c.raw).join("\n\n");
+    trackUrl = URL.createObjectURL(new Blob([vtt], { type: "text/vtt" }));
+    const tr = document.createElement("track"); tr.kind = "subtitles"; tr.srclang = state.lang.toLowerCase(); tr.label = langLabel(state.lang); tr.src = trackUrl; tr.default = true;
+    v.appendChild(tr);
+    if($("player").classList.contains("show")) v.src = mp4;
+  }
+  function showPlayer(on){
+    const v = $("video");
+    $("player").classList.toggle("show", on); $("playBtn").classList.toggle("on", on);
+    if(on && !v.getAttribute("src") && v.dataset.src) v.src = v.dataset.src;
+    if(!on) v.pause();
+  }
+  function playFrom(t, end){
+    showPlayer(true);
+    const v = $("video");
+    state.playEnd = end != null ? end : null;
+    const go = () => { v.currentTime = t; v.play().catch(() => {}); };
+    if(v.readyState >= 1) go(); else v.addEventListener("loadedmetadata", go, { once: true });
+    $("player").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  $("video").addEventListener("timeupdate", () => {
+    const v = $("video");
+    if(state.playEnd != null && v.currentTime >= state.playEnd){ v.pause(); state.playEnd = null; }
+    const i = cueAt(v.currentTime);
+    if(i !== state.curIdx){
+      const old = document.querySelector("#text .cur"); if(old) old.classList.remove("cur");
+      state.curIdx = i;
+      const el = document.querySelector(`#text [data-i="${i}"]`);
+      if(el){ el.classList.add("cur"); if(!v.paused) scrollToCue(i, true); }
+    }
+  });
+
+  /* ---------- vykreslení ---------- */
+  function isSel(i){
+    const a = state.selA, b = state.selB;
+    if(a < 0) return false;
+    if(b < 0) return i === a;
+    return i >= Math.min(a, b) && i <= Math.max(a, b);
+  }
+  function render(){
+    const q = $("search").value.trim();
+    const re = q ? new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi") : null;
+    const hl = html => re ? html.replace(/(<[^>]+>)|([^<]+)/g, (m, tag, txt) => tag || txt.replace(re, x => "<mark>" + x + "</mark>")) : html;
+    const box = $("text");
+    let out = "";
+    if(state.mode === "subs"){
+      state.cues.forEach((c, i) => {
+        const cls = ["cue"]; if(isSel(i)) cls.push("sel"); if(i === state.selA) cls.push("sel-start"); if(i === state.curIdx) cls.push("cur");
+        out += `<div class="${cls.join(" ")}" data-i="${i}"><button class="t" data-t="${c.s}" title="Přehrát odsud">${fmt(c.s)}</button><div class="x">${hl(cueHtml(c.raw))}</div></div>`;
+      });
+    }else{
+      let para = [];
+      const flush = () => { if(para.length){ out += `<p class="para">${para.join(" ")}</p>`; para = []; } };
+      state.cues.forEach((c, i) => {
+        const lines = cueHtml(c.raw).split("\n");
+        const startsDash = /^\s*(<i>)?\s*[-–]/.test(lines[0]);
+        const prev = state.cues[i - 1];
+        const gapBreak = prev && (c.s - prev.e > 2.2) && /[.?!…“"»)]\s*(<\/i>)?\s*$/.test(cuePlain(prev.raw));
+        if(startsDash || gapBreak) flush();
+        const body = lines.map((l, k) => (k && /^\s*(<i>)?\s*[-–]/.test(l) ? "<br>" : "") + l.replace(/^(\s*(?:<i>)?\s*)-\s*/, "$1– ")).join(" ");
+        const cls = ["c"]; if(isSel(i)) cls.push("sel"); if(i === state.curIdx) cls.push("cur");
+        para.push(`<span class="${cls.join(" ")}" data-i="${i}">${hl(body)}</span>`);
+      });
+      flush();
+    }
+    box.innerHTML = out;
+    state.hits = [...box.querySelectorAll("mark")];
+    if(state.hitIdx >= state.hits.length) state.hitIdx = state.hits.length - 1;
+    updateHits();
+    updateSelInfo();
+    $("modeBtn").textContent = state.mode === "subs" ? "⏱️" : "📝";
+    $("modeBtn").title = state.mode === "subs" ? "Teď: titulky s časy (přepnout na přepis)" : "Teď: souvislý přepis (přepnout na titulky)";
+  }
+  function scrollToCue(i, soft){
+    const el = document.querySelector(`#text [data-i="${i}"]`); if(!el) return;
+    const tb = $("toolbar").getBoundingClientRect().height;
+    const r = el.getBoundingClientRect();
+    if(soft && r.top > tb + 40 && r.bottom < innerHeight - 40) return;
+    window.scrollTo({ top: scrollY + r.top - tb - 60, behavior: soft ? "smooth" : "auto" });
+  }
+  function updateHits(){
+    const n = state.hits.length;
+    $("cnt").textContent = $("search").value.trim() ? (n ? (state.hitIdx + 1 || 0) + "/" + n : "0") : "";
+    state.hits.forEach((m, k) => m.classList.toggle("now", k === state.hitIdx));
+  }
+  function gotoHit(d){
+    const n = state.hits.length; if(!n) return;
+    state.hitIdx = (state.hitIdx + d + n) % n; updateHits();
+    const m = state.hits[state.hitIdx];
+    const tb = $("toolbar").getBoundingClientRect().height;
+    window.scrollTo({ top: scrollY + m.getBoundingClientRect().top - tb - 80, behavior: "smooth" });
+  }
+  function selRange(){
+    if(state.selA < 0) return null;
+    const a = state.selB < 0 ? state.selA : Math.min(state.selA, state.selB);
+    const b = state.selB < 0 ? state.selA : Math.max(state.selA, state.selB);
+    return [a, b];
+  }
+  function updateSelInfo(){
+    const r = selRange();
+    $("selinfo").classList.toggle("show", !!r);
+    if(!r) return;
+    const c = state.cues;
+    $("selText").textContent = state.selB < 0
+      ? "Začátek: " + fmt(c[r[0]].s) + " – klepni na konec úseku"
+      : "Vybráno " + fmt(c[r[0]].s) + " – " + fmt(c[r[1]].e) + " (" + (r[1] - r[0] + 1) + " titulků)";
+    $("playSel").disabled = $("playBtn").disabled;
+  }
+
+  /* ---------- text k exportu ---------- */
+  function exportText(){
+    const r = selRange(); const c = state.cues;
+    const [a, b] = r || [0, c.length - 1];
+    const part = c.slice(a, b + 1);
+    if(state.mode === "subs"){
+      return part.map(x => fmt(x.s) + "  " + cuePlain(x.raw).replace(/\n/g, " ")).join("\n");
+    }
+    const paras = []; let cur = [];
+    part.forEach((x, k) => {
+      const txt = cuePlain(x.raw);
+      const prev = part[k - 1];
+      const brk = /^\s*[-–]/.test(txt) || (prev && x.s - prev.e > 2.2 && /[.?!…“"»)]\s*$/.test(cuePlain(prev.raw)));
+      if(brk && cur.length){ paras.push(cur.join(" ")); cur = []; }
+      cur.push(txt.split("\n").map((l, i) => (i && /^\s*[-–]/.test(l) ? "\n" : "") + l.replace(/^\s*-\s*/, "– ")).join(" ").replace(/ \n/g, "\n"));
+    });
+    if(cur.length) paras.push(cur.join(" "));
+    return paras.join("\n\n");
+  }
+  function exportVtt(){
+    const r = selRange(); const c = state.cues;
+    const [a, b] = r || [0, c.length - 1];
+    return "WEBVTT\n\n" + c.slice(a, b + 1).map(x => vttTime(x.s) + " --> " + vttTime(x.e) + "\n" + x.raw).join("\n\n") + "\n";
+  }
+  function header(){
+    const r = selRange();
+    return state.media.title + (r ? " (" + fmt(state.cues[r[0]].s) + "–" + fmt(state.cues[r[1]].e) + ")" : "");
+  }
+
+  /* ---------- odkazy ---------- */
+  function jwLink(){ return "https://www.jw.org/finder?srcid=share&wtlocale=" + encodeURIComponent(state.lang) + "&lank=" + encodeURIComponent(state.key); }
+  function hereLink(){
+    const u = new URL(location.href.split("?")[0]);
+    u.searchParams.set("lank", state.key); u.searchParams.set("wtlocale", state.lang);
+    const r = selRange();
+    if(r){ u.searchParams.set("od", state.cues[r[0]].s.toFixed(2)); if(state.selB >= 0) u.searchParams.set("do", state.cues[r[1]].e.toFixed(2)); }
+    return u.toString();
+  }
+
+  /* ---------- události ---------- */
+  $("loadBtn").onclick = () => {
+    const p = parseLink($("link").value);
+    if(!p){ setMsg("Z odkazu jsem nevyčetl, o jaké video jde. Potřebuji odkaz, ve kterém je klíč videa končící na <strong>_VIDEO</strong>.", true); return; }
+    let lang = p.lang || (p.locale && state.localeToCode && state.localeToCode[p.locale]) || "B";
+    openVideo(p.key, lang, p);
+  };
+  $("link").addEventListener("keydown", e => { if(e.key === "Enter") $("loadBtn").click(); });
+  $("pasteBtn").onclick = async () => {
+    try{ const t = await navigator.clipboard.readText(); if(t){ $("link").value = t; $("loadBtn").click(); return; } }catch(e){}
+    $("link").focus(); setMsg("Schránku se nepodařilo přečíst – vlož odkaz ručně (dlouze podrž pole a zvol Vložit).");
+  };
+
+  $("text").addEventListener("click", e => {
+    const tb = e.target.closest(".t");
+    if(tb){ playFrom(+tb.dataset.t); return; }
+    const el = e.target.closest("[data-i]"); if(!el) return;
+    if(window.getSelection && String(window.getSelection()).length > 2) return; // uživatel označuje text prstem
+    const i = +el.dataset.i;
+    if(state.selA < 0 || state.selB >= 0){ state.selA = i; state.selB = -1; }
+    else if(i === state.selA){ state.selA = -1; }
+    else { state.selB = i; }
+    const y = scrollY; render(); window.scrollTo(0, y);
+  });
+  $("clearSel").onclick = () => { state.selA = state.selB = -1; const y = scrollY; render(); window.scrollTo(0, y); };
+  $("playSel").onclick = () => { const r = selRange(); if(r) playFrom(state.cues[r[0]].s, state.selB >= 0 ? state.cues[r[1]].e : null); };
+
+  $("modeBtn").onclick = () => {
+    const anchor = selRange() ? selRange()[0] : firstVisible();
+    state.mode = state.mode === "subs" ? "text" : "subs"; ls.set(LS.mode, state.mode);
+    render(); if(anchor >= 0) scrollToCue(anchor);
+  };
+  function firstVisible(){
+    const tb = $("toolbar").getBoundingClientRect().bottom;
+    for(const el of document.querySelectorAll("#text [data-i]")){ if(el.getBoundingClientRect().bottom > tb + 4) return +el.dataset.i; }
+    return -1;
+  }
+  $("playBtn").onclick = () => showPlayer(!$("player").classList.contains("show"));
+
+  function setFs(v){ v = Math.min(1.8, Math.max(0.8, v)); document.documentElement.style.setProperty("--fs", v + "rem"); ls.set(LS.fs, v); return v; }
+  let fs = setFs(ls.get(LS.fs, 1));
+  $("fsDown").onclick = () => { fs = setFs(+(fs - 0.1).toFixed(2)); };
+  $("fsUp").onclick = () => { fs = setFs(+(fs + 0.1).toFixed(2)); };
+
+  $("copyBtn").onclick = () => copyText(exportText());
+  $("shareBtn").onclick = async () => {
+    const text = header() + "\n\n" + exportText() + "\n\n" + jwLink();
+    if(navigator.share){ try{ await navigator.share({ title: state.media.title, text }); }catch(e){} }
+    else copyText(text);
+  };
+  $("saveBtn").onclick = () => {
+    const subs = state.mode === "subs";
+    const data = subs ? exportVtt() : header() + "\n\n" + exportText() + "\n";
+    const name = (state.media.title || "titulky").replace(/[\\/:*?"<>|]+/g, "").slice(0, 80).trim() + (selRange() ? " – úsek" : "") + (subs ? ".vtt" : ".txt");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], { type: subs ? "text/vtt" : "text/plain;charset=utf-8" }));
+    a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    toast(subs ? "Ukládám titulky (.vtt)" : "Ukládám přepis (.txt)");
+  };
+
+  $("linkBtn").onclick = e => { e.stopPropagation(); $("linkMenu").classList.toggle("open"); };
+  document.addEventListener("click", e => { if(!e.target.closest("#linkMenu")) $("linkMenu").classList.remove("open"); });
+  $("lnkOpen").onclick = () => { window.open(jwLink(), "_blank", "noopener"); $("linkMenu").classList.remove("open"); };
+  $("lnkCopyJw").onclick = () => { copyText(jwLink()); $("linkMenu").classList.remove("open"); };
+  $("lnkCopyHere").onclick = () => { copyText(hereLink()); $("linkMenu").classList.remove("open"); };
+
+  $("lang").onchange = () => {
+    const r = selRange();
+    const t = r ? state.cues[r[0]].s : (firstVisible() >= 0 ? state.cues[firstVisible()].s : null);
+    const old = state.lang;
+    openVideo(state.key, $("lang").value, { keepTime: t }).then(ok => { if(!ok){ $("lang").value = old; } });
+  };
+
+  let st;
+  $("search").addEventListener("input", () => { clearTimeout(st); st = setTimeout(() => { state.hitIdx = -1; const y = scrollY; render(); window.scrollTo(0, y); if(state.hits.length) gotoHit(1); }, 250); });
+  $("search").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); gotoHit(e.shiftKey ? -1 : 1); } });
+  $("prevHit").onclick = () => gotoHit(-1);
+  $("nextHit").onclick = () => gotoHit(1);
+
+  /* ---------- start ---------- */
+  state.mode = ls.get(LS.mode, "subs") === "text" ? "text" : "subs";
+  renderRecent();
+  loadLangList().then(() => {
+    renderRecent();
+    // odkaz z adresy (sdílení do aplikace, odkaz z jiné stránky rozcestníku)
+    const q = new URLSearchParams(location.search);
+    const shared = q.get("lank") ? location.href : (q.get("url") || q.get("text") || q.get("title"));
+    if(shared){
+      const p = parseLink(shared);
+      if(p){
+        $("link").value = shared;
+        const lang = p.lang || (p.locale && state.localeToCode[p.locale]) || "B";
+        openVideo(p.key, lang, p);
+      }else{
+        $("link").value = shared;
+        setMsg("Ve sdíleném textu jsem nenašel odkaz na video.", true);
+      }
+    }
+  });
+})();
+</script>
+<script src="assets/nav-dock.js"></script>
+</body>
+</html>
