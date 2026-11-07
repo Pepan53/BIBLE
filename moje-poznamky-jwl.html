@@ -287,7 +287,7 @@
       <div style="margin-top:8px;font-size:.85em">nebo sem soubor přetáhni</div>
     </div>
     <p class="msg" id="msg">Záloha zůstává jen v tomto zařízení – nikam se neodesílá.</p>
-    <p class="msg">📥 <a href="https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing" target="_blank" rel="noopener" style="color:var(--gold-dark);font-weight:600">Aktuální český překlad studijních poznámek (Matouš–Jakub)</a> – stáhni CSV z Google Disku, pak otevři svou zálohu a nahraj ho přes <strong>⇅ Export / Import → Import poznámek z tabulky</strong>.</p>
+    <p class="msg">📥 <strong>Český překlad studijních poznámek (Matouš–Jakub):</strong> otevři svou zálohu a v nabídce <strong>⇅ Export / Import</strong> zvol <strong>Importovat překlad studijních poznámek</strong>. (<a href="https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing" target="_blank" rel="noopener" style="color:var(--gold-dark)">soubor na Google Disku ↗</a>)</p>
     <details class="how">
       <summary>Jak získat zálohu z JW Library?</summary>
       <ol>
@@ -330,7 +330,7 @@
             <button id="expCsv">Export do tabulky (.csv)</button>
             <div class="hint" style="padding:8px 10px 2px;font-size:.75em;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid var(--border);margin-top:4px">Import</div>
             <button id="impCsv">Import poznámek z tabulky (.csv)…</button>
-            <button id="studyLink" onclick="window.open('https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing','_blank','noopener')">📥 Stáhnout překlad studijních poznámek (Google Disk) ↗</button>
+            <button id="studyImp">📥 Importovat překlad studijních poznámek (Google Disk)</button>
             <input type="file" id="impFile" accept=".csv,text/csv,text/plain" hidden>
           </div>
         </div>
@@ -1434,9 +1434,38 @@
   $("impCsv").onclick = () => { $("expMenu").classList.remove("open"); if(!S.writable){ toast("Tuto zálohu nelze upravovat."); return; } $("impFile").click(); };
   $("impFile").onchange = async () => {
     const f = $("impFile").files[0]; $("impFile").value = ""; if(!f) return;
+    let text = await f.text();
+    if(text.includes("\ufffd")) text = new TextDecoder("windows-1250").decode(await f.arrayBuffer());
+    showImport(f.name, text);
+  };
+  /* překlad studijních poznámek přímo z Google Disku (soubor musí být sdílený „kdokoli s odkazem“) */
+  const STUDY_ID = "19toODA6lOCgtWWjkV486qjs22X8QaizR";
+  $("studyImp").onclick = async () => {
+    $("expMenu").classList.remove("open");
+    if(!S.writable){ toast("Tuto zálohu nelze upravovat."); return; }
+    toast("Stahuji překlad studijních poznámek…");
     try{
-      let text = await f.text();
-      if(text.includes("�")) text = new TextDecoder("windows-1250").decode(await f.arrayBuffer());
+      const r = await fetch("https://drive.usercontent.google.com/download?id=" + STUDY_ID + "&export=download&confirm=t");
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      const buf = await r.arrayBuffer();
+      let text = new TextDecoder("utf-8").decode(buf);
+      if(/^\s*<(!doctype|html)/i.test(text)) throw new Error("Disk vrátil stránku místo souboru");
+      if(text.includes("\ufffd")) text = new TextDecoder("windows-1250").decode(buf);
+      showImport("Studijní poznámky (Google Disk)", text);
+    }catch(e){
+      console.warn("Přímé stažení z Disku se nepovedlo:", e);
+      window.open("https://drive.google.com/uc?export=download&id=" + STUDY_ID, "_blank", "noopener");
+      $("impReport").innerHTML = `<p>Prohlížeč nedovolil načíst soubor přímo z Google Disku, proto se teď <strong>stahuje do tvého zařízení</strong>.</p>
+        <ol style="padding-left:20px;line-height:1.6"><li>Počkej, až se stažení dokončí (soubor <em>Studijní_poznámky…csv</em>).</li>
+        <li>Klepni na <strong>Vybrat stažený soubor</strong> a najdi ho ve Stažených souborech.</li></ol>
+        <p class="hint">Pokud se místo stažení otevře přihlášení ke Googlu, soubor na Disku není sdílený pro „kdokoli s odkazem“.</p>`;
+      $("impOk").disabled = false; $("impOk").textContent = "Vybrat stažený soubor";
+      impData = null; $("impModal").classList.add("show");
+    }
+  };
+  function showImport(name, text){
+    const f = { name };
+    try{
       impData = analyzeCSV(text);
       const c = a => impData.items.filter(i => i.action === a).length;
       const nNew = c("new"), nUpd = c("upd"), nDup = c("dup") + c("dupfile");
@@ -1459,7 +1488,7 @@
   const closeImp = () => $("impModal").classList.remove("show");
   $("impClose").onclick = $("impCancel").onclick = closeImp;
   $("impOk").onclick = () => {
-    if(!impData) return;
+    if(!impData){ closeImp(); $("impFile").click(); return; }
     try{ const r = applyImport(impData.items); closeImp(); changed(); $("dirtyText").textContent = `Import z tabulky: přidáno ${r.added}, aktualizováno ${r.updated}. Neuloženo.`; toast("Import hotov"); }
     catch(e){ console.error(e); toast("Import se nepovedl: " + e.message); }
   };
