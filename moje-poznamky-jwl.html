@@ -278,7 +278,7 @@
     <p class="lead">Otevři zálohu z JW Library a prohlédni si své poznámky, zvýraznění, záložky a odpovědi na jednom místě. Můžeš v nich hledat, upravovat je, exportovat a uložit jako novou zálohu.</p>
   </header>
 
-  <div class="wip" role="note">🚧 <strong>Úpravy a obnovení zálohy jsou ověřené v JW Library 15.10</strong> (Android i Windows, databáze verze 16). Některé funkce se ještě dodělávají. <span style="color:var(--red)">Před obnovením upravené zálohy si v JW Library <strong style="color:var(--red)">vždy udělej čerstvou zálohu</strong></span> – obnovení nahradí všechna současná data.</div>
+  <div class="wip" role="note">ℹ️ <strong>Úpravy a obnovení zálohy jsou ověřené v JW Library 15.10</strong> (Android i Windows, databáze verze 16). <span style="color:var(--red)">Před obnovením upravené zálohy si v JW Library <strong style="color:var(--red)">vždy udělej čerstvou zálohu</strong></span> – obnovení nahradí všechna současná data.</div>
 
   <div class="panel" id="openPanel">
     <div class="drop" id="drop">
@@ -287,6 +287,7 @@
       <div style="margin-top:8px;font-size:.85em">nebo sem soubor přetáhni</div>
     </div>
     <p class="msg" id="msg">Záloha zůstává jen v tomto zařízení – nikam se neodesílá.</p>
+    <p class="msg">📥 <a href="https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing" target="_blank" rel="noopener" style="color:var(--gold-dark);font-weight:600">Aktuální český překlad studijních poznámek (Matouš–Jakub)</a> – stáhni CSV z Google Disku, pak otevři svou zálohu a nahraj ho přes <strong>⇅ Export / Import → Import poznámek z tabulky</strong>.</p>
     <details class="how">
       <summary>Jak získat zálohu z JW Library?</summary>
       <ol>
@@ -329,6 +330,7 @@
             <button id="expCsv">Export do tabulky (.csv)</button>
             <div class="hint" style="padding:8px 10px 2px;font-size:.75em;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid var(--border);margin-top:4px">Import</div>
             <button id="impCsv">Import poznámek z tabulky (.csv)…</button>
+            <button id="studyLink" onclick="window.open('https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing','_blank','noopener')">📥 Stáhnout překlad studijních poznámek (Google Disk) ↗</button>
             <input type="file" id="impFile" accept=".csv,text/csv,text/plain" hidden>
           </div>
         </div>
