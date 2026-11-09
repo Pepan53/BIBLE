@@ -1350,18 +1350,29 @@
         Object.assign(it, { lang, pub, issue, doc, bk, ch, vs, block, color: color || 0, range: g("range").trim() || null });
         if(it.range && !/^(\d+:)?\d+-\d+(;(\d+:)?\d+-\d+)*$/.test(it.range)) throw new Error("neplatný rozsah zvýraznění");
         // rozhodnutí: nový / aktualizace / duplicitní
-        const ex = findExisting(it);
-        if(ex){
-          const tagsNow = q("SELECT t.Name FROM TagMap m JOIN Tag t USING (TagId) WHERE m.NoteId = ? ORDER BY t.Name", [ex.NoteId]).map(r => r.Name).join("|");
-          const same = (ex.Title || "") === it.title && (ex.Content || "").trim() === it.text.trim() && (col.tags == null || tagsNow === it.tags.slice().sort((a, b) => a.localeCompare(b)).join("|"));
-          it.action = same ? "dup" : "upd"; it.noteId = ex.NoteId;
-        }else it.action = "new";
+        it.cands = findExisting(it);
+        it.wantTags = col.tags == null ? null : it.tags.slice().sort((a, b) => a.localeCompare(b)).join("|");
         items.push(it);
       }catch(e){ errors.push({ line, msg: e.message }); }
     });
     // duplicity uvnitř souboru
     const seen = new Set();
     items.forEach(it => { const k = it.guid || [it.kind, it.lang, it.pub, it.doc, it.bk, it.ch, it.vs, it.block, it.title, it.text.trim()].join("|"); if(seen.has(k)) it.action = "dupfile"; seen.add(k); });
+    // 1. průchod: přesné shody (stejný nadpis i text) = duplicita; každá poznámka se „zabere“ jen jednou
+    const claimed = new Set();
+    const tagsOf = id => q("SELECT t.Name FROM TagMap m JOIN Tag t USING (TagId) WHERE m.NoteId = ? ORDER BY t.Name", [id]).map(r => r.Name).sort((a, b) => a.localeCompare(b)).join("|");
+    items.forEach(it => {
+      if(it.action) return;
+      const ex = it.cands.find(n => !claimed.has(n.NoteId) && (n.Content || "").trim() === it.text.trim() && (n.Title || "") === it.title);
+      if(ex){ claimed.add(ex.NoteId); it.noteId = ex.NoteId; it.action = it.wantTags == null || tagsOf(ex.NoteId) === it.wantTags ? "dup" : "upd"; }
+    });
+    // 2. průchod: shoda jen podle místa a nadpisu = aktualizace (jen nezabraná poznámka), jinak nová
+    items.forEach(it => {
+      if(it.action) return;
+      const ex = it.cands.find(n => !claimed.has(n.NoteId));
+      if(ex){ claimed.add(ex.NoteId); it.noteId = ex.NoteId; it.action = "upd"; } else it.action = "new";
+    });
+    items.forEach(it => { delete it.cands; });
     return { items, errors };
   }
   function one2(sql, p){ return q(sql, p)[0]; }
@@ -1379,14 +1390,16 @@
   }
   const blockOf = it => it.kind === "bible" ? (it.vs != null ? [2, it.vs] : [0, null]) : it.kind === "doc" ? (it.block != null ? [1, it.block] : [0, null]) : [0, null];
   function findExisting(it){
-    if(it.guid){ const g = one2("SELECT * FROM Note WHERE Guid = ?", [it.guid]); if(g) return g; }
+    if(it.guid){ const g = one2("SELECT * FROM Note WHERE Guid = ?", [it.guid]); if(g) return [g]; }
     const loc = locFor(it, false);
-    if(it.kind !== "ind" && loc == null) return null;
+    if(it.kind !== "ind" && loc == null) return [];
     const [bt, bi] = blockOf(it);
     const key = it.title ? ["TRIM(Title) = ?", it.title.trim()] : ["(Title = '' OR Title IS NULL) AND TRIM(Content) = ?", it.text.trim()];
     return it.kind === "ind"
-      ? one2(`SELECT * FROM Note WHERE LocationId IS NULL AND ${key[0]} AND BlockType = 0`, [key[1]])
-      : one2(`SELECT * FROM Note WHERE LocationId = ? AND ${key[0]} AND BlockType = ? AND BlockIdentifier IS ?`, [loc, key[1], bt, bi]);
+      ? q(`SELECT * FROM Note WHERE LocationId IS NULL AND ${key[0]} AND BlockType = 0`, [key[1]])
+      : bt === 0 && it.kind === "bible"
+        ? q(`SELECT * FROM Note WHERE LocationId = ? AND ${key[0]} AND BlockType IN (0, 1)`, [loc, key[1]])
+        : q(`SELECT * FROM Note WHERE LocationId = ? AND ${key[0]} AND BlockType = ? AND BlockIdentifier IS ?`, [loc, key[1], bt, bi]);
   }
   function applyImport(items){
     const now = nowIso(); let added = 0, updated = 0;
@@ -1438,30 +1451,18 @@
     if(text.includes("\ufffd")) text = new TextDecoder("windows-1250").decode(await f.arrayBuffer());
     showImport(f.name, text);
   };
-  /* překlad studijních poznámek přímo z Google Disku (soubor musí být sdílený „kdokoli s odkazem“) */
-  const STUDY_ID = "19toODA6lOCgtWWjkV486qjs22X8QaizR";
+  /* překlad studijních poznámek – kopie CSV je přímo na webu (assets/studijni-poznamky.csv).
+     Při nové verzi překladu nahraď soubor a uprav STUDY_VERSION. Originál je na Google Disku. */
+  const STUDY_FILE = "assets/studijni-poznamky.csv", STUDY_VERSION = "7. 11. 2026";
   $("studyImp").onclick = async () => {
     $("expMenu").classList.remove("open");
     if(!S.writable){ toast("Tuto zálohu nelze upravovat."); return; }
-    toast("Stahuji překlad studijních poznámek…");
+    toast("Načítám překlad studijních poznámek…");
     try{
-      const r = await fetch("https://drive.usercontent.google.com/download?id=" + STUDY_ID + "&export=download&confirm=t");
+      const r = await fetch(STUDY_FILE, { cache: "no-cache" });
       if(!r.ok) throw new Error("HTTP " + r.status);
-      const buf = await r.arrayBuffer();
-      let text = new TextDecoder("utf-8").decode(buf);
-      if(/^\s*<(!doctype|html)/i.test(text)) throw new Error("Disk vrátil stránku místo souboru");
-      if(text.includes("\ufffd")) text = new TextDecoder("windows-1250").decode(buf);
-      showImport("Studijní poznámky (Google Disk)", text);
-    }catch(e){
-      console.warn("Přímé stažení z Disku se nepovedlo:", e);
-      window.open("https://drive.google.com/uc?export=download&id=" + STUDY_ID, "_blank", "noopener");
-      $("impReport").innerHTML = `<p>Prohlížeč nedovolil načíst soubor přímo z Google Disku, proto se teď <strong>stahuje do tvého zařízení</strong>.</p>
-        <ol style="padding-left:20px;line-height:1.6"><li>Počkej, až se stažení dokončí (soubor <em>Studijní_poznámky…csv</em>).</li>
-        <li>Klepni na <strong>Vybrat stažený soubor</strong> a najdi ho ve Stažených souborech.</li></ol>
-        <p class="hint">Pokud se místo stažení otevře přihlášení ke Googlu, soubor na Disku není sdílený pro „kdokoli s odkazem“.</p>`;
-      $("impOk").disabled = false; $("impOk").textContent = "Vybrat stažený soubor";
-      impData = null; $("impModal").classList.add("show");
-    }
+      showImport("Studijní poznámky Mt–Jk (verze z " + STUDY_VERSION + ")", await r.text());
+    }catch(e){ console.error(e); toast("Překlad se nepodařilo načíst – jsi připojen k internetu?"); }
   };
   function showImport(name, text){
     const f = { name };
