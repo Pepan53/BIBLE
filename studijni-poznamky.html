@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Studijní poznámky – český překlad</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  :root{ --row-alt:#fbf7ee; --mark:#f6e2a8; }
+  :root[data-theme="dark"]{ --row-alt:#211c14; --mark:#5a4718; }
+  *{box-sizing:border-box}
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Verdana,Arial,sans-serif;transition:background .25s,color .25s}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 14px 60px}
+  .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
+  header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
+  h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
+
+  .picker{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 10px;margin-top:12px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .picker select,.picker input{font:inherit;font-size:1em;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-panel);color:var(--ink);min-width:0}
+  .picker select{padding-right:34px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 55%,calc(100% - 12px) 55%;background-size:6px 6px;background-repeat:no-repeat}
+  #book{flex:2 1 150px} #chap{flex:1 1 90px}
+  .search{flex:1 1 100%;position:relative}
+  .search input{width:100%;padding-left:36px}
+  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-soft)}
+  .picker select:focus,.picker input:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .nav{display:flex;justify-content:space-between;gap:8px;margin:12px 0 0}
+  .nav button,.dl{font:inherit;font-size:.88em;border:1px solid var(--border);background:var(--bg-panel);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  .nav button[disabled]{opacity:.4;cursor:default}
+  .info{color:var(--ink-soft);font-size:.85em;text-align:center;margin:10px 0 0}
+
+  .verse{background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-top:14px;overflow:hidden}
+  .verse h2{margin:0;padding:10px 16px;font-size:1em;font-family:var(--heading-font);color:var(--maroon-dark);background:var(--row-alt);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .verse h2 a{font-family:"Segoe UI",Verdana,Arial,sans-serif;font-size:.8em;font-weight:400;color:var(--maroon);text-decoration:none;white-space:nowrap}
+  .note{padding:12px 16px;border-top:1px solid var(--border);line-height:1.55}
+  .note:first-of-type{border-top:0}
+  .note h3{margin:0 0 4px;font-size:1em;color:var(--maroon-dark)}
+  .note p{margin:0 0 8px} .note p:last-child{margin-bottom:0}
+  .note.media h3 a{color:inherit}
+  .note.media .open{display:inline-block;font-size:.85em;color:var(--maroon);margin-bottom:6px}
+  mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+  .empty{padding:24px 16px;text-align:center;color:var(--ink-soft)}
+  .bottom{display:flex;justify-content:center;margin-top:20px}
+  footer{text-align:center;color:var(--ink-soft);font-size:.82em;margin-top:24px}
+  @media (max-width:480px){ h1{font-size:1.5em} .note{padding:11px 13px} }
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#7a2e2e">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="assets/pwa.js" defer></script>
+</head>
+<body>
+<a class="home-btn" id="homeBtn" href="index.html" title="Zpět na rozcestník" aria-label="Zpět na rozcestník">🏠</a>
+<button class="theme-toggle-btn" id="themeToggle" title="Přepnout vzhled" aria-label="Přepnout vzhled">🌙</button>
+<button class="daily-text-btn" id="dailyTextBtn" title="Denní text" aria-label="Denní text">📅</button>
+
+<div class="modal-overlay daily-text-modal" id="dailyTextModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <button class="modal-close" id="dailyTextClose" aria-label="Zavřít">✕</button>
+    </div>
+    <div class="daily-text-row">
+      <div class="daily-text-icon" id="dailyTextIcon" role="button" tabindex="0" aria-label="Co znázorňuje ikona"></div>
+      <div class="daily-text-word-col">
+        <p class="daily-text-word" id="dailyTextWord"></p>
+        <div class="daily-text-nav">
+          <button class="daily-text-nav-btn" id="dailyTextPrev" aria-label="Předchozí den">‹</button>
+          <button class="daily-text-nav-btn" id="dailyTextNext" aria-label="Další den">›</button>
+        </div>
+      </div>
+    </div>
+    <p class="daily-text-icon-desc" id="dailyTextIconDesc"></p>
+    <hr class="daily-text-divider" />
+    <h3 id="dailyTextTitle" class="daily-text-date">Denní text</h3>
+    <p class="hint" style="margin:0 0 16px;">Už sis dnes přečetl(a) denní text z <strong>wol.jw.org</strong>?</p>
+    <div class="daily-text-toolbar">
+      <button class="action" id="dailyTextYes">Ano</button>
+      <button class="action secondary" id="dailyTextReadBtn">Přečíst</button>
+      <button class="action secondary" id="dailyTextLater">Později</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <h1>Studijní poznámky</h1>
+    <p class="lead">Český překlad studijních poznámek ze studijního vydání Překladu nového světa, Matouš–Jakub. Vyber knihu a kapitolu, nebo hledej v celém překladu.</p>
+  </header>
+  <div class="picker">
+    <select id="book" aria-label="Kniha"></select>
+    <select id="chap" aria-label="Kapitola"></select>
+    <label class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" type="search" placeholder="Hledat ve všech poznámkách…" aria-label="Hledat" autocomplete="off"></label>
+  </div>
+  <p class="info" id="info">Načítám překlad…</p>
+  <div id="list" aria-live="polite"></div>
+  <div class="nav" id="nav" hidden><button id="prev">‹ Předchozí kapitola</button><button id="next">Další kapitola ›</button></div>
+  <div class="bottom"><a class="dl" href="assets/studijni-poznamky.csv" download="Studijní poznámky Mt–Jk.csv"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Stáhnout CSV (pro Moje poznámky JWL)</a></div>
+  <footer>Aplikace nesbírá žádná data. Všechna jsou uložena jen ve tvém prohlížeči. <a href="mailto:pepan53@postme.cz" title="Napsat e-mail: pepan53@postme.cz" aria-label="Napsat e-mail" style="text-decoration:none">✉️</a></footer>
+</div>
+<script src="assets/common.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function parseCSV(text){
+    text = text.replace(/^﻿/, "");
+    const rows = []; let row = [], f = "", inq = false;
+    for(let i = 0; i < text.length; i++){
+      const ch = text[i];
+      if(inq){ if(ch === '"'){ if(text[i+1] === '"'){ f += '"'; i++; } else inq = false; } else f += ch; }
+      else if(ch === '"' && f === "") inq = true;
+      else if(ch === ";"){ row.push(f); f = ""; }
+      else if(ch === "\n" || ch === "\r"){ if(ch === "\r" && text[i+1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += ch;
+    }
+    if(f !== "" || row.length){ row.push(f); rows.push(row); }
+    return rows.filter(r => r.some(x => x.trim() !== ""));
+  }
+
+  let NOTES = [], BOOKS = [];           // BOOKS: [{name, no, chaps:[n...]}]
+  const S = { book: null, chap: null, q: "" };
+
+  function load(text){
+    const rows = parseCSV(text), head = rows.shift();
+    const ix = n => head.indexOf(n);
+    const iT = ix("Nadpis"), iX = ix("Text"), iU = ix("Umístění"), iO = ix("Odkaz");
+    const byBook = new Map();
+    rows.forEach(r => {
+      const m = (r[iO] || "").match(/bible=(\d{2})(\d{3})(\d{3})/); if(!m) return;
+      const loc = r[iU] || "", book = loc.replace(/\s+\d+(:\d+)?$/, "");
+      const n = { title: r[iT] || "", text: r[iX] || "", loc, book, no: +m[1], ch: +m[2], v: +m[3], code: m[0].slice(6) };
+      n.hay = (n.title + " " + n.text + " " + loc).toLowerCase();
+      NOTES.push(n);
+      if(!byBook.has(n.no)) byBook.set(n.no, { name: book, no: n.no, chaps: new Set() });
+      byBook.get(n.no).chaps.add(n.ch);
+    });
+    BOOKS = [...byBook.values()].sort((a, b) => a.no - b.no).map(b => ({ ...b, chaps: [...b.chaps].sort((x, y) => x - y) }));
+  }
+
+  function fromHash(){
+    const h = decodeURIComponent(location.hash.slice(1));
+    const m = h.match(/^(\d+)-(\d+)$/);
+    if(m && BOOKS.some(b => b.no === +m[1])){ S.book = +m[1]; S.chap = +m[2]; return true; }
+    return false;
+  }
+  function fillBooks(){
+    $("book").innerHTML = BOOKS.map(b => `<option value="${b.no}">${esc(b.name)}</option>`).join("");
+  }
+  function fillChaps(){
+    const b = BOOKS.find(b => b.no === S.book);
+    if(!b.chaps.includes(S.chap)) S.chap = b.chaps[0];
+    $("chap").innerHTML = b.chaps.map(c => `<option value="${c}">Kapitola ${c}</option>`).join("");
+    $("book").value = S.book; $("chap").value = S.chap;
+  }
+
+  function fmt(text, rx){
+    let h = esc(text);
+    h = h.replace(/(^|[\s(\[„“])_([^_\n]+)_/g, "$1<i>$2</i>").replace(/\*([^*\n]+)\*/g, "<i>$1</i>");
+    if(rx) h = h.replace(rx, "<mark>$&</mark>");
+    return h.split(/\n\s*\n|\n/).filter(p => p.trim()).map(p => `<p>${p}</p>`).join("");
+  }
+  function noteHtml(n, rx){
+    const media = /^(🖼|🎬)/.test(n.title);
+    if(media){
+      const m = n.text.match(/^(https?:\/\/\S+)\s*([\s\S]*)$/);
+      const url = m ? m[1] : "", body = m ? m[2] : n.text;
+      return `<div class="note media"><h3>${fmt(n.title, rx).replace(/^<p>|<\/p>$/g, "")}</h3>${url ? `<a class="open" href="${esc(url)}" target="_blank" rel="noopener">${n.title.startsWith("🎬") ? "Přehrát video" : "Zobrazit obrázek"} na wol.jw.org ↗</a>` : ""}${fmt(body, rx)}</div>`;
+    }
+    return `<div class="note">${n.title ? `<h3>${fmt(n.title, rx).replace(/^<p>|<\/p>$/g, "")}</h3>` : ""}${fmt(n.text, rx)}</div>`;
+  }
+  function verseLabel(n){ return n.v ? `${n.book} ${n.ch}:${n.v}` : (n.ch ? `${n.book} ${n.ch}` : n.book); }
+  function renderGroups(list, rx){
+    const out = []; let cur = null, buf = [];
+    const flush = () => { if(cur) out.push(`<section class="verse"><h2><span>${esc(verseLabel(cur))}</span><a href="https://www.jw.org/finder?wtlocale=B&amp;pub=nwt&amp;bible=${cur.code}" target="_blank" rel="noopener">verš ↗</a></h2>${buf.join("")}</section>`); };
+    list.forEach(n => {
+      if(!cur || cur.code !== n.code || cur.no !== n.no){ flush(); cur = n; buf = []; }
+      buf.push(noteHtml(n, rx));
+    });
+    flush();
+    return out.join("");
+  }
+
+  function render(){
+    const q = S.q.trim().toLowerCase();
+    if(q.length >= 2){
+      const words = q.split(/\s+/).filter(Boolean);
+      const hits = NOTES.filter(n => words.every(w => n.hay.includes(w)));
+      const shown = hits.slice(0, 150);
+      const rx = new RegExp(words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "gi");
+      $("info").textContent = hits.length ? `Nalezeno ${hits.length} poznámek` + (hits.length > shown.length ? ` – zobrazuji prvních ${shown.length}, upřesni hledání.` : ".") : "Nic nenalezeno.";
+      $("list").innerHTML = renderGroups(shown, rx);
+      $("nav").hidden = true;
+      return;
+    }
+    const list = NOTES.filter(n => n.no === S.book && n.ch === S.chap);
+    const b = BOOKS.find(b => b.no === S.book);
+    $("info").textContent = `${b.name} ${S.chap} – ${list.length} poznámek`;
+    $("list").innerHTML = list.length ? renderGroups(list) : `<p class="empty">K této kapitole nejsou poznámky.</p>`;
+    const flat = BOOKS.flatMap(b => b.chaps.map(c => [b.no, c]));
+    const i = flat.findIndex(([x, c]) => x === S.book && c === S.chap);
+    $("prev").disabled = i <= 0; $("next").disabled = i >= flat.length - 1;
+    $("prev").onclick = () => go(flat[i - 1]); $("next").onclick = () => go(flat[i + 1]);
+    $("nav").hidden = false;
+    history.replaceState(null, "", `#${S.book}-${S.chap}`);
+    try{ localStorage.setItem("studyNotesPos", `${S.book}-${S.chap}`); }catch(e){}
+  }
+  function go(p){ if(!p) return; S.book = p[0]; S.chap = p[1]; fillChaps(); render(); window.scrollTo({ top: $("list").offsetTop - 140, behavior: "smooth" }); }
+
+  $("book").onchange = () => { S.book = +$("book").value; S.chap = null; fillChaps(); render(); };
+  $("chap").onchange = () => { S.chap = +$("chap").value; render(); };
+  let t; $("q").oninput = () => { clearTimeout(t); t = setTimeout(() => { S.q = $("q").value; render(); }, 250); };
+
+  fetch("assets/studijni-poznamky.csv").then(r => { if(!r.ok) throw new Error(r.status); return r.text(); }).then(text => {
+    load(text);
+    if(!fromHash()){
+      let saved = null; try{ saved = localStorage.getItem("studyNotesPos"); }catch(e){}
+      const m = saved && saved.match(/^(\d+)-(\d+)$/);
+      if(m && BOOKS.some(b => b.no === +m[1])){ S.book = +m[1]; S.chap = +m[2]; }
+      else { S.book = BOOKS[0].no; S.chap = BOOKS[0].chaps[0]; }
+    }
+    fillBooks(); fillChaps(); render();
+  }).catch(e => { console.error(e); $("info").textContent = "Překlad se nepodařilo načíst – jsi připojen k internetu?"; });
+})();
+</script>
+<script src="assets/nav-dock.js"></script>
+</body>
+</html>
