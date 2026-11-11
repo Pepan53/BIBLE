@@ -16,7 +16,8 @@
   .home-btn,.theme-toggle-btn,.daily-text-btn{position:absolute}
   header{text-align:center;padding:10px 0 0;position:relative;z-index:150}
   h1{font-family:var(--heading-font);color:var(--maroon-dark);margin:6px 0 6px;font-size:1.9em;line-height:1.15}
-  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em}
+  .lead{color:var(--ink-soft);max-width:36em;margin:0 auto;line-height:1.5;font-size:.95em;padding:0 4px}
+  .wrap{overflow-x:hidden} .note,.verse h2{overflow-wrap:anywhere}
 
   .picker{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 10px;margin-top:12px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .picker select,.picker input{font:inherit;font-size:1em;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-panel);color:var(--ink);min-width:0}
@@ -87,7 +88,7 @@
 <div class="wrap">
   <header>
     <h1>Studijní poznámky</h1>
-    <p class="lead">Český překlad studijních poznámek ze studijního vydání Překladu nového světa, Matouš–Jakub. Vyber knihu a kapitolu, nebo hledej v celém překladu.</p>
+    <p class="lead">Český překlad studijních poznámek ze studijního vydání Překladu nového světa v angličtině, Matouš–Jakub. Vyber knihu a kapitolu, nebo hledej v celém překladu.</p>
   </header>
   <div class="picker">
     <select id="book" aria-label="Kniha"></select>
