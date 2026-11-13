@@ -425,7 +425,7 @@
       if(!manifest.userDataBackup) throw new Error("Soubor neobsahuje osobní data z JW Library.");
       const dbBytes = await dbf.async("uint8array");
       await initSql();
-      S.zip = zip; S.fileName = file.name; S.manifest = manifest; S.origBytes = dbBytes;
+      S.zip = zip; S.fileName = file.name; S.origName = file.name; S.manifest = manifest; S.origBytes = dbBytes;
       loadDb(dbBytes);
       $("openPanel").hidden = true; $("app").hidden = false;
       setMsg("");
@@ -1525,7 +1525,7 @@
       AND LocationId NOT IN (SELECT LocationId FROM PlaylistItemLocationMap);
     UPDATE Location SET Title = '' WHERE Title IS NULL;`;
 
-  async function buildBackup(){
+  async function buildBackup(name){
     const db = S.db;
     db.exec("PRAGMA foreign_keys = OFF; BEGIN;" + TRIM_SQL + " COMMIT; PRAGMA foreign_keys = ON;");
     const stamp = nowIso();
@@ -1540,8 +1540,6 @@
     bytes[18] = S.hdr[0]; bytes[19] = S.hdr[1];
     const hash = await sha256Hex(bytes);
     const today = stamp.slice(0, 10);
-    const base = (S.manifest.userDataBackup.deviceName || "JWL").replace(/[^\w-]+/g, "_");
-    const name = `UserdataBackup_${today}_${base}_MojePoznamkyJWL.jwlibrary`;
     const m = JSON.parse(JSON.stringify(S.manifest));
     m.name = name; m.creationDate = today;
     m.userDataBackup.lastModifiedDate = stamp;
@@ -1571,12 +1569,29 @@
   const closeSave = () => $("saveModal").classList.remove("show");
   $("saveCancel").onclick = closeSave;
   $("saveModal").addEventListener("click", e => { if(e.target === $("saveModal")) closeSave(); });
+  /* výchozí název: název otevřeného souboru + „_upraveno“ */
+  function saveName(){
+    const stem = (S.origName || S.fileName || "zaloha").replace(/\.jwlibrary$/i, "").replace(/_upraveno$/i, "");
+    return stem + "_upraveno.jwlibrary";
+  }
   $("saveConfirm").onclick = async () => {
     closeSave();
     if(!S.writable || !S.dirty) return;
+    let name = saveName(), handle = null;
+    // kde je to možné, zeptej se, kam uložit (nikdy nepřepisuj otevřený soubor bez dotazu)
+    if(window.showSaveFilePicker){
+      try{
+        handle = await window.showSaveFilePicker({ suggestedName: name,
+          types: [{ description: "Záloha JW Library", accept: { "application/octet-stream": [".jwlibrary"] } }] });
+        name = handle.name;
+      }catch(e){
+        if(e.name === "AbortError") return;          // uživatel dialog zavřel – nic neukládej
+        console.warn(e); handle = null;               // dialog nejde otevřít – použij stažení
+      }
+    }
     $("saveBtn").disabled = true; toast("Připravuji zálohu…");
     try{
-      const r = await buildBackup();
+      const r = await buildBackup(name);
       S.manifest = r.manifest; S.fileName = r.name; S.origBytes = r.bytes;
       // nový základ: otevři uložený stav (odpovídá souboru)
       const z = new JSZip(); for(const [p, f] of Object.entries(S.zip.files)){ if(!f.dir && !SKIP_FILES.test(p) && !S.removed.has(p) && p !== DB_NAME && p !== "manifest.json") z.file(p, await f.async("uint8array")); }
@@ -1584,7 +1599,9 @@
       z.file(DB_NAME, r.bytes); z.file("manifest.json", JSON.stringify(r.manifest)); S.zip = z;
       loadDb(r.bytes.slice());
       const file = new File([r.blob], r.name, { type: "application/octet-stream" });
-      if(navigator.canShare && navigator.canShare({ files: [file] })){
+      if(handle){
+        const w = await handle.createWritable(); await w.write(r.blob); await w.close();
+      }else if(navigator.canShare && navigator.canShare({ files: [file] })){
         try{ await navigator.share({ files: [file], title: r.name }); toast("Záloha připravena"); }
         catch(e){ if(e.name !== "AbortError") download(r.blob, r.name); }
       }else download(r.blob, r.name);
