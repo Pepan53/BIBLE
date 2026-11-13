@@ -16,6 +16,7 @@ nezměnilo něco, co stránka převzala.
 | Funkce v JWLManageru | Kde ve stránce | Co hlídat |
 |---|---|---|
 | `upgrade_schema` / `downgrade_schema`, kontrola verze | `WRITE_SCHEMAS = [16]` | nová verze schématu (17…), nové tabulky/sloupce |
+| `upgrade_schema` + `res/blank` (prázdná DB v16) | `UPGRADE_FROM`, `convertTo16()`, `assets/jwl/schema16.js` | při nové verzi schématu přegenerovat schema16.js z nového `res/blank` |
 | `zip_file` / `update_manifest` | `buildBackup()` | pole v `manifest.json`, název DB, hash, formát dat |
 | `trim_db` | `TRIM_SQL` | nové úklidové příkazy, nové tabulky |
 | `delete_items` (Highlights, Notes…) | `doDelete()`, hromadné mazání | jiný způsob mazání |
