@@ -287,6 +287,7 @@
       <div style="margin-top:8px;font-size:.85em">nebo sem soubor přetáhni</div>
     </div>
     <p class="msg" id="msg">Záloha zůstává jen v tomto zařízení – nikam se neodesílá.</p>
+    <p class="msg" style="font-size:.85em">💾 Otevřená záloha i neuložené změny se průběžně pamatují v tomto prohlížeči. Když se stránka znovu načte (třeba při otevření Foldu), pokračuješ tam, kde jsi skončil. Smaže je až tlačítko <strong>Zavřít</strong>.</p>
     <p class="msg">📥 <strong>Český překlad studijních poznámek (Matouš–Jakub):</strong> otevři svou zálohu a v nabídce <strong>⇅ Export / Import</strong> zvol <strong>Importovat překlad studijních poznámek</strong>. (<a href="studijni-poznamky.html" style="color:var(--gold-dark)">přečíst překlad na webu</a>)</p>
     <details class="how">
       <summary>Jak získat zálohu z JW Library?</summary>
@@ -446,6 +447,7 @@
       $("openPanel").hidden = true; $("app").hidden = false;
       setMsg("");
       window.scrollTo(0, 0);
+      WORK.zipBytes = new Uint8Array(buf); persistSoon(0);
     }catch(e){
       console.error(e);
       setMsg("Zálohu se nepodařilo otevřít: " + esc(e.message || e), true);
@@ -655,7 +657,7 @@
         loadDb(bytes);
         S.dirty = true; updateDirty();
         $("dirtyText").textContent = "Záloha je převedená z verze " + from + " na verzi 16 – ulož ji jako novou zálohu.";
-        toast("Převedeno na verzi 16");
+        toast("Převedeno na verzi 16"); persistSoon(0);
       }catch(e){
         console.error(e);
         toast("Převod se nepodařil: " + (e.message || e));
@@ -668,6 +670,7 @@
   }
   function changed(msg){
     S.dirty = true; readAll(); updateDirty(); renderTabs(); render();
+    persistSoon();
     if(msg) toast(msg);
   }
 
@@ -1167,7 +1170,7 @@
   $("mergeBtn").onclick = () => $("mergeFile").click();
   $("mergeFile").onchange = async () => {
     const f = $("mergeFile").files[0]; $("mergeFile").value = ""; if(!f) return;
-    try{ const st = await mergeFrom(f); changed(); $("dirtyText").textContent = st; toast("Sloučeno – zkontroluj výsledek a ulož novou zálohu."); }
+    try{ const st = await mergeFrom(f); changed(); $("dirtyText").textContent = st; persistSoon(); toast("Sloučeno – zkontroluj výsledek a ulož novou zálohu."); }
     catch(e){ console.error(e); toast("Sloučení se nepovedlo: " + (e.message || e)); }
   };
   async function mergeFrom(file){
@@ -1698,6 +1701,7 @@
         catch(e){ if(e.name !== "AbortError") download(r.blob, r.name); }
       }else download(r.blob, r.name);
       setMsg("");
+      WORK.zipBytes = new Uint8Array(await r.blob.arrayBuffer()); persistSoon(0);
       toast("Uloženo jako " + r.name);
     }catch(e){
       console.error(e);
@@ -1706,16 +1710,89 @@
     }
   };
 
+  /* ---------- pracovní kopie v prohlížeči ----------
+     Android při otevření/zavření Foldu (nebo když mu dojde paměť) stránku někdy načte znovu.
+     Rozpracovaná záloha se proto průběžně ukládá do úložiště prohlížeče (IndexedDB, jen v tomto
+     zařízení) a po novém načtení stránky se sama otevře i s neuloženými změnami. Tlačítko Zavřít ji smaže. */
+  const WORK = { t: null, zipBytes: null };
+  function workIdb(){
+    return new Promise((res, rej) => {
+      const r = indexedDB.open("mojePoznamkyJWL", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("work");
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+  }
+  async function workDo(mode, val){
+    try{
+      const db = await workIdb();
+      return await new Promise((res, rej) => {
+        const tx = db.transaction("work", mode === "get" ? "readonly" : "readwrite"), st = tx.objectStore("work");
+        const r = mode === "get" ? st.get(val) : mode === "put" ? st.put(val[1], val[0]) : st.delete(val);
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    }catch(e){ console.warn("pracovní kopie:", e); return null; }
+  }
+  const workDel = () => { workDo("del", "base"); workDo("del", "current"); };
+  // ms = 0 → hned (otevření, převod, uložení): uloží i základ (soubor zálohy); jinak jen aktuální stav databáze
+  function persistSoon(ms){
+    clearTimeout(WORK.t);
+    if(ms === 0) WORK.full = true;
+    WORK.t = setTimeout(persistNow, ms == null ? 1200 : ms);
+  }
+  async function persistNow(){
+    clearTimeout(WORK.t); WORK.t = null;
+    if(!S.db || !WORK.zipBytes) return;
+    try{
+      if(WORK.full){
+        WORK.full = false;
+        await workDo("put", ["base", { v: 1, zipBytes: WORK.zipBytes, origBytes: S.origBytes,
+          fileName: S.fileName, origName: S.origName, manifest: S.manifest }]);
+      }
+      const b = S.db.export(); b[18] = S.hdr[0]; b[19] = S.hdr[1];
+      await workDo("put", ["current", { v: 1, savedAt: Date.now(), dbBytes: b, dirty: S.dirty,
+        dirtyText: $("dirtyText").textContent, removed: [...S.removed], added: [...S.added], tab: S.tab }]);
+    }catch(e){ console.warn("pracovní kopie se neuložila:", e); }
+  }
+  // uložit hned, když stránka jde do pozadí (např. při otevírání Foldu)
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden" && WORK.t) persistNow(); });
+  window.addEventListener("pagehide", () => { if(WORK.t) persistNow(); });
+  async function restoreWork(){
+    const base = await workDo("get", "base"), cur = await workDo("get", "current");
+    if(!base || !base.zipBytes || !cur || !cur.dbBytes) return;
+    const w = Object.assign({}, base, cur);
+    try{
+      setMsg("Otevírám rozpracovanou zálohu…");
+      const zip = await JSZip.loadAsync(w.zipBytes);
+      await initSql();
+      S.zip = zip; S.fileName = w.fileName; S.origName = w.origName; S.manifest = w.manifest;
+      S.origBytes = w.origBytes || w.dbBytes; WORK.zipBytes = w.zipBytes;
+      if(w.tab) S.tab = w.tab;
+      loadDb(w.dbBytes);
+      S.removed = new Set(w.removed || []); S.added = new Map(w.added || []);
+      S.dirty = !!w.dirty;
+      if(w.dirtyText) $("dirtyText").textContent = w.dirtyText;
+      updateDirty();
+      $("openPanel").hidden = true; $("app").hidden = false;
+      setMsg("");
+      toast(S.dirty ? "Pokračuješ v rozpracované záloze (neuložené změny zůstaly)" : "Pokračuješ v otevřené záloze");
+    }catch(e){
+      console.error(e); workDel();
+      setMsg("Rozpracovanou zálohu se nepodařilo obnovit – otevři ji prosím znovu.", true);
+    }
+  }
+
   /* ---------- ostatní ---------- */
   function confirmLeave(){ return window.confirm("Máš neuložené změny. Opravdu je zahodit?"); }
-  $("revertBtn").onclick = () => { loadDb(S.origBytes.slice()); toast("Změny zahozeny"); };
+  $("revertBtn").onclick = () => { loadDb(S.origBytes.slice()); persistSoon(0); toast("Změny zahozeny"); };
   $("closeBtn").onclick = () => {
     if(S.dirty && !confirmLeave()) return;
     if(S.db) S.db.close(); S.db = null; S.data = null; S.zip = null; S.dirty = false;
     $("app").hidden = true; $("openPanel").hidden = false; $("file").value = "";
+    clearTimeout(WORK.t); workDel();
   };
   window.addEventListener("beforeunload", e => { if(S.dirty){ e.preventDefault(); e.returnValue = ""; } });
   $("pickBtn").onclick = () => $("file").click();
+  restoreWork();
   $("file").onchange = () => { const f = $("file").files[0]; if(f) openFile(f); };
   const drop = $("drop");
   ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
