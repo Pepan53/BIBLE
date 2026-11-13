@@ -287,7 +287,7 @@
       <div style="margin-top:8px;font-size:.85em">nebo sem soubor přetáhni</div>
     </div>
     <p class="msg" id="msg">Záloha zůstává jen v tomto zařízení – nikam se neodesílá.</p>
-    <p class="msg">📥 <strong>Český překlad studijních poznámek (Matouš–Jakub):</strong> otevři svou zálohu a v nabídce <strong>⇅ Export / Import</strong> zvol <strong>Importovat překlad studijních poznámek</strong>. (<a href="https://drive.google.com/file/d/19toODA6lOCgtWWjkV486qjs22X8QaizR/view?usp=sharing" target="_blank" rel="noopener" style="color:var(--gold-dark)">soubor na Google Disku ↗</a>)</p>
+    <p class="msg">📥 <strong>Český překlad studijních poznámek (Matouš–Jakub):</strong> otevři svou zálohu a v nabídce <strong>⇅ Export / Import</strong> zvol <strong>Importovat překlad studijních poznámek</strong>. (<a href="studijni-poznamky.html" style="color:var(--gold-dark)">přečíst překlad na webu</a>)</p>
     <details class="how">
       <summary>Jak získat zálohu z JW Library?</summary>
       <ol>
@@ -296,6 +296,17 @@
         <li>Tady klepni na <strong>Otevřít zálohu</strong> a vyber ji.</li>
         <li>Upravenou zálohu vrátíš přes <strong>Zálohovat a obnovit → Obnovit zálohu</strong>. Pozor: obnovení <strong>nahradí všechna</strong> současná data v JW Library – před ním si vždy udělej čerstvou zálohu.</li>
       </ol>
+    </details>
+    <details class="how">
+      <summary>Mám starší zálohu (verze databáze 12–15)</summary>
+      <p>Starší zálohy JW Library mají starší verzi databáze (verze se ukáže pod názvem souboru jako „schéma 13“ apod.). Takovou zálohu stránka otevře jen pro <strong>prohlížení a export</strong>. Aby šla upravit a uložit, převeď ji na aktuální verzi:</p>
+      <ol>
+        <li>Otevři starší zálohu a klepni na <strong>⬆️ Převést na verzi 16</strong> (u upozornění nahoře).</li>
+        <li>Stránka vytvoří databázi ve verzi 16 a zkopíruje do ní všechno: poznámky, zvýraznění, záložky, štítky, odpovědi, oblíbené i playlisty s obrázky. Pak zkontroluje, že počty záznamů sedí. Když by se něco převést nedalo, převod se zastaví a nic se nezmění.</li>
+        <li>Teď ji můžeš upravovat i <strong>sloučit</strong> s jinou zálohou (🔀 Sloučit s jinou zálohou).</li>
+        <li>Ulož ji přes <strong>💾 Uložit novou zálohu</strong>. Původní starý soubor zůstane beze změny.</li>
+      </ol>
+      <p><strong>Tip:</strong> Když chceš staré poznámky jen přidat ke svým současným, otevři svou <strong>aktuální</strong> zálohu a starou do ní přidej přes <strong>🔀 Sloučit s jinou zálohou</strong>. Starší záloha se při tom převede na verzi 16 sama. Obnovením samotné převedené staré zálohy v JW Library bys současná data nahradil.</p>
     </details>
   </div>
 
@@ -364,12 +375,15 @@
 <script src="assets/jwl/jwl-data.js"></script>
 <script src="assets/jwl/jszip.min.js"></script>
 <script src="assets/jwl/sql-wasm.js"></script>
+<script src="assets/jwl/schema16.js"></script>
 <script>
 (function(){
   "use strict";
   /* Ověřené verze schématu databáze JW Library, do kterých smí stránka zapisovat.
      Při nové verzi JW Library / JWLManageru ověř a doplň (viz _LAB\BIBLE\JWLM\JWLM-projekt.md). */
   const WRITE_SCHEMAS = [16];
+  /* starší verze, které umí stránka převést na verzi 16 (zkopíruje data do prázdné databáze verze 16) */
+  const UPGRADE_FROM = [12, 13, 14, 15];
   const DB_NAME = "userData.db";
   const SKIP_FILES = /^userData\.db-(wal|shm|journal)$/;
   const BOOKS = ["1. Mojžíšova","2. Mojžíšova","3. Mojžíšova","4. Mojžíšova","5. Mojžíšova","Jozue","Soudci","Rut","1. Samuelova","2. Samuelova","1. Královská","2. Královská","1. Paralipomenon","2. Paralipomenon","Ezra","Nehemjáš","Ester","Job","Žalmy","Přísloví","Kazatel","Šalomounova píseň","Izajáš","Jeremjáš","Nářky","Ezekiel","Daniel","Ozeáš","Joel","Amos","Obadjáš","Jonáš","Micheáš","Nahum","Habakuk","Sefanjáš","Ageus","Zecharjáš","Malachiáš","Matouš","Marek","Lukáš","Jan","Skutky","Římanům","1. Korinťanům","2. Korinťanům","Galaťanům","Efezanům","Filipanům","Kolosanům","1. Tesaloničanům","2. Tesaloničanům","1. Timoteovi","2. Timoteovi","Titovi","Filemonovi","Hebrejcům","Jakub","1. Petra","2. Petra","1. Jana","2. Jana","3. Jana","Juda","Zjevení"];
@@ -573,8 +587,80 @@
     $("fmeta").textContent = [m.deviceName, m.lastModifiedDate ? "upraveno " + fmtDate(m.lastModifiedDate) : "", "schéma " + S.schema].filter(Boolean).join(" · ");
     $("roWarn").hidden = S.writable;
     $("mergeBtn").hidden = !S.writable;
-    $("roWarn").innerHTML = S.writable ? "" : "⚠️ Tato záloha má verzi databáze <strong>" + S.schema + "</strong>, kterou zatím nemám ověřenou. Můžeš ji prohlížet a exportovat, ale <strong>úpravy a ukládání jsou vypnuté</strong>, aby se záloha nepoškodila.";
+    $("roWarn").innerHTML = S.writable ? "" : UPGRADE_FROM.includes(S.schema) && window.JWL_SCHEMA16
+      ? "⚠️ Tato záloha má <strong>starší verzi databáze (" + S.schema + ")</strong>. Můžeš ji prohlížet a exportovat. Pro úpravy a uložení ji nejdřív převeď na aktuální verzi 16 – převod zachová poznámky, zvýraznění, záložky, štítky, odpovědi i playlisty a původní soubor se nezmění." +
+        `<div style="margin-top:8px"><button class="btn" id="upgradeBtn">⬆️ Převést na verzi 16</button></div>`
+      : "⚠️ Tato záloha má verzi databáze <strong>" + S.schema + "</strong>, kterou zatím nemám ověřenou. Můžeš ji prohlížet a exportovat, ale <strong>úpravy a ukládání jsou vypnuté</strong>, aby se záloha nepoškodila.";
+    const ub = $("upgradeBtn"); if(ub) ub.onclick = upgradeBackup;
     updateDirty();
+  }
+  /* ---------- převod starší zálohy (verze 12–15) na verzi 16 ----------
+     Vytvoří prázdnou databázi verze 16 a zkopíruje do ní všechna data (stejné sloupce).
+     Když by se něco nedalo převést, převod se zastaví a nic se nezmění. */
+  function convertTo16(old){
+    const nd = new S.SQL.Database();
+    try{
+      nd.exec("PRAGMA foreign_keys = OFF;");
+      const isTrig = sql => /^CREATE TRIGGER/i.test(sql);
+      window.JWL_SCHEMA16.filter(sql => !isTrig(sql)).forEach(sql => nd.exec(sql));
+      // řádek LastModified musí vzniknout dřív než spouště, které vkládání do něj zakazují
+      const lm = old.exec("SELECT LastModified FROM LastModified");
+      nd.run("INSERT INTO LastModified (LastModified) VALUES (?)", [lm.length ? lm[0].values[0][0] : nowIso()]);
+      window.JWL_SCHEMA16.filter(isTrig).forEach(sql => nd.exec(sql));
+      const names = db => db.exec("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")[0].values.map(v => v[0]);
+      const cols = (db, t) => db.exec(`PRAGMA table_info("${t}")`)[0].values.map(v => v[1]);
+      const count = (db, t, where) => db.exec(`SELECT COUNT(*) FROM "${t}"` + (where || ""))[0].values[0][0];
+      const newT = names(nd), oldT = names(old), lost = [];
+      oldT.filter(t => !newT.includes(t)).forEach(t => { if(count(old, t)) lost.push(t); });
+      newT.filter(t => oldT.includes(t)).forEach(t => {
+        const nc = cols(nd, t);
+        cols(old, t).filter(c => !nc.includes(c)).forEach(c => { if(count(old, t, ` WHERE "${c}" IS NOT NULL`)) lost.push(t + "." + c); });
+      });
+      if(lost.length) throw new Error("tato záloha obsahuje data, která verze 16 nezná (" + lost.join(", ") + ")");
+      nd.exec("BEGIN");
+      newT.filter(t => oldT.includes(t) && t !== "LastModified").forEach(t => {
+        const oc = cols(old, t), common = cols(nd, t).filter(c => oc.includes(c));
+        const list = common.map(c => `"${c}"`).join(", ");
+        const st = old.prepare(`SELECT ${list} FROM "${t}"`);
+        const ins = nd.prepare(`INSERT INTO "${t}" (${list}) VALUES (${common.map(() => "?").join(", ")})`);
+        while(st.step()) ins.run(st.get());
+        st.free(); ins.free();
+      });
+      nd.exec("COMMIT");
+      nd.run("UPDATE LastModified SET LastModified = ?", [lm.length ? lm[0].values[0][0] : nowIso()]);
+      nd.exec("PRAGMA user_version = 16;");
+      // kontroly: stejný počet záznamů, celistvost, odkazy
+      newT.filter(t => oldT.includes(t)).forEach(t => {
+        if(count(nd, t) !== count(old, t)) throw new Error("nesouhlasí počet záznamů v tabulce " + t);
+      });
+      const ok = nd.exec("PRAGMA integrity_check")[0].values[0][0];
+      if(ok !== "ok") throw new Error("kontrola databáze: " + ok);
+      const fkNew = nd.exec("PRAGMA foreign_key_check"), fkOld = old.exec("PRAGMA foreign_key_check");
+      const nNew = fkNew.length ? fkNew[0].values.length : 0, nOld = fkOld.length ? fkOld[0].values.length : 0;
+      if(nNew > nOld) throw new Error("po převodu vznikly neplatné odkazy (" + nNew + ")");
+      return nd.export();
+    }finally{ nd.close(); }
+  }
+  function upgradeBackup(){
+    const from = S.schema;
+    if(!UPGRADE_FROM.includes(from) || !window.JWL_SCHEMA16) return;
+    if(S.dirty && !confirmLeave()) return;
+    toast("Převádím zálohu…");
+    setTimeout(() => {
+      try{
+        const hdr = S.hdr.slice();
+        const bytes = convertTo16(S.db);
+        bytes[18] = hdr[0]; bytes[19] = hdr[1];
+        S.origBytes = bytes.slice();
+        loadDb(bytes);
+        S.dirty = true; updateDirty();
+        $("dirtyText").textContent = "Záloha je převedená z verze " + from + " na verzi 16 – ulož ji jako novou zálohu.";
+        toast("Převedeno na verzi 16");
+      }catch(e){
+        console.error(e);
+        toast("Převod se nepodařil: " + (e.message || e));
+      }
+    }, 30);
   }
   function updateDirty(){
     $("dirty").classList.toggle("show", S.dirty);
@@ -1089,9 +1175,13 @@
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const dbf = zip.file(DB_NAME); if(!dbf || !zip.file("manifest.json")) throw new Error("soubor není záloha z JW Library");
     const b = new Uint8Array(await dbf.async("uint8array")); b[18] = 1; b[19] = 1;
-    const B = new S.SQL.Database(b);
+    let B = new S.SQL.Database(b);
     const bq = (sql, p) => { const st = B.prepare(sql); if(p) st.bind(p); const r = []; while(st.step()) r.push(st.getAsObject()); st.free(); return r; };
-    const bSchema = bq("PRAGMA user_version")[0].user_version;
+    let bSchema = bq("PRAGMA user_version")[0].user_version;
+    // starší druhá záloha (12–15) se nejdřív v paměti převede na verzi 16
+    if(bSchema !== S.schema && S.schema === 16 && UPGRADE_FROM.includes(bSchema) && window.JWL_SCHEMA16){
+      const conv = convertTo16(B); B.close(); conv[18] = 1; conv[19] = 1; B = new S.SQL.Database(conv); bSchema = 16;
+    }
     if(bSchema !== S.schema){ B.close(); throw new Error("druhá záloha má jinou verzi databáze (" + bSchema + ")"); }
     const C = { hl:0, hlSkip:0, note:0, noteSkip:0, bm:0, bmSkip:0, field:0, fieldSkip:0, fav:0, pl:0, plSkip:0 };
     const one = (sql, p) => q(sql, p)[0];
