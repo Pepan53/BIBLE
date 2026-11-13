@@ -400,6 +400,8 @@
   }
   function run(sql, params){ S.db.run(sql, params || []); }
   function download(blob, name){
+    // .jwlibrary je uvnitř ZIP – typ „octet-stream“, aby Android nepřidal příponu .zip
+    if(/\.jwlibrary$/i.test(name) && blob.type !== "application/octet-stream") blob = new Blob([blob], { type: "application/octet-stream" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   }
@@ -1554,7 +1556,7 @@
     for(const [path, data] of S.added){ if(!S.removed.has(path)) out.file(path, data); }
     out.file(DB_NAME, bytes);
     out.file("manifest.json", JSON.stringify(m));
-    const blob = await out.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+    const blob = await out.generateAsync({ type: "blob", mimeType: "application/octet-stream", compression: "DEFLATE", compressionOptions: { level: 6 } });
     // kontrola: otevřít výsledek znovu
     const chk = await JSZip.loadAsync(blob);
     const chkDb = await chk.file(DB_NAME).async("uint8array");
