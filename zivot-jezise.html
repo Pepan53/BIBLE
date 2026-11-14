@@ -390,12 +390,14 @@
       kafbreh:[580,169], horaKaf:[577,159], jezero:[584,181], jezeroNE:[594,170], genezaret:[576,172],
       gadbreh:[591,190], dekapolis:[598,181,null,"area"], fenicie:[532,62,null,"area"], vychod:[613,110]
     };
-    // Místa v detailu „Jeruzalém a okolí“ (souřadnice uvnitř výřezu)
+    // Místa v detailu „Jeruzalém a okolí“ (souřadnice uvnitř výřezu 118 × 88; sever nahoře)
+    // Půdorys podle mapy „Jeruzalém a okolí“ v Překladu nového světa (dodatek B12): hradby, chrámová plocha,
+    // místodržitelský palác, údolí Kidron a Hinnom. Místa s „(?)“ jsou i tam jen pravděpodobná.
     const SUB = {
-      chram:[51,37,"chrám"], betzata:[49,19,"Betzata"], siloe:[37,77,"Siloe"], palac:[20,48,"Pilát"],
-      kaifas:[27,69,"Kaifáš"], mistnost:[33,58,"horní místnost"], golgota:[8,25,"Golgota"],
-      getsemane:[68,43,"Getsemane"], olivova:[82,33,"Olivová hora"], betfage:[93,50,"Betfage"],
-      betanie:[107,70,"Betanie"], mesto:[36,48]
+      chram:[41,38.5,"chrám"], betzata:[43.6,20.6,"Betzata"], siloe:[37.2,76,"Siloe"], palac:[10.7,54.6,"Pilát"],
+      kaifas:[13.8,66,"Kaifáš"], mistnost:[28,60,"horní místnost"], golgota:[16.8,37.5,"Golgota"],
+      getsemane:[57,31.8,"Getsemane"], olivova:[72,36,"Olivová hora"], betfage:[90,42,"Betfage"],
+      betanie:[104,68,"Betanie"], mesto:[24,56]
     };
     const SECTIONS = ["Do začátku Ježíšovy služby","Začátek Ježíšovy služby","Ježíšova intenzivní služba v Galileji",
       "Ježíšova pozdější služba v Judeji","Ježíšova pozdější služba východně od Jordánu","Závěr Ježíšovy služby – Jeruzalém a okolí"];
@@ -614,17 +616,33 @@
     const ins = $("inset");
     mk("rect", {x:0, y:0, width:118, height:88, rx:3, class:"ins-bg"}, ins);
     mk("text", {x:4, y:7, class:"ins-title"}, ins).textContent = "Jeruzalém a okolí";
-    mk("ellipse", {cx:84, cy:44, rx:13, ry:20, fill:"#dfe8cf"}, ins);
-    mk("ellipse", {cx:84, cy:44, rx:8, ry:13, fill:"#d2dfbd"}, ins);
-    mk("path", {d:"M62 12 C66 30 61 50 63 70 C64 78 60 84 57 88", fill:"none", stroke:"#9cc3d6", "stroke-width":1.4, "stroke-dasharray":"2 1.3"}, ins);
-    const kid = mk("text", {x:66, y:80, class:"ins-lab", "font-style":"italic", transform:"rotate(-78 66 80)"}, ins); kid.textContent = "údolí Kidron"; linkify(kid, "údolí Kidron");
+    // Olivová hora
+    mk("ellipse", {cx:72, cy:40, rx:15, ry:19, fill:"#dfe8cf"}, ins);
+    mk("ellipse", {cx:72, cy:39, rx:9, ry:12, fill:"#d2dfbd"}, ins);
+    // údolí Kidron (východně od města) a Hinnom (jižně a západně)
+    mk("path", {d:"M52.9 9 L52.9 43 C52.6 51 51.5 60 51.5 60 C50 68 47.7 74.5 47.7 74.5 C44.5 80 41 84 39 88", fill:"none", stroke:"#9cc3d6", "stroke-width":1.4, "stroke-dasharray":"2 1.3"}, ins);
+    mk("path", {d:"M4.5 74.5 C6 80 8 82.6 11 83.6 C20 85.6 30 85.8 39 85.6", fill:"none", stroke:"#9cc3d6", "stroke-width":1.1, "stroke-dasharray":"1.6 1.2"}, ins);
+    const kid = mk("text", {x:56.5, y:74, class:"ins-lab", "font-style":"italic", transform:"rotate(-72 56.5 74)"}, ins); kid.textContent = "údolí Kidron"; linkify(kid, "údolí Kidron");
+    const hin = mk("text", {x:13, y:82.9, class:"ins-lab", "font-style":"italic", "font-size":"3.3px"}, ins); hin.textContent = "údolí Hinnom"; linkify(hin, "údolí Hinnom");
+    // cesty z Getsemane přes Olivovou horu do Betfage a do Betanie
+    mk("path", {d:"M54.4 30.9 C66 33 78 37.5 90 42 L116 48", fill:"none", stroke:"#b6a27a", "stroke-width":.6, "stroke-dasharray":"1.2 1"}, ins);
+    mk("path", {d:"M57.2 43.2 C70 51 87 60 104 68", fill:"none", stroke:"#b6a27a", "stroke-width":.6, "stroke-dasharray":"1.2 1"}, ins);
     const SUBQ = {chram:"chrám v Jeruzalémě", palac:"Pilát", kaifas:"Kaifáš", mistnost:"horní místnost", betzata:"rybník Betzata", siloe:"rybník Siloe", olivova:"Olivová hora"};
-    mk("path", {d:"M14 22 L42 14 L58 18 L59 60 L50 80 L28 83 L15 68 Z", fill:"#efe2c4", stroke:"#8a7650", "stroke-width":.7}, ins);
-    mk("rect", {x:45, y:27, width:12, height:19, rx:1, fill:"#e1cb95", stroke:"#8a7650", "stroke-width":.4}, ins);
-    mk("path", {d:"M93 50 C99 56 103 63 107 70", fill:"none", stroke:"#b6a27a", "stroke-width":.6, "stroke-dasharray":"1.2 1"}, ins);
+    // městské hradby (severní část města a horní/dolní město na jihu)
+    mk("path", {d:"M17.8 23.2 L27.8 16.4 L32.5 16.1 L35.8 26.1 L46.3 27.1 L49.1 50.8 L41.5 59.4 L39.1 71.7 L37.7 80.2 L27.8 77.4 L16.4 77.4 L5.9 71.7 L5.4 48 L10.2 45.6 L20.1 45.6 Z", fill:"#efe2c4", stroke:"#5f8fa3", "stroke-width":.6}, ins);
+    mk("path", {d:"M20.1 45.6 L30.1 43.2 L34.4 41.8", fill:"none", stroke:"#5f8fa3", "stroke-width":.5}, ins);          // první (vnitřní) hradba
+    mk("path", {d:"M19.7 21.8 L35.4 48 L36.8 67 L36.5 79.3", fill:"none", stroke:"#ebbfae", "stroke-width":.9}, ins);  // hlavní ulice údolím
+    mk("rect", {x:6.8, y:46, width:7.2, height:16.7, fill:"none", stroke:"#5f8fa3", "stroke-width":.4}, ins);        // místodržitelský palác
+    // chrámová plocha a svatyně
+    mk("path", {d:"M32.5 26.6 L46.3 27.5 L49.1 50.8 L35.4 50.8 Z", fill:"#e9d3a6", stroke:"#a8664f", "stroke-width":.5}, ins);
+    mk("rect", {x:36.3, y:31.8, width:9.6, height:8.6, fill:"#dcc08a", stroke:"#a8664f", "stroke-width":.35}, ins);
+    // rybníky Betzata a Siloe
+    mk("rect", {x:42.2, y:18.6, width:2.6, height:2, fill:"#bfe0ef", stroke:"#5f8fa3", "stroke-width":.3, transform:"rotate(20 43.5 19.6)"}, ins);
+    mk("rect", {x:43.4, y:20.8, width:2.6, height:2, fill:"#bfe0ef", stroke:"#5f8fa3", "stroke-width":.3, transform:"rotate(20 44.7 21.8)"}, ins);
+    mk("rect", {x:38.4, y:74.8, width:2.8, height:2.4, fill:"#bfe0ef", stroke:"#5f8fa3", "stroke-width":.3, transform:"rotate(30 39.8 76)"}, ins);
     const subText = {};
-    const SUBLAB = {chram:[0,-11,"middle"], betzata:[0,-2.4,"middle"], siloe:[2.4,1.4,"start"], palac:[2.4,1.4,"start"], kaifas:[-2.4,3.6,"end"],
-      mistnost:[2.4,1.4,"start"], golgota:[1.6,-2.4,"start"], getsemane:[-2.4,5.2,"start"], olivova:[0,-4,"middle"],
+    const SUBLAB = {chram:[0,10.2,"middle"], betzata:[-2,-2.8,"middle"], siloe:[-2.4,1.4,"end"], palac:[2.2,1.4,"start"], kaifas:[0,4.6,"middle"],
+      mistnost:[0,4.6,"middle"], golgota:[-1.6,-2.6,"middle"], getsemane:[0,5,"middle"], olivova:[0,-16,"middle"],
       betfage:[2.4,-1.6,"start"], betanie:[0,5.4,"middle"]};
     Object.entries(SUBLAB).forEach(([id, [dx, dy, an]])=>{
       const p = SUB[id];
