@@ -777,7 +777,7 @@
       let html = "", sec = -1;
       E.forEach(ev=>{
         if(ev.sec !== sec){ sec = ev.sec; html += '<h4 style="border-left:4px solid '+SEC_COL[sec]+'">'+esc(SECTIONS[sec])+'</h4>'; }
-        html += '<button type="button" data-i="'+ev.i+'"><span class="n">'+(ev.i+1)+'.</span><span>'+esc(ev.x)+' <small>· '+esc(ev.d)+'</small>'+tripShort(ev)+'</span></button>';
+        html += '<button type="button" data-i="'+ev.i+'"><span class="n">'+(ev.i+1)+'.</span><span>'+esc(ev.x)+' <small>· '+esc(ev.d)+'</small></span></button>';
       });
       evList.innerHTML = html;
       evList.addEventListener("click", e=>{ const b = e.target.closest("button"); if(!b) return; stopPlay(); const k = +b.dataset.i; goTo(k, Math.abs(k - idx) === 1); });
