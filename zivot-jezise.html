@@ -215,6 +215,11 @@
     body.side .ev-card > *{ flex:none; }
     body.side .ev-list{ display:block; flex:1 1 auto; min-height:0; overflow:auto; margin:10px -14px 0; padding:0 8px 8px; border-top:1px solid var(--border); background:var(--item-bg); }
     body.side .ev-pager .ev-count{ order:3; flex-basis:100%; justify-content:center; }
+    /* úzký telefon s volným místem pod mapou: okno dole vyplní místo a ukáže seznam dalších událostí */
+    body.fill .ev-card{ display:flex; flex-direction:column; max-height:none; overflow:hidden; padding-bottom:0; }
+    body.fill .ev-card > *{ flex:none; }
+    body.fill .ev-pager{ position:static; padding-bottom:8px; }
+    body.fill .ev-list{ display:block; flex:1 1 auto; min-height:0; overflow:auto; margin:0 -14px; padding:0 8px calc(8px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--border); background:var(--item-bg); }
   }
 </style>
 <link rel="icon" type="image/png" href="assets/icon-192.png">
@@ -919,7 +924,7 @@
       document.body.classList.toggle("side", side);
       if(side){ if(card.parentNode !== lay) lay.appendChild(card); }
       else if(card.parentNode !== mb) mb.appendChild(card);
-      card.style.height = "";
+      card.style.height = ""; document.body.classList.remove("fill");
       if(!narrow){ document.documentElement.style.removeProperty("--sheetH"); mb.style.width = mb.style.height = tc.style.height = ""; return; }
       if(side){
         document.documentElement.style.setProperty("--sheetH", "0px");
@@ -938,6 +943,15 @@
       const availH = vh - top - sheetH - 6, availW = lay.clientWidth - 54 - 6;
       const h = Math.max(240, Math.min(availH, availW / RATIO));
       mb.style.height = h+"px"; mb.style.width = Math.min(availW, h*RATIO)+"px"; tc.style.height = h+"px";
+      // mapu omezuje šířka telefonu → pod ní zbývá volné místo: spodní okno se roztáhne až k mapě
+      // a do volného místa se ukáže seznam událostí (aktuální zvýrazněná, pod ní ty následující)
+      const free = vh - top - h - 8;
+      if(free - sheetH >= 90){
+        document.body.classList.add("fill");
+        card.style.height = free+"px";
+        document.documentElement.style.setProperty("--sheetH", free+"px");
+        requestAnimationFrame(()=>markList(idx));
+      }
     }
     function buildRail(){
       horiz = false; narrow = isH();
@@ -1255,7 +1269,7 @@
     window.addEventListener("resize", relayout);
     if(window.visualViewport) window.visualViewport.addEventListener("resize", relayout);
     // když se spodní okno s delším textem zvětší, mapu jednou zmenšit
-    if(window.ResizeObserver) new ResizeObserver(()=>{ if(narrow && !document.body.classList.contains("side") && card.offsetHeight > sheetRes + 2) buildRail(); }).observe(card);
+    if(window.ResizeObserver) new ResizeObserver(()=>{ if(narrow && !document.body.classList.contains("side") && !document.body.classList.contains("fill") && card.offsetHeight > sheetRes + 2) buildRail(); }).observe(card);
     buildRail();
     let start = 0;
     try{ const v = parseInt(localStorage.getItem("jesusLifeIdx"), 10); if(v >= 0 && v < N) start = v; }catch(e){}
