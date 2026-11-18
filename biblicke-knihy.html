@@ -737,6 +737,9 @@
     color: var(--gold-dark);
     font-size: 1.05em;
     opacity: 0.6;
+    padding: 10px 8px;
+    margin: -10px -4px;
+    touch-action: none;
   }
   .book-item .pos{
     display:inline-flex;
@@ -751,7 +754,7 @@
     font-weight: 700;
   }
   .book-item .name{ flex: 1; }
-  .book-item.dragging{ opacity: 0.4; }
+  .book-item.dragging{ opacity: 0.3; }
   .book-item.drop-target{ border-color: var(--gold); }
   .book-item.correct{
     background: var(--green-bg);
@@ -818,6 +821,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7a2e2e">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="assets/touch-sort.js"></script>
 <script src="assets/pwa.js" defer></script>
 </head>
 <body>
@@ -1278,7 +1282,7 @@
   function makeItem(bookIndex, big){
     const li = document.createElement("li");
     li.className = "book-item";
-    li.draggable = true;
+    li.draggable = false;
     li.dataset.idx = bookIndex;
     li.innerHTML = '<span class="handle">☰</span><span class="name">'+BOOKS[bookIndex]+'</span>';
     return li;
@@ -1345,7 +1349,7 @@
   function makeTile(bookIndex){
     const li = document.createElement("li");
     li.className = "book-tile";
-    li.draggable = true;
+    li.draggable = false;
     li.dataset.idx = bookIndex;
     li.title = BOOKS[bookIndex];
     li.textContent = BOOK_ABBR[bookIndex];
@@ -1355,7 +1359,7 @@
   function makeWriterItem(bookIndex){
     const li = document.createElement("li");
     li.className = "book-item";
-    li.draggable = true;
+    li.draggable = false;
     li.dataset.book = bookIndex;
     li.innerHTML = '<span class="handle">✍️</span><span class="name">'+WRITERS[bookIndex]+'</span>';
     return li;
@@ -1364,54 +1368,15 @@
   function makePeriodItem(bookIndex){
     const li = document.createElement("li");
     li.className = "book-item";
-    li.draggable = true;
+    li.draggable = false;
     li.dataset.book = bookIndex;
     li.innerHTML = '<span class="handle">🕑</span><span class="name">'+WRITING_PERIOD[bookIndex]+'</span>';
     return li;
   }
 
   function attachSortable(container){
-    let dragEl = null;
-
-    container.addEventListener("dragstart", (e)=>{
-      const li = e.target.closest(".book-item");
-      if(!li) return;
-      dragEl = li;
-      li.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      try{ e.dataTransfer.setData("text/plain", li.dataset.idx); }catch(err){}
-    });
-
-    container.addEventListener("dragend", ()=>{
-      if(dragEl) dragEl.classList.remove("dragging");
-      dragEl = null;
-      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
-    });
-
-    container.addEventListener("dragover", (e)=>{
-      e.preventDefault();
-      if(!dragEl) return;
-      const afterEl = getDragAfterElement(container, e.clientY);
-      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
-      if(afterEl == null){
-        container.appendChild(dragEl);
-      }else{
-        container.insertBefore(dragEl, afterEl);
-        afterEl.classList.add("drop-target");
-      }
-      // simple autoscroll near edges
-      const rect = container.getBoundingClientRect();
-      const margin = 40;
-      if(e.clientY - rect.top < margin){
-        container.scrollTop -= 12;
-      }else if(rect.bottom - e.clientY < margin){
-        container.scrollTop += 12;
-      }
-    });
-
-    container.addEventListener("drop", (e)=>{
-      e.preventDefault();
-    });
+    // přetahování prstem i myší – viz assets/touch-sort.js
+    TouchSort.attach({ containers:[container], itemSel:".book-item", handleSel:".handle" });
   }
 
   function getDragAfterElement(container, y){
@@ -1434,39 +1399,7 @@
   // přetáhnout čtvereček i mezi dvěma bloky (Hebrejsko-aramejská /
   // Křesťanská řecká písma), ne jen v rámci jednoho z nich.
   function attachSortableGrid(...containers){
-    let dragEl = null;
-
-    function clearDropTargets(){
-      containers.forEach(c=> c.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target")));
-    }
-
-    containers.forEach(container=>{
-      container.addEventListener("dragstart", (e)=>{
-        const tile = e.target.closest(".book-tile");
-        if(!tile) return;
-        dragEl = tile;
-        tile.classList.add("dragging");
-        e.dataTransfer.effectAllowed = "move";
-        try{ e.dataTransfer.setData("text/plain", tile.dataset.idx); }catch(err){}
-      });
-
-      container.addEventListener("dragend", ()=>{
-        if(dragEl) dragEl.classList.remove("dragging");
-        dragEl = null;
-        clearDropTargets();
-      });
-
-      container.addEventListener("dragover", (e)=>{
-        e.preventDefault();
-        if(!dragEl) return;
-        clearDropTargets();
-        placeTileAt(container, dragEl, e.clientX, e.clientY);
-      });
-
-      container.addEventListener("drop", (e)=>{
-        e.preventDefault();
-      });
-    });
+    TouchSort.attach({ containers:containers, itemSel:".book-tile", grid:true });
   }
 
   function placeTileAt(container, dragEl, x, y){

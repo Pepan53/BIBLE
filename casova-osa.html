@@ -200,7 +200,8 @@
     color: var(--gold-dark);
     font-size: 1.1em;
     flex-shrink:0;
-    padding: 2px 4px;
+    padding: 10px 8px;
+    margin: -10px -4px;
     touch-action: none;
     user-select: none;
   }
@@ -280,6 +281,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#7a2e2e">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="assets/touch-sort.js"></script>
 <script src="assets/pwa.js" defer></script>
 </head>
 <body>
@@ -668,7 +670,7 @@
     items.forEach((item, idx)=>{
       const li = document.createElement("li");
       li.className = "card";
-      li.draggable = true;
+      li.draggable = false;
       li.dataset.name = item.name;
       li.innerHTML = `
         <span class="handle">☰</span>
@@ -695,52 +697,18 @@
 
   // ---------- DRAG & DROP (stejný princip jako ve hře s pořadím knih) ----------
   function attachSortable(container){
-    let dragEl = null;
-
-    container.addEventListener("dragstart", (e)=>{
-      const li = e.target.closest(".card");
-      if(!li) return;
-      dragEl = li;
-      li.classList.add("dragging");
-      e.dataTransfer.effectAllowed = "move";
-      try{ e.dataTransfer.setData("text/plain", li.dataset.name); }catch(err){}
-    });
-
-    container.addEventListener("dragend", ()=>{
-      if(dragEl) dragEl.classList.remove("dragging");
-      dragEl = null;
-      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
-      renumberCards();
-      if(roundChecked){
-        verdict.className = "verdict";
-        verdict.textContent = "";
-        roundChecked = false;
-        pointsAwarded = false;
+    // přetahování prstem i myší – viz assets/touch-sort.js
+    TouchSort.attach({
+      containers:[container], itemSel:".card", handleSel:".handle",
+      onEnd:function(){
+        renumberCards();
+        if(roundChecked){
+          verdict.className = "verdict";
+          verdict.textContent = "";
+          roundChecked = false;
+          pointsAwarded = false;
+        }
       }
-    });
-
-    container.addEventListener("dragover", (e)=>{
-      e.preventDefault();
-      if(!dragEl) return;
-      const afterEl = getDragAfterElement(container, e.clientY);
-      container.querySelectorAll(".drop-target").forEach(el=>el.classList.remove("drop-target"));
-      if(afterEl == null){
-        container.appendChild(dragEl);
-      }else{
-        container.insertBefore(dragEl, afterEl);
-        afterEl.classList.add("drop-target");
-      }
-      const rect = container.getBoundingClientRect();
-      const margin = 40;
-      if(e.clientY - rect.top < margin){
-        window.scrollBy(0, -12);
-      }else if(rect.bottom - e.clientY < margin){
-        window.scrollBy(0, 12);
-      }
-    });
-
-    container.addEventListener("drop", (e)=>{
-      e.preventDefault();
     });
   }
 
