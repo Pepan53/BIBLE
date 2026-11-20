@@ -3,7 +3,7 @@
    – Obrázky odjinud (jw.org, YouTube náhledy): uloží se, jakmile je jednou uvidíš.
    – Tabulka Osy dějin (Google Sheets): nejdřív internet, bez internetu poslední stažená verze.
    Při přidání nového souboru na web ho dopiš do seznamu CORE a zvyš číslo VERZE. */
-const VERZE = "v8";
+const VERZE = "v9";
 const CORE_CACHE = "bible-core-" + VERZE;
 const IMG_CACHE = "bible-img";
 const DATA_CACHE = "bible-data";
@@ -15,7 +15,7 @@ const CORE = [
   "assets/common.css", "assets/common.js", "assets/tooltip-fit.js", "assets/nav-dock.js", "assets/pwa.js", "assets/touch-sort.js",
   "assets/celosvetova-zprava-data.js",
   "assets/jwl/jwl-data.js", "assets/jwl/schema16.js", "assets/jwl/jszip.min.js", "assets/jwl/sql-wasm.js", "assets/jwl/sql-wasm.wasm",
-  "assets/osa/gideon-mapa.jpg", "assets/osa/noe-archa.jpg",
+  "assets/osa/gideon-mapa.jpg", "assets/osa/udalosti-knih.csv", "assets/osa/noe-archa.jpg",
   "manifest.webmanifest", "assets/icon-192.png", "assets/icon-512.png",
   "assets/icon-maskable-512.png", "assets/apple-touch-icon.png"
 ];

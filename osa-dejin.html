@@ -1124,8 +1124,17 @@
   /* ---------- načtení dat ---------- */
   const status=document.getElementById("status");
   function setCtlVar(){ document.documentElement.style.setProperty("--ctl-h", ctlH()+"px"); }
+  /* Události z biblických knih (Ezekiel, další knihy přibudou) – vlastní soubor na webu,
+     stejné sloupce jako tabulka; přidají se k řádkům z tabulky. */
+  const EXTRA_URL = "assets/osa/udalosti-knih.csv";
+  let extraRows = [], lastCsv = null;
+  fetch(EXTRA_URL, {cache:"no-cache"}).then(r=>r.ok?r.text():"").then(txt=>{
+    extraRows = parseCSV(txt.replace(/^\uFEFF/,""));
+    if(lastCsv!=null) useData(lastCsv, status.textContent);
+  }).catch(()=>{});
   function useData(csv, note){
-    buildModel(parseCSV(csv));
+    lastCsv = csv;
+    buildModel(parseCSV(csv).concat(extraRows));
     if(!items.length){ tl.innerHTML=`<div class="msg">Tabulka je prázdná.</div>`; return; }
     let z=null; try{ z=parseFloat(localStorage.getItem(ZOOM_KEY)); }catch(e){}
     if(!(z>0) && !render._init) ppy=Math.min(MAXP,Math.max(0.4,(window.innerHeight*3)/(domain.b-domain.a)));
